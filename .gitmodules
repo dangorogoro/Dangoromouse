@@ -1,0 +1,3 @@
+[submodule "MazeSolver2015"]
+	path = MazeSolver2015
+	url = https://github.com/idt12312/MazeSolver2015
