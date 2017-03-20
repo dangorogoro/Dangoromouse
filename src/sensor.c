@@ -62,7 +62,7 @@ uint8_t read_wall(uint8_t RobotDirection){
 		WallData |= (0x08 << DirValue) % 0x0f;
 	}
 	else	GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_RESET);
-	if(led_2 >= 2400 &&  led_3 >= 2900 ){ //2320
+	if(led_2 >= 2430 &&  led_3 >= 2930 ){ //2320
 		GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_SET);
 		WallData |= (0x01 << DirValue) % 0x0f;
 	}

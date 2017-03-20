@@ -112,7 +112,7 @@ void Robot::robotMove(Direction Nextdir){
 }
 void Robot::robotShortMove(OperationList root,uint16_t speed,size_t *i){
 	uint16_t length = 0;
-	length =  *i == 0 ? 135+(root[*i].n-1)*ONE_BLOCK : root[*i].n*ONE_BLOCK;
+	length =  *i == 0 ? 130+(root[*i].n-1)*ONE_BLOCK : root[*i].n*ONE_BLOCK;
 	if(root[*i].op == Operation::FORWARD){
 		while(len_counter <= len_measure(length)){
 			static int16_t value = 0;
@@ -128,46 +128,81 @@ void Robot::robotShortMove(OperationList root,uint16_t speed,size_t *i){
 			}
 			if(ENCODER_start==ON){
 				read_encoder();
-				speed_controller(speed,value*speed*0.00001);
+				speed_controller(speed,0);
 				ENCODER_start=OFF;
 			}
 		}
 	}
 	else if(root[*i].op == Operation::TURN_RIGHT90){
+		static float target_rad = 0;
+		float first_clothoid_degree = 0;
+		float second_clothoid_degree = 0;
+		bool clothoid_flag = false;
 		int16_t target_degree = 0;
-		if(root[*i+1].op == root[*i].op){
+		if(root[(*i)+1].op == root[*i].op){
 			(*i)++;
-			target_degree = -176;
+			start_buzzer(10);
+			target_degree = -180 + 4 * speed / 50;
 		}
 		else
-			target_degree = -88;
+			target_degree = -90 + 4 * speed / 100;
 		degree = 0;
-		while(degree >= target_degree){
+		while(1){
 			if(ENCODER_start == ON){
 				read_encoder();
-				speed_controller(speed,- speed / 90);
+				if(target_rad <= speed / 90.0 && clothoid_flag == false){
+					target_rad += speed / 90.0 / 10.0;
+					first_clothoid_degree = degree;
+					speed_controller(speed,-target_rad);
+					clothoid_flag = false;
+				}
+				else{
+					second_clothoid_degree =  clothoid_flag == false ? target_degree - first_clothoid_degree : second_clothoid_degree;
+					clothoid_flag = true;
+					speed_controller(speed,-target_rad);
+					if(degree <= second_clothoid_degree)	target_rad -= speed / 90.0 / 10.0 ;
+					if(target_rad <= 0)	break;
+				}
 				ENCODER_start=OFF;
 			}
 		}
 		degree = 0;
+		stop_buzzer();
 	}
 	else if(root[*i].op ==  Operation::TURN_LEFT90){
+		static float target_rad = 0;
+		float first_clothoid_degree = 0;
+		float second_clothoid_degree = 0;
+		bool clothoid_flag = false;
 		int16_t target_degree = 0;
-		if(root[*i+1].op == root[*i].op){
-			i++;
-			target_degree = 176;
+		if(root[(*i)+1].op == root[*i].op){
+			(*i)++;
+			start_buzzer(10);
+			target_degree = 180 - 4 * speed /50;
 		}
 		else
-			target_degree = 88;
+			target_degree = 90 - 4 * speed / 100;
 		degree = 0;
-		while(degree <= -target_degree){
+		while(1){
 			if(ENCODER_start == ON){
 				read_encoder();
-				speed_controller(speed,speed /90 );
+				if(target_rad <= speed / 90.0 && clothoid_flag == false){
+					target_rad += speed / 90.0 / 10.0;
+					first_clothoid_degree = degree;
+					speed_controller(speed,target_rad);
+					clothoid_flag = false;
+				}
+				else{
+					second_clothoid_degree =  clothoid_flag == false ? target_degree - first_clothoid_degree : second_clothoid_degree;
+					clothoid_flag = true;
+					speed_controller(speed,target_rad);
+					if(degree >= second_clothoid_degree)	target_rad -= speed / 90.0 / 10.0;
+					if(target_rad <= 0)	break;
+				}
 				ENCODER_start=OFF;
 			}
 		}
+		degree = 0;
 	}
-
 }
 

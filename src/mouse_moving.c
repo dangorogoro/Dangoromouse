@@ -93,12 +93,12 @@ void speed_controller(int16_t target_speed,float target_rad){
 	float GYRO_rad = 0;
 	if(GYRO_start == ON){
 		GYRO_rad = (float)(ReadGYRO()-GYRO_offset_data)/16.4/180.0*3.14;
-		degree += GYRO_rad*180/3.14/1000;
+		degree += GYRO_rad*180.0/3.14/1000.0;
 		GYRO_start = OFF;
 	}
 	const float left_target  = (target_speed - target_rad * WheelDistance / 2.0) * MmConvWheel;
 	const float right_target = (target_speed + target_rad * WheelDistance / 2.0) * MmConvWheel;
-	const float left_Kp = 0.2,right_Kp = 0.2; //when10-1 2.0 2.0
+	const float left_Kp = 0.6,right_Kp = 0.6; //when10-1 2.0 2.0
 	const float left_Ki = 6.0,right_Ki = 6.0; //6.0 6.0
 	//const float left_Kd=0.001,right_Kd=0.001;
 	left_e_old  = left_e;
