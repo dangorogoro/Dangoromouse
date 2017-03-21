@@ -142,7 +142,8 @@ void go_straight(){
 	}
 	if(ENCODER_start == ON){
 		read_encoder();
-		speed_controller(150, (float)value*0.001);
+		//speed_controller(150, (float)value*0.001);
+		speed_controller(150, 0);
 		ENCODER_start=OFF;
 	}
 }

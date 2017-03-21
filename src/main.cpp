@@ -186,7 +186,6 @@ int main(){
 			while(1){
 				for(size_t i = 0;i<=runSequence.size();i++){
 					len_counter =0;
-					degree = 0;
 					dango.robotShortMove(runSequence,param_value*100,&i);
 				}
 				start_buzzer(100);
@@ -194,7 +193,38 @@ int main(){
 			}
 		}
 		else if(mode_select % 10 == 4){
-			turn_back();
+			pipi(3);
+			pipi(4);
+			pipi(5);
+			pipi(6);
+			Delay_ms(1000);
+			OperationList runSequence; 
+			runSequence.push_back({Operation::FORWARD,3});
+			runSequence.push_back({Operation::TURN_LEFT90,1});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::TURN_LEFT90,1});
+			runSequence.push_back({Operation::TURN_LEFT90,1});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::TURN_LEFT90,1});
+			runSequence.push_back({Operation::TURN_LEFT90,1});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::TURN_LEFT90,1});
+			runSequence.push_back({Operation::TURN_LEFT90,1});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::FORWARD,3});
+			runSequence.push_back({Operation::STOP,1});
+			while(1){
+				for(size_t i = 0;i<=runSequence.size();i++){
+					len_counter =0;
+					dango.robotShortMove(runSequence,param_value*100,&i);
+				}
+				start_buzzer(100);
+				while(1);
+			}
 		}
 		else if(mode_select % 10 == 5){
 			while(1){

@@ -111,10 +111,15 @@ void Robot::robotMove(Direction Nextdir){
 	}
 }
 void Robot::robotShortMove(OperationList root,uint16_t speed,size_t *i){
+	static int16_t target_direction = 0;
+	static int16_t target_speed = 0;
+	const static int16_t accel = 10;
 	uint16_t length = 0;
 	length =  *i == 0 ? 130+(root[*i].n-1)*ONE_BLOCK : root[*i].n*ONE_BLOCK;
+	
 	if(root[*i].op == Operation::FORWARD){
 		while(len_counter <= len_measure(length)){
+			target_speed = target_speed >= speed ? speed : target_speed + accel;
 			static int16_t value = 0;
 			if(SENSOR_start==ON)
 				led_get();
@@ -133,76 +138,80 @@ void Robot::robotShortMove(OperationList root,uint16_t speed,size_t *i){
 			}
 		}
 	}
+	else if(root[*i].op == Operation::STOP){
+		set_speed(0,0);
+	}
 	else if(root[*i].op == Operation::TURN_RIGHT90){
+		const float current_degree = degree;
+		target_direction -= 1;
 		static float target_rad = 0;
 		float first_clothoid_degree = 0;
 		float second_clothoid_degree = 0;
 		bool clothoid_flag = false;
 		int16_t target_degree = 0;
 		if(root[(*i)+1].op == root[*i].op){
+			target_direction -= 1;
 			(*i)++;
 			start_buzzer(10);
-			target_degree = -180 + 4 * speed / 50;
+			target_degree = target_direction * 90 + 4 * speed / 50;
 		}
 		else
-			target_degree = -90 + 4 * speed / 100;
-		degree = 0;
+			target_degree = target_direction * 90 + 4 * speed / 100;
 		while(1){
 			if(ENCODER_start == ON){
 				read_encoder();
 				if(target_rad <= speed / 90.0 && clothoid_flag == false){
-					target_rad += speed / 90.0 / 10.0;
+					target_rad += speed / 90.0 / 5.0;
 					first_clothoid_degree = degree;
 					speed_controller(speed,-target_rad);
 					clothoid_flag = false;
 				}
 				else{
-					second_clothoid_degree =  clothoid_flag == false ? target_degree - first_clothoid_degree : second_clothoid_degree;
+					second_clothoid_degree =  clothoid_flag == false ? target_degree - (current_degree - first_clothoid_degree) : second_clothoid_degree;
 					clothoid_flag = true;
 					speed_controller(speed,-target_rad);
-					if(degree <= second_clothoid_degree)	target_rad -= speed / 90.0 / 10.0 ;
+					if(degree <= second_clothoid_degree)	target_rad -= speed / 90.0 / 5.0 ;
 					if(target_rad <= 0)	break;
 				}
 				ENCODER_start=OFF;
 			}
 		}
-		degree = 0;
-		stop_buzzer();
 	}
 	else if(root[*i].op ==  Operation::TURN_LEFT90){
+		const float current_degree = degree;
+		target_direction += 1;
 		static float target_rad = 0;
 		float first_clothoid_degree = 0;
 		float second_clothoid_degree = 0;
 		bool clothoid_flag = false;
 		int16_t target_degree = 0;
 		if(root[(*i)+1].op == root[*i].op){
+			target_direction += 1;
 			(*i)++;
 			start_buzzer(10);
-			target_degree = 180 - 4 * speed /50;
+			target_degree = target_direction * 90 - 4 * speed /50;
 		}
 		else
-			target_degree = 90 - 4 * speed / 100;
-		degree = 0;
+			target_degree = target_direction * 90 - 4 * speed / 100;
 		while(1){
 			if(ENCODER_start == ON){
 				read_encoder();
 				if(target_rad <= speed / 90.0 && clothoid_flag == false){
-					target_rad += speed / 90.0 / 10.0;
+					target_rad += speed / 90.0 / 5.0;
 					first_clothoid_degree = degree;
 					speed_controller(speed,target_rad);
 					clothoid_flag = false;
 				}
 				else{
-					second_clothoid_degree =  clothoid_flag == false ? target_degree - first_clothoid_degree : second_clothoid_degree;
+					second_clothoid_degree =  clothoid_flag == false ? target_degree + (current_degree - first_clothoid_degree) : second_clothoid_degree;
 					clothoid_flag = true;
 					speed_controller(speed,target_rad);
-					if(degree >= second_clothoid_degree)	target_rad -= speed / 90.0 / 10.0;
+					if(degree >= second_clothoid_degree)	target_rad -= speed / 90.0 / 5.0;
 					if(target_rad <= 0)	break;
 				}
 				ENCODER_start=OFF;
 			}
 		}
-		degree = 0;
 	}
+	stop_buzzer();
 }
-
