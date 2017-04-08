@@ -98,8 +98,8 @@ void speed_controller(int16_t target_speed,float target_rad){
 	}
 	const float left_target  = (target_speed - target_rad * WheelDistance / 2.0) * MmConvWheel;
 	const float right_target = (target_speed + target_rad * WheelDistance / 2.0) * MmConvWheel;
-	const float left_Kp = 0.6,right_Kp = 0.6; //when10-1 2.0 2.0
-	const float left_Ki = 6.0,right_Ki = 6.0; //6.0 6.0
+	const float left_Kp = 0.2,right_Kp = 0.2; //1.0 1.10
+	const float left_Ki = 6.0,right_Ki = 6.0; //7.0 7.2
 	//const float left_Kd=0.001,right_Kd=0.001;
 	left_e_old  = left_e;
 	right_e_old = right_e;
@@ -150,10 +150,11 @@ void go_straight(){
 
 void turn_back(){
 	degree = 0;
+	start_buzzer(5);
 	while(degree<178){
 		if(ENCODER_start == ON){
 			read_encoder();
-			speed_controller(0,2.00);
+			speed_controller(0,5.00);
 			ENCODER_start=OFF;
 		}
 	}
