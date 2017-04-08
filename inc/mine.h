@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "mazesolve.h"
+#include "param.h"
 extern "C" {
 #endif /* __cplusplus */
 #include "config.h"
