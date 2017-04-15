@@ -6,7 +6,7 @@ class Robot{
 		int16_t LeftEncoder,RightEncoder;
 		IndexVec RobotVec;
 		Direction RobotDir;
-		int8_t RobotDirection;
+		int8_t RobotDegreeDir;
 		float x_point;
 		float y_point;
 	public:
@@ -23,5 +23,8 @@ class Robot{
 		void robotShortMove(OperationList root,Param param,size_t *i);
 		inline float x()const{return x_point;}
 		inline float y()const{return y_point;}
+		void addRobotDegreeDir(int8_t dir){RobotDegreeDir += dir;}
+		void setRobotDegreeDir(int8_t dir){RobotDegreeDir	 = dir;}
+		int8_t getRobotDegreeDir()const{return RobotDegreeDir;}
 };
 #endif

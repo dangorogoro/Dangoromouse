@@ -1,7 +1,7 @@
 #include "mine.h"
 Robot::Robot(){
 	RobotDir = NORTH;
-	RobotDirection = 0;
+	RobotDegreeDir = 0;
 	x_point = 0.0;
 	y_point = 0.0;
 };
@@ -40,8 +40,7 @@ void Robot::startOffSet(Agent *agent){
 	sensor_works();
 	Direction WallData = read_wall(NORTH);
 	agent->update(Robot::getRobotVec(),WallData);
-	SENSOR_reset=OFF;
-	while(len_counter <= len_measure(130)){
+	while(len_counter <= len_measure(140)){
 		go_straight();
 	}
 	Robot::addRobotVec(IndexVec::vecNorth);
@@ -49,7 +48,6 @@ void Robot::startOffSet(Agent *agent){
 	set_speed(0,0);
 }
 void Robot::robotMove(Direction Nextdir){
-
 	len_counter = 0;
 	Direction Nowdir =  Robot::getRobotDir();
 	if(Nowdir==NORTH){
@@ -58,39 +56,57 @@ void Robot::robotMove(Direction Nextdir){
 				go_straight();
 			}
 		}
-		if(Nextdir==EAST)
-			go_right();
-		if(Nextdir==WEST)
-			go_left();
+		if(Nextdir==EAST){
+			addRobotDegreeDir(-1);
+			go_right(getRobotDegreeDir() * 90 + 3);
+		}
+		if(Nextdir==WEST){
+			addRobotDegreeDir(1);
+			go_left(getRobotDegreeDir() * 90 - 3);
+		}
 		if(Nextdir==SOUTH){
 			turn_back();
 			start_wall();
+			setRobotDegreeDir(2);
+			degree = 180.0;
 		}
 	}
 	if(Nowdir==WEST){
-		if(Nextdir==NORTH)
-			go_right();
+		if(Nextdir==NORTH){
+			addRobotDegreeDir(-1);
+			go_right(getRobotDegreeDir() * 90 + 3);
+		}
 		if(Nextdir==EAST){
 			turn_back();
 			start_wall();
+			setRobotDegreeDir(-1);
+			degree = -90.0;
 		}
 		if(Nextdir==WEST){
 			while(len_counter <= len_measure(ONE_BLOCK)){
 				go_straight();
 			}
 		}
-		if(Nextdir==SOUTH)
-			go_left();
+		if(Nextdir==SOUTH){
+			addRobotDegreeDir(1);
+			go_left(getRobotDegreeDir() * 90 - 3);
+		}
 	}
 	if(Nowdir==SOUTH){
 		if(Nextdir==NORTH){
 			turn_back();
 			start_wall();
+			setRobotDegreeDir(0);
+			degree = 0.0;
 		}
-		if(Nextdir==EAST)
-			go_left();
-		if(Nextdir==WEST)
-			go_right();
+		if(Nextdir==EAST){
+			addRobotDegreeDir(1);
+			go_left(getRobotDegreeDir() * 90 - 3);
+		}
+		if(Nextdir==WEST){
+			addRobotDegreeDir(-1);
+			go_right(getRobotDegreeDir() * 90 + 3);
+		}
 		if(Nextdir==SOUTH){
 			while(len_counter <= len_measure(ONE_BLOCK)){
 				go_straight();
@@ -98,8 +114,10 @@ void Robot::robotMove(Direction Nextdir){
 		}
 	}
 	if(Nowdir==EAST){
-		if(Nextdir==NORTH)
-			go_left();
+		if(Nextdir==NORTH){
+			addRobotDegreeDir(1);
+			go_left(getRobotDegreeDir() * 90 - 3);
+		}
 		if(Nextdir==EAST){
 			while(len_counter <= len_measure(ONE_BLOCK)){
 				go_straight();
@@ -108,16 +126,20 @@ void Robot::robotMove(Direction Nextdir){
 		if(Nextdir==WEST){
 			turn_back();
 			start_wall();
+			setRobotDegreeDir(1);
+			degree = 90.0;
 		}
-		if(Nextdir==SOUTH)
-			go_right();
+		if(Nextdir==SOUTH){
+			addRobotDegreeDir(-1);
+			go_right(getRobotDegreeDir() * 90 + 3);
+		}
 	}
 }
 void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	len_counter = 0;
 	static int16_t target_direction = 0;
-	const static uint8_t curving_length = 30;
-	static int16_t speed = (left_speed + right_speed) / 2 / MmConvWheel;
+	const static uint8_t curving_length = param.get_last_param() / 3; // 60
+	static int16_t now_speed = (left_speed + right_speed) / 2 / MmConvWheel;
 	const static int16_t last_speed = param.get_last_param();
 	const static int16_t turn_speed = param.get_turn_param();
 	const static int16_t accel = param.get_accel_param();
@@ -137,12 +159,12 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 				reset_led();
 				}*/
 			if(ENCODER_start==ON){
-				if(len_counter >= len_measure(length-(last_speed*last_speed - turn_speed*turn_speed) /1000.0 / 2.0 / (accel * 1000))) //conv to mm
-					speed = turn_speed >= speed ? turn_speed : speed - accel;
+				if(len_counter >= len_measure(length-(now_speed*now_speed - turn_speed*turn_speed) /1000.0 / 2.0 / (accel * 1000))) //conv to mm
+					now_speed = turn_speed >= now_speed ? turn_speed : now_speed - accel;
 				else
-					speed = last_speed <= speed ? last_speed : speed + accel;
+					now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
 				read_encoder();
-				speed_controller(speed,0);
+				speed_controller(now_speed,0);
 				ENCODER_start=OFF;
 			}
 		}
