@@ -52,17 +52,26 @@ void led_get(){
 	SENSOR_start=OFF;
 }
 uint8_t read_wall(uint8_t RobotDirection){
-	uint8_t WallData = 0xf0;
-	uint8_t DirValue= (~RobotDirection) & (RobotDirection-1);
-	DirValue = (DirValue & 0x55) + (DirValue>> 1 & 0x55);
-	DirValue = (DirValue & 0x33) + (DirValue>> 2 & 0x33);
-	DirValue = (DirValue & 0x0f) + (DirValue>> 4 & 0x0f); //countbits MSB
+	volatile uint8_t WallData = 0xf0;
+	/*if(RobotDirection == 0x01)
+		DirValue = 0;
+	if(RobotDirection == 0x08)
+		DirValue = 3;
+	if(RobotDirection == 0x04)
+		DirValue = 2;
+	if(RobotDirection == 0x02)
+		DirValue = 1;
+	*/
+	volatile uint8_t DirValue = (~RobotDirection) & (RobotDirection-1);
+	DirValue = (DirValue & 0x55) + (DirValue >> 1 & 0x55);
+	DirValue = (DirValue & 0x33) + (DirValue >> 2 & 0x33);
+	DirValue = (DirValue & 0x0f) + (DirValue >> 4 & 0x0f); //countbits MSB
 	if(led_1 >= 2900){ //2110
 		GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
 		WallData |= (0x08 << DirValue) % 0x0f;
 	}
 	else	GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_RESET);
-	if(led_2 >= 2700 &&  led_3 >= 2900 ){ //2320
+	if(led_2 >= 2650 &&  led_3 >= 2900 ){ //2320
 		GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_SET);
 		WallData |= (0x01 << DirValue) % 0x0f;
 	}
