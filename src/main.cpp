@@ -5,7 +5,7 @@
 	TIMER_setting();
 	set_servo();
 	motor_setting();
-//	ADC_setting();
+	ADC_setting();
 	USART_setting();
 	z_point=19;
 	while (1){
@@ -24,7 +24,6 @@
 			turn_right();
 		else
 			stop_motor();
-		
 		if(button_1==ON){
 			if(button_b==ON)
 				release_servo();
@@ -86,22 +85,9 @@ int main(){
 	Agent agent(maze);
 	Agent::State prev_State = Agent::IDLE;
 	Robot dango;
-	agent.getState();
-	
-	Param param1(0,100,100,10);
-	Param param2(0,300,300,10);
-	Param param3(0,600,600,10);
-	Param param4(0,1000,500,10);
-	Param param5(0,900,900,5);
-	Param param6(0,1000,1000,5);
 	ParamList parameters;
-	parameters.push_back(param1);
-	parameters.push_back(param2);
-	parameters.push_back(param3);
-	parameters.push_back(param4);
-	parameters.push_back(param5);
-	parameters.push_back(param6);
-//
+	parameters.setting();
+
 	while(1){
 		if(mode_select%10==0){
 			led_flash();
@@ -144,15 +130,15 @@ int main(){
 			}
 		}
 		else if(mode_select%10==3){
-			//led_flash();
+			led_flash();
+			Delay_ms(100);
 			dango.startOffSet(&agent);
 			prev_State = agent.getState();
 			while(1){
+				reset_led();
 				sensor_works();
-				start_buzzer(10);
 				Direction WallData = read_wall(dango.getRobotDir());
 				agent.update(dango.getRobotVec(),WallData);
-				reset_led();
 				if(agent.getState() == Agent::FINISHED){
 					dango.setRobotVec(NORTH);
 					set_speed(0,0);
@@ -161,7 +147,7 @@ int main(){
 					set_speed(0,0);
 					reset_e();
 					len_counter = 0;
-					while(len_counter > len_measure(-140)){
+					while(len_counter > len_measure(-180)){
 						if(ENCODER_start==ON){
 							read_encoder();
 							speed_controller(-100,0);
@@ -172,14 +158,11 @@ int main(){
 				}
 				if(prev_State == Agent::SEARCHING_NOT_GOAL && 
 						(agent.getState() == Agent::SEARCHING_REACHED_GOAL || agent.getState() == Agent::BACK_TO_START)){
-					start_buzzer(5);
 					maze_backup = maze;
 				}
 				prev_State = agent.getState();
 				Direction Nextdir = agent.getNextDirection();
-				Delay_ms(1000);
-				start_buzzer(20);
-				degree = 0;
+				Delay_ms(500);
 				reset_e();
 				len_counter = 0;
 				dango.robotMove(Nextdir);
@@ -188,19 +171,20 @@ int main(){
 				set_speed(0,0);
 				stop_buzzer();
 			}
-			start_buzzer(3);
+			degree = 0;
 			set_speed(0,0);
 			len_counter = 0;
 			reset_e();
-			agent.caclRunSequence(false);
-			const OperationList &runSequence = agent.getRunSequence();
 			pipi(3);
 			pipi(4);
 			pipi(5);
 			pipi(6);
-			Delay_ms(1000);
+			agent.caclRunSequence(false);
+			OperationList runSequence = agent.getRunSequence();
+			runSequence.push_back({Operation::FORWARD,1});
+			runSequence.push_back({Operation::STOP,1});
 			while(1){
-				for(size_t i = 0;i<=runSequence.size();i++){
+				for(size_t i = 0;i<runSequence.size();i++){
 					len_counter = 0;
 					dango.robotShortMove(runSequence,parameters[param_value],&i);
 				}
@@ -219,11 +203,10 @@ int main(){
 			runSequence.push_back({Operation::TURN_RIGHT90,1});
 			runSequence.push_back({Operation::TURN_RIGHT90,1});
 			runSequence.push_back({Operation::TURN_LEFT90,1});
-			runSequence.push_back({Operation::FORWARD,2});
 			runSequence.push_back({Operation::TURN_LEFT90,1});
+			runSequence.push_back({Operation::FORWARD,1});
 			runSequence.push_back({Operation::TURN_LEFT90,1});
-			runSequence.push_back({Operation::TURN_RIGHT90,1});
-			runSequence.push_back({Operation::FORWARD,3});
+			runSequence.push_back({Operation::FORWARD,1});
 			runSequence.push_back({Operation::STOP,1});
 			while(1){
 				for(size_t i = 0;i<runSequence.size();i++){
