@@ -28,5 +28,6 @@ class ParamList{
 	inline void push_back(const Param& param) { param_list.push_back(param); }
 	inline void pop_back() { param_list.pop_back(); }
 	const Param &operator[](size_t i) const { return param_list[i]; }
+	void setting();
 };
 #endif
