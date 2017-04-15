@@ -98,8 +98,8 @@ void speed_controller(int16_t target_speed,float target_rad){
 	}
 	const float left_target  = (target_speed - target_rad * WheelDistance / 2.0) * MmConvWheel;
 	const float right_target = (target_speed + target_rad * WheelDistance / 2.0) * MmConvWheel;
-	const float left_Kp = 0.2,right_Kp = 0.2; //1.0 1.10
-	const float left_Ki = 6.0,right_Ki = 6.0; //7.0 7.2
+	const float left_Kp = 1.0,right_Kp = 1.20; //1.0 1.10
+	const float left_Ki = 6.0,right_Ki = 6.5; //7.0 7.2
 	//const float left_Kd=0.001,right_Kd=0.001;
 	left_e_old  = left_e;
 	right_e_old = right_e;
@@ -129,8 +129,7 @@ void mouse_turn(const uint8_t value){
 	}
 }
 void go_straight(){
-	static int16_t value = 0;
-	if(SENSOR_start==ON)
+	/*if(SENSOR_start==ON)
 		led_get();
 	if(SENSOR_reset==ON){
 		read_wall(0x00);
@@ -139,10 +138,9 @@ void go_straight(){
 			value = led_4 - led_1;
 		SENSOR_reset=OFF;
 		reset_led();
-	}
+	}*/
 	if(ENCODER_start == ON){
 		read_encoder();
-		//speed_controller(150, (float)value*0.001);
 		speed_controller(150, 0);
 		ENCODER_start=OFF;
 	}
@@ -150,42 +148,36 @@ void go_straight(){
 
 void turn_back(){
 	degree = 0;
-	start_buzzer(5);
-	while(degree<178){
+	while(degree<180){
 		if(ENCODER_start == ON){
 			read_encoder();
 			speed_controller(0,5.00);
 			ENCODER_start=OFF;
 		}
 	}
-	degree = 0;
 }
-void go_left(){
-	degree = 0;
-	while(degree <= 88){
+void go_left(int16_t target_degree){
+	while(degree <= target_degree){
 		if(ENCODER_start == ON){
 			read_encoder();
-			speed_controller(100,1);
+			speed_controller(100,100/100.0);
 			ENCODER_start=OFF;
 		}
 	}
-	degree = 0;
 }
-void go_right(){
-	degree = 0;
-	while(degree >= -88){
+void go_right(int16_t target_degree){
+	while(degree >= target_degree){
 		if(ENCODER_start == ON){
 			read_encoder();
-			speed_controller(100,-1);
+			speed_controller(100,-100/100.0);
 			ENCODER_start=OFF;
 		}
 	}
-	degree = 0;
 }
 void go_back(){
 	if(ENCODER_start == ON){
 		read_encoder();
-		speed_controller(-50,0);
+		speed_controller(-150,0);
 		ENCODER_start=OFF;
 	}
 }
@@ -204,7 +196,7 @@ void start_wall(){
 	len_counter = 0;
 	set_speed(0,0);
 	Delay_ms(1000);
-	while(len_counter < len_measure(135)){
+	while(len_counter < len_measure(140)){
 		if(ENCODER_start==ON){
 			read_encoder();
 			speed_controller(100,0);
