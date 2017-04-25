@@ -36,7 +36,7 @@ TARGET_ARCH := \
 	-mfpu=fpv4-sp-d16
 
 CFLAGS :=  $(TARGET_ARCH) $(DEFINE_MACRO) \
-	-O0 -g3 -Wall \
+	-O1 -g3 -Wall \
 	-fmessage-length=0 \
 	-fsigned-char \
 	-ffunction-sections \
