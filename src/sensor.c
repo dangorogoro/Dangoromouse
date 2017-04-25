@@ -24,6 +24,16 @@ void led_flash(){
 	TIM_OCInitStructure.TIM_Pulse = 15-1;
 	TIM_OC2Init(TIM9,&TIM_OCInitStructure);
 }
+void led_stop(){
+	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;
+	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Disable;
+	TIM_OCInitStructure.TIM_OCPolarity=TIM_OCPolarity_High;
+	TIM_OCInitStructure.TIM_Pulse=15-1;//look period
+
+	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Disable;
+	TIM_OC1Init(TIM9,&TIM_OCInitStructure);
+	TIM_OC2Init(TIM9,&TIM_OCInitStructure);
+}
 void led_get(){
 	volatile uint16_t value = 0;
 	ADC_RegularChannelConfig(ADC1,ADC_Channel_10,1,ADC_SampleTime_3Cycles);//
