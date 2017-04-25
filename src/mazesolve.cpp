@@ -36,6 +36,16 @@ Direction Robot::getRobotDir(){
 void Robot::setRobotDir(Direction dir){
 	RobotDir = dir;
 }
+void Robot::set_coordinate(float coordinate_x, float coordinate_y){
+	float speed = (left_speed + right_speed) / 2.0 / MmConvWheel * 1000.0;
+ 	set_x(speed * coordinate_x);
+	set_y(speed * coordinate_y);
+}
+void Robot::add_coordinate(float coordinate_x, float coordinate_y){
+	float speed = (left_speed + right_speed) / 2.0 / MmConvWheel * 1000.0;
+ 	add_x(speed * coordinate_x);
+	add_y(speed * coordinate_y);
+}
 void Robot::startOffSet(Agent *agent){
 	sensor_works();
 	Direction WallData = read_wall(NORTH);
@@ -138,7 +148,7 @@ void Robot::robotMove(Direction Nextdir){
 void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	len_counter = 0;
 	static int16_t target_direction = 0;
-	const static uint8_t curving_length = param.get_last_param() / 3; // 60
+	const static uint8_t curving_length = param.get_turn_param() / 15; // 60
 	static int16_t now_speed = (left_speed + right_speed) / 2 / MmConvWheel;
 	const static int16_t last_speed = param.get_last_param();
 	const static int16_t turn_speed = param.get_turn_param();
@@ -164,8 +174,11 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 				else
 					now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
 				read_encoder();
-				speed_controller(now_speed,0);
-				ENCODER_start=OFF;
+				add_coordinate(-sin(degree * pi /180.0),cos(degree * pi / 180.0));
+				const float target_theta = atan( - x() / 10.0f) - degree;
+				//speed_controller(now_speed,20.0 * -sin(degree * pi / 180.0) * (x() - 0.0) );
+				speed_controller(now_speed,1.5f * target_theta );
+				ENCODER_start = OFF;
 			}
 		}
 	}
