@@ -7,6 +7,8 @@
 #include "stdlib.h"
 #include "stdarg.h"
 #include "float.h"
+#include "math.h"
+#define pi 3.14159
 
 #ifdef __cplusplus
 #include "Maze.h"

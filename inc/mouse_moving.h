@@ -1,6 +1,6 @@
 #ifndef MY_MOVING_H
 #define MY_MOVING_H
-#define MmConvWheel 4096*4/1000/79
+#define MmConvWheel 4096.0 * 4.0 / 1000.0 / 79.0
 #define ONE_BLOCK 180
 #define WheelDistance 69
 extern int16_t left_speed,right_speed;
