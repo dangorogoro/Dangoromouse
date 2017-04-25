@@ -162,7 +162,7 @@ int main(){
 				}
 				prev_State = agent.getState();
 				Direction Nextdir = agent.getNextDirection();
-				Delay_ms(500);
+				Delay_ms(100);
 				reset_e();
 				len_counter = 0;
 				dango.robotMove(Nextdir);
@@ -179,6 +179,16 @@ int main(){
 			pipi(4);
 			pipi(5);
 			pipi(6);
+			led_stop();
+			/*
+			while(1){
+				for(int i = 0;i<=2;i++){
+					for(int j =0;j<=2;j++){
+						USART_printf("%d,%d---%d\r\n",i,j,maze.getWall(i,j));
+						Delay_ms(200);
+					}
+				}
+			}*/
 			agent.caclRunSequence(false);
 			OperationList runSequence = agent.getRunSequence();
 			runSequence.push_back({Operation::FORWARD,1});
@@ -199,14 +209,7 @@ int main(){
 			pipi(6);
 			Delay_ms(1000);
 			OperationList runSequence; 
-			runSequence.push_back({Operation::FORWARD,1});
-			runSequence.push_back({Operation::TURN_RIGHT90,1});
-			runSequence.push_back({Operation::TURN_RIGHT90,1});
-			runSequence.push_back({Operation::TURN_LEFT90,1});
-			runSequence.push_back({Operation::TURN_LEFT90,1});
-			runSequence.push_back({Operation::FORWARD,1});
-			runSequence.push_back({Operation::TURN_LEFT90,1});
-			runSequence.push_back({Operation::FORWARD,1});
+			runSequence.push_back({Operation::FORWARD,7});
 			runSequence.push_back({Operation::STOP,1});
 			while(1){
 				for(size_t i = 0;i<runSequence.size();i++){
