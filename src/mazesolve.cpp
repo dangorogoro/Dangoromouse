@@ -1,11 +1,4 @@
 #include "mine.h"
-Robot::Robot(){
-	RobotDir = NORTH;
-	RobotDegreeDir = 0;
-	x_point = 0.0;
-	y_point = 0.0;
-};
-//use with read_encoder()
 void Robot::setSpeed(){
 	LeftEncoder 	= left_speed;
 	RightEncoder = right_speed;
@@ -37,12 +30,12 @@ void Robot::setRobotDir(Direction dir){
 	RobotDir = dir;
 }
 void Robot::set_coordinate(float coordinate_x, float coordinate_y){
-	float speed = (left_speed + right_speed) / 2.0 / MmConvWheel * 1000.0;
+	float speed = (left_speed + right_speed) / 2.0 / MmConvWheel / 1000.0;
  	set_x(speed * coordinate_x);
 	set_y(speed * coordinate_y);
 }
 void Robot::add_coordinate(float coordinate_x, float coordinate_y){
-	float speed = (left_speed + right_speed) / 2.0 / MmConvWheel * 1000.0;
+	float speed = (left_speed + right_speed) / 2.0 / MmConvWheel / 1000.0;
  	add_x(speed * coordinate_x);
 	add_y(speed * coordinate_y);
 }
@@ -158,32 +151,25 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	
 	if(root[*i].op == Operation::FORWARD){
 		while(len_counter <= len_measure(length)){
-			/*if(SENSOR_start==ON)
-				led_get();
-				if(SENSOR_reset==ON){
-				read_wall(0x00);
-				value = 0;
-				if(led_1 >= 2200 && led_4 >= 2200)
-				value = led_4 - led_1;
-				SENSOR_reset=OFF;
-				reset_led();
-				}*/
+		//while( y() <= length){
 			if(ENCODER_start==ON){
-				if(len_counter >= len_measure(length-(now_speed*now_speed - turn_speed*turn_speed) /1000.0 / 2.0 / (accel * 1000))) //conv to mm
+				if(len_counter >= len_measure(length - 50000 * (now_speed * now_speed - turn_speed * turn_speed) /1000.0 / 2.0 / (accel * 1000))) //conv to mm
 					now_speed = turn_speed >= now_speed ? turn_speed : now_speed - accel;
 				else
 					now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
 				read_encoder();
-				add_coordinate(-sin(degree * pi /180.0),cos(degree * pi / 180.0));
-				const float target_theta = atan( - x() / 10.0f) - degree;
-				//speed_controller(now_speed,20.0 * -sin(degree * pi / 180.0) * (x() - 0.0) );
-				speed_controller(now_speed,1.5f * target_theta );
+				add_coordinate(-sin(degree * PI /180.0),cos(degree * PI / 180.0));
+				const float target_theta =  (degree - target_direction * 90) / 180 * PI;
+				speed_controller(now_speed,- 30.0f * target_theta );
 				ENCODER_start = OFF;
 			}
 		}
 	}
 	else if(root[*i].op == Operation::STOP){
 		set_speed(0,0);
+	}
+	else if((root[*i].op == Operation::TURN_RIGHT45) && (root[*i].op == Operation::TURN_LEFT45)){
+	//	int8_t diag_direction = (root[*i].op == Operation::TURN_RIGHT90) ? -1 : 1;
 	}
 	else if((root[*i].op == Operation::TURN_RIGHT90) || (root[*i].op  == Operation::TURN_LEFT90)){
 		int8_t operation_direction = (root[*i].op == Operation::TURN_RIGHT90) ? -1 : 1;
@@ -197,16 +183,16 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 		if(root[(*i)+1].op == root[*i].op){
 			target_direction += operation_direction;
 			(*i)++;
-			target_degree = target_direction * 90 -(float)(operation_direction) * 3.5 * turn_speed / 50;
+			target_degree = target_direction * 90;
 		}
 		else
-			target_degree = target_direction * 90 -(float)(operation_direction) * 3.5 * turn_speed / 50;
+			target_degree = target_direction * 90; 
 		while(1){
 			GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_SET);
 			if(ENCODER_start == ON){
 				read_encoder();
 				if(target_rad <= turn_speed / 90.0 && clothoid_flag == false){
-					target_rad += turn_speed / 90.0 / 10.0;
+					target_rad += turn_speed / 90.0 / 20.0;
 					first_clothoid_degree = degree;
 					speed_controller(turn_speed,(float)operation_direction * target_rad);
 					clothoid_flag = false;
@@ -215,8 +201,8 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 					second_clothoid_degree =  clothoid_flag == false ? target_degree + (float)operation_direction * (current_degree - first_clothoid_degree) : second_clothoid_degree;
 					clothoid_flag = true;
 					speed_controller(turn_speed,(float)operation_direction * target_rad);
-					if(operation_direction == -1 && degree <= second_clothoid_degree)	target_rad -= turn_speed / 90.0 / 10.0 ;
-					if(operation_direction == 1 && degree >= second_clothoid_degree)	target_rad -= turn_speed / 90.0 / 10.0 ;
+					if(operation_direction == -1 && degree <= second_clothoid_degree)	target_rad -= turn_speed / 90.0 / 20.0;
+					if(operation_direction == 1 && degree >= second_clothoid_degree)	target_rad -= turn_speed / 90.0 / 20.0;
 					if(target_rad <= 0)	break;
 				}
 				ENCODER_start=OFF;
