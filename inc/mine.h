@@ -8,7 +8,7 @@
 #include "stdarg.h"
 #include "float.h"
 #include "math.h"
-#define pi 3.14159
+#define PI 3.14159
 
 #ifdef __cplusplus
 #include "Maze.h"
@@ -18,6 +18,10 @@
 
 #include "mazesolve.h"
 #include "param.h"
+#include <Eigen/Dense>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+using namespace Eigen;
 extern "C" {
 #endif /* __cplusplus */
 #include "config.h"
