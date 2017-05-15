@@ -209,7 +209,10 @@ int main(){
 			pipi(6);
 			Delay_ms(1000);
 			OperationList runSequence; 
-			runSequence.push_back({Operation::FORWARD,7});
+			runSequence.push_back({Operation::FORWARD,4});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::FORWARD,4});
 			runSequence.push_back({Operation::STOP,1});
 			while(1){
 				for(size_t i = 0;i<runSequence.size();i++){
