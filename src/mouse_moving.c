@@ -98,7 +98,7 @@ void speed_controller(int16_t target_speed,float target_rad){
 	}
 	const float left_target  = (target_speed - target_rad * WheelDistance / 2.0) * MmConvWheel;
 	const float right_target = (target_speed + target_rad * WheelDistance / 2.0) * MmConvWheel;
-	const float left_Kp = 1.0,right_Kp = 1.20; //1.0 1.10
+	const float left_Kp = 2.0,right_Kp = 2.10; //1.0 1.10
 	const float left_Ki = 6.0,right_Ki = 6.5; //7.0 7.2
 	//const float left_Kd=0.001,right_Kd=0.001;
 	left_e_old  = left_e;
