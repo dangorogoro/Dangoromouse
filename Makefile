@@ -18,8 +18,8 @@ INCLUDE := \
 	-Ilib/FreeRTOS/include \
 	-Ilib/FreeRTOS/portable \
 	-Ilib/STM32F4xx_StdPeriph_Driver/inc \
-	-IMazeSolver2015
-
+	-IMazeSolver2015 \
+	-I/usr/include/eigen3
 DEFINE_MACRO := \
 	-DSTM32F40_41xxx \
 	-DSTM32F405xx \
