@@ -10,8 +10,13 @@ class Robot{
 		int8_t RobotDegreeDir;
 		float x_point;
 		float y_point;
+		const Matrix2i LEFT90;
+		const Matrix2i RIGHT90;
 	public:
-		Robot();
+		Matrix2i getRIGHT(){Matrix2i po; po << 0, 1,-1,0; return po;}
+		Matrix2i getLEFT(){Matrix2i po; po << 0, -1,1,0; return po;}
+		//Robot();
+		Robot() : RobotDir{NORTH}, RobotDegreeDir{0}, x_point{0.0}, y_point{0.0},LEFT90{getLEFT()}, RIGHT90{getRIGHT()} {}
 		void setSpeed();
 		void setRobotVec(IndexVec vec);
 		void addRobotVec(IndexVec vec);
