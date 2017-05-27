@@ -80,11 +80,11 @@ void TIMER_setting(){
 void TIM5_IRQHandler(){ //100khz
 	if(TIM_GetITStatus(TIM5,TIM_IT_Update)!=RESET){
 		TIM_ClearITPendingBit(TIM5,TIM_IT_Update);
-		timer_counter=timer_counter%200000+1;
-		if(timer_counter%100==0){
-			GYRO_start=ON;
-			ENCODER_start=ON;
-			SENSOR_reset=ON;
+		timer_counter = timer_counter % 200000 + 1;
+		if(timer_counter % 100 == 0){
+			GYRO_start = ON;
+			ENCODER_start = ON;
+			SENSOR_reset = ON;
 		}
 		//if(timer_counter%100000==0)
 		//	GPIO_ToggleBits(GPIOB,GPIO_Pin_11);
