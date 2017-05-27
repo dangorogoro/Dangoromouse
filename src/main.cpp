@@ -70,8 +70,8 @@ int main(){
 	MPU6500_setting();
 	battery_check();
 	TIM_Cmd(TIM5,ENABLE);
+	Delay_ms(500);
 	GYRO_offset();
-	Delay_ms(100);
 	
 	led_flash_setting();
 	GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_SET);
@@ -131,7 +131,7 @@ int main(){
 		}
 		else if(mode_select%10==3){
 			led_flash();
-			Delay_ms(100);
+			//Delay_ms(100);
 			dango.startOffSet(&agent);
 			prev_State = agent.getState();
 			while(1){
@@ -143,7 +143,7 @@ int main(){
 					dango.setRobotVec(NORTH);
 					set_speed(0,0);
 					Delay_ms(500);
-					turn_back();
+					turn_back(dango.getRobotDegreeDir());
 					set_speed(0,0);
 					reset_e();
 					len_counter = 0;
@@ -162,13 +162,13 @@ int main(){
 				}
 				prev_State = agent.getState();
 				Direction Nextdir = agent.getNextDirection();
-				Delay_ms(100);
+				//Delay_ms(100);
 				reset_e();
 				len_counter = 0;
 				dango.robotMove(Nextdir);
 				dango.setRobotDir(Nextdir);
 				dango.addRobotDirToVec(Nextdir);
-				set_speed(0,0);
+				//set_speed(0,0);
 				stop_buzzer();
 			}
 			degree = 0;
@@ -180,6 +180,15 @@ int main(){
 			pipi(5);
 			pipi(6);
 			led_stop();
+			
+			for(int i = 1;i <= 15;i ++){
+				for(int j = 1;j <= 15;j ++){
+					if(maze.getWall(i,j) / 16 != 15){
+						IndexVec po(i,j);
+						maze.updateWall(po,0b1111 ,true);
+					}
+				}
+			}
 			/*
 			while(1){
 				for(int i = 0;i<=2;i++){
@@ -189,6 +198,9 @@ int main(){
 					}
 				}
 			}*/
+			Delay_ms(100);
+			IndexVec po(0,0);
+			dango.setRobotVec(po);
 			agent.caclRunSequence(false);
 			OperationList runSequence = agent.getRunSequence();
 			runSequence.push_back({Operation::FORWARD,1});
@@ -209,10 +221,12 @@ int main(){
 			pipi(6);
 			Delay_ms(1000);
 			OperationList runSequence; 
-			runSequence.push_back({Operation::FORWARD,4});
-			runSequence.push_back({Operation::TURN_RIGHT90,1});
-			runSequence.push_back({Operation::TURN_RIGHT90,1});
-			runSequence.push_back({Operation::FORWARD,4});
+			runSequence.push_back({Operation::FORWARD,1});
+			for(int i = 0; i<= 3; i++){
+				runSequence.push_back({Operation::FORWARD,6});
+				runSequence.push_back({Operation::TURN_RIGHT90,1});
+				runSequence.push_back({Operation::TURN_RIGHT90,1});
+			}
 			runSequence.push_back({Operation::STOP,1});
 			while(1){
 				for(size_t i = 0;i<runSequence.size();i++){
@@ -221,6 +235,7 @@ int main(){
 				}
 				start_buzzer(100);
 				while(1);
+
 			}
 		}
 		else if(mode_select % 10 == 5){
