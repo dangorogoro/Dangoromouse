@@ -1,11 +1,11 @@
 #include "mine.h"
 
-float degree=0;
-float degree_old=0;
-int16_t GYRO_offset_data;
-volatile int16_t GYRO_old=0;
-volatile int16_t GYRO_new=0;
-volatile uint8_t GYRO_start=0;
+float degree = 0;
+float degree_old = 0;
+float GYRO_offset_data;
+volatile int16_t GYRO_old = 0;
+volatile int16_t GYRO_new = 0;
+volatile uint8_t GYRO_start = 0;
 int32_t speed=0;
 void SPI_setting(){
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
@@ -16,7 +16,7 @@ void SPI_setting(){
 	SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;
 	SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
 	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_64;
+	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_4;
 	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
 	SPI_Init(SPI1,&SPI_InitStructure);
 
@@ -55,11 +55,11 @@ void WriteReg(uint8_t reg, uint8_t data){
 	GPIO_WriteBit(GPIOA,GPIO_Pin_4,Bit_SET);
 }
 void GYRO_offset(){
-	int32_t sum = 0.0;
-	for (int i=0;i<1000;i++)
+	float sum = 0.0;
+	for (int i=0;i<10000;i++)
 		sum += ReadGYRO();
-	GYRO_offset_data = sum / 1000;
-	USART_printf("%d\r\n",GYRO_offset_data);
+	GYRO_offset_data = sum / 10000.0;
+	USART_printf("%d\r\n",(int)GYRO_offset_data);
 }
 void GYRO_NameCall(){
 	USART_printf("MPU6500...%d",ReadReg(0x75));
