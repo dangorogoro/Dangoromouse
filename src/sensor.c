@@ -76,12 +76,13 @@ uint8_t read_wall(uint8_t RobotDirection){
 	DirValue = (DirValue & 0x55) + (DirValue >> 1 & 0x55);
 	DirValue = (DirValue & 0x33) + (DirValue >> 2 & 0x33);
 	DirValue = (DirValue & 0x0f) + (DirValue >> 4 & 0x0f); //countbits MSB
-	if(led_1 >= 2900){ //2110
+	if(led_1 >= 2800){ //2110
 		GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
 		WallData |= (0x08 << DirValue) % 0x0f;
 	}
 	else	GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_RESET);
-	if(led_2 >= 2650 &&  led_3 >= 2900 ){ //2320
+	//if(led_2 >= 2650 &&  led_3 >= 2900 ){ //2320
+	if(led_2 >= 2550 &&  led_3 >= 2700 ){ //2320
 		GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_SET);
 		WallData |= (0x01 << DirValue) % 0x0f;
 	}
