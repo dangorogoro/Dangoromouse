@@ -15,12 +15,12 @@ void encoder_setting();
 void read_encoder();
 void speed_controller(int16_t speed , float rad);
 uint8_t set_param();
-void go_straight();
+void go_straight(float target_theta);
 void go_left(int16_t degree);
 void go_right(int16_t degree);
 void go_back();
-void start_wall();
-void turn_back();
+void start_wall(int16_t po);
+void turn_back(int16_t po);
 int32_t len_measure(int32_t length);
 void reset_e();
 #endif

@@ -128,30 +128,19 @@ void mouse_turn(const uint8_t value){
 		Delay_ms(1000);
 	}
 }
-void go_straight(){
-	/*if(SENSOR_start==ON)
-		led_get();
-	if(SENSOR_reset==ON){
-		read_wall(0x00);
-		value = 0;
-		if(led_1 >= 2140 && led_4 >= 2150)
-			value = led_4 - led_1;
-		SENSOR_reset=OFF;
-		reset_led();
-	}*/
+void go_straight(float po){
 	if(ENCODER_start == ON){
 		read_encoder();
-		speed_controller(150, 0);
+		speed_controller(300, -30.0 * po);
 		ENCODER_start=OFF;
 	}
 }
 
-void turn_back(){
-	degree = 0;
-	while(degree<180){
+void turn_back(int16_t target_direction){
+	while(degree >= (target_direction - 2) * 90){
 		if(ENCODER_start == ON){
 			read_encoder();
-			speed_controller(0,5.00);
+			speed_controller(0,-3.00);
 			ENCODER_start=OFF;
 		}
 	}
@@ -160,7 +149,7 @@ void go_left(int16_t target_degree){
 	while(degree <= target_degree){
 		if(ENCODER_start == ON){
 			read_encoder();
-			speed_controller(100,100/100.0);
+			speed_controller(100,100/90.0);
 			ENCODER_start=OFF;
 		}
 	}
@@ -169,7 +158,7 @@ void go_right(int16_t target_degree){
 	while(degree >= target_degree){
 		if(ENCODER_start == ON){
 			read_encoder();
-			speed_controller(100,-100/100.0);
+			speed_controller(100,-100/90.0);
 			ENCODER_start=OFF;
 		}
 	}
@@ -177,29 +166,31 @@ void go_right(int16_t target_degree){
 void go_back(){
 	if(ENCODER_start == ON){
 		read_encoder();
-		speed_controller(-150,0);
+		speed_controller(-300,0);
 		ENCODER_start=OFF;
 	}
 }
-void start_wall(){
+void start_wall(int16_t po){
 	set_speed(0,0);
 	reset_e();
 	len_counter = 0;
 	while(len_counter > len_measure(-170)){
 		if(ENCODER_start==ON){
 			read_encoder();
-			speed_controller(-100,0);
+			speed_controller(-300,0);
 			ENCODER_start=OFF;
 		}
 	}
+	degree = po * 90.0;
 	reset_e();
 	len_counter = 0;
 	set_speed(0,0);
 	Delay_ms(1000);
 	while(len_counter < len_measure(140)){
-		if(ENCODER_start==ON){
+		const float target_theta =  (degree - po * 90.0) / 180.0 * PI;
+		if(ENCODER_start == ON){
 			read_encoder();
-			speed_controller(100,0);
+			speed_controller(100,- 30.0f *  target_theta);
 			ENCODER_start=OFF;
 		}
 	}
