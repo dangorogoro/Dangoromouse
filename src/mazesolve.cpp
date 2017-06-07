@@ -1,10 +1,10 @@
 #include "mine.h"
 void Robot::setSpeed(){
-	LeftEncoder 	= left_speed;
+	LeftEncoder = left_speed;
 	RightEncoder = right_speed;
 }
 void Robot::setRobotVec(IndexVec vec){
-	RobotVec	=	vec; 
+	RobotVec = vec; 
 }
 void Robot::addRobotVec(IndexVec vec){
 	RobotVec += vec;
@@ -120,7 +120,6 @@ void Robot::robotMove(Direction Nextdir){
 			turn_back(getRobotDegreeDir());
 			setRobotDegreeDir(0);
 			start_wall(getRobotDegreeDir());
-			degree = 0.0;
 		}
 		if(Nextdir==EAST){
 			addRobotDegreeDir(1);
@@ -152,7 +151,6 @@ void Robot::robotMove(Direction Nextdir){
 			turn_back(getRobotDegreeDir());
 			setRobotDegreeDir(1);
 			start_wall(getRobotDegreeDir());
-			degree = 90.0;
 		}
 		if(Nextdir==SOUTH){
 			addRobotDegreeDir(-1);
@@ -165,7 +163,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	//USART_printf("Run %d %d %d %d\r\n",RobotRunVec(0,0),RobotRunVec(0,1),RobotRunVec(1,0),RobotRunVec(1,1));
 	len_counter = 0;
 	static int16_t target_direction = 0;
-	const static uint8_t curving_length = param.get_turn_param() / 15; // 60
+	const static uint16_t curving_length = param.get_turn_param() / 20; // 60
 	static int16_t now_speed = (left_speed + right_speed) / 2 / MmConvWheel;
 	const static int16_t last_speed = param.get_last_param();
 	const static int16_t turn_speed = param.get_turn_param();
@@ -181,13 +179,13 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	setRobotVecFromRun(root[*i].op,root[*i].n);
 	if(root[*i].op == Operation::FORWARD){
 		while(len_counter <= len_measure(length)){
-			if( now_speed >= 100.0){
+			if(now_speed >= 100.0){
 				x_p = 0.1 * 600.0 / now_speed;
 				degree_p = 50.0 * 600.0 / now_speed;
 				degree_d = 1.0 * 600.0 / now_speed;
 			}
 			if(ENCODER_start == ON){
-				if(len_counter >= len_measure(length - 10.0 * (now_speed * now_speed - turn_speed * turn_speed) / 2.0 / (accel * 1000))) //conv to mm
+				if(len_counter >= len_measure(length - 15.0 * (now_speed * now_speed - turn_speed * turn_speed) / 2.0 / (accel * 1000))) //conv to mm
 					now_speed = turn_speed >= now_speed ? turn_speed : now_speed - accel;
 				else
 					now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;

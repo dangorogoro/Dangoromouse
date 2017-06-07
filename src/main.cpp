@@ -180,7 +180,7 @@ int main(){
 			pipi(5);
 			pipi(6);
 			led_stop();
-			
+			/*
 			for(int i = 1;i <= 15;i ++){
 				for(int j = 1;j <= 15;j ++){
 					if(maze.getWall(i,j) / 16 != 15){
@@ -189,7 +189,6 @@ int main(){
 					}
 				}
 			}
-			/*
 			while(1){
 				for(int i = 0;i<=2;i++){
 					for(int j =0;j<=2;j++){
@@ -197,6 +196,7 @@ int main(){
 						Delay_ms(200);
 					}
 				}
+
 			}*/
 			Delay_ms(100);
 			IndexVec po(0,0);
@@ -221,12 +221,13 @@ int main(){
 			pipi(6);
 			Delay_ms(1000);
 			OperationList runSequence; 
-			runSequence.push_back({Operation::FORWARD,1});
+			runSequence.push_back({Operation::FORWARD,8});
+			/*
 			for(int i = 0; i<= 3; i++){
-				runSequence.push_back({Operation::FORWARD,6});
+				runSequence.push_back({Operation::FORWARD,2});
 				runSequence.push_back({Operation::TURN_RIGHT90,1});
 				runSequence.push_back({Operation::TURN_RIGHT90,1});
-			}
+			}*/
 			runSequence.push_back({Operation::STOP,1});
 			while(1){
 				for(size_t i = 0;i<runSequence.size();i++){
