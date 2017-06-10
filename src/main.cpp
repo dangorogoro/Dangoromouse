@@ -201,7 +201,7 @@ int main(){
 			Delay_ms(100);
 			IndexVec po(0,0);
 			dango.setRobotVec(po);
-			agent.caclRunSequence(false);
+			agent.caclRunSequence(true);
 			OperationList runSequence = agent.getRunSequence();
 			runSequence.push_back({Operation::FORWARD,1});
 			runSequence.push_back({Operation::STOP,1});
@@ -210,7 +210,7 @@ int main(){
 					len_counter = 0;
 					dango.robotShortMove(runSequence,parameters[param_value],&i);
 				}
-				start_buzzer(100);
+				start_buzzer(10);
 				while(1);
 			}
 		}
@@ -221,20 +221,24 @@ int main(){
 			pipi(6);
 			Delay_ms(1000);
 			OperationList runSequence; 
-			runSequence.push_back({Operation::FORWARD,8});
+			runSequence.push_back({Operation::FORWARD,4});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::FORWARD,4});
 			/*
 			for(int i = 0; i<= 3; i++){
-				runSequence.push_back({Operation::FORWARD,2});
+				runSequence.push_back({Operation::FORWARD,3});
 				runSequence.push_back({Operation::TURN_RIGHT90,1});
 				runSequence.push_back({Operation::TURN_RIGHT90,1});
-			}*/
+			}
+			*/
 			runSequence.push_back({Operation::STOP,1});
 			while(1){
 				for(size_t i = 0;i<runSequence.size();i++){
 					len_counter = 0;
 					dango.robotShortMove(runSequence,parameters[param_value],&i);
 				}
-				start_buzzer(100);
+				start_buzzer(10);
 				while(1);
 
 			}
