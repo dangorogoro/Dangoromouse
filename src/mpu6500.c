@@ -56,9 +56,11 @@ void WriteReg(uint8_t reg, uint8_t data){
 }
 void GYRO_offset(){
 	float sum = 0.0;
-	for (int i=0;i<10000;i++)
+	for (int i=0;i<1000;i++){
 		sum += ReadGYRO();
-	GYRO_offset_data = sum / 10000.0;
+		Delay_ms(1);
+	}
+	GYRO_offset_data = sum / 1000.0;
 	USART_printf("%d\r\n",(int)GYRO_offset_data);
 }
 void GYRO_NameCall(){
