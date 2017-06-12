@@ -50,12 +50,12 @@ int main(){
 	SystemInit();
 	TIMER_setting();
 	SysTickTimer_Config();
-	while(button_return==0){
-		if(button_a==1){
+	while(button_return == 0){
+		if(button_a == 1){
 			GPIO_WriteBit(GPIOB,GPIO_Pin_15,Bit_SET);
 			mode_select += 1;
 			pipi(mode_select);
-			while(button_a==1);
+			while(button_a == 1);
 			Delay_ms(100);
 		}
 		GPIO_WriteBit(GPIOB,GPIO_Pin_15,Bit_RESET);
@@ -75,7 +75,7 @@ int main(){
 	
 	led_flash_setting();
 	GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_SET);
-	const uint8_t param_value = encoder_paramset();
+	uint8_t param_value = encoder_paramset();
 	TIM2->CNT = 0;
 	TIM8->CNT = 0;
 	Delay_ms(1000); //veryvery important
@@ -129,7 +129,7 @@ int main(){
 				}
 			}
 		}
-		else if(mode_select%10==3){
+		else if(mode_select % 10 == 3){
 			led_flash();
 			//Delay_ms(100);
 			dango.startOffSet(&agent);
@@ -162,13 +162,11 @@ int main(){
 				}
 				prev_State = agent.getState();
 				Direction Nextdir = agent.getNextDirection();
-				//Delay_ms(100);
 				reset_e();
 				len_counter = 0;
 				dango.robotMove(Nextdir);
 				dango.setRobotDir(Nextdir);
 				dango.addRobotDirToVec(Nextdir);
-				//set_speed(0,0);
 				stop_buzzer();
 			}
 			degree = 0;
@@ -180,6 +178,7 @@ int main(){
 			pipi(5);
 			pipi(6);
 			led_stop();
+			TIM_Cmd(TIM5,DISABLE);
 			/*
 			for(int i = 1;i <= 15;i ++){
 				for(int j = 1;j <= 15;j ++){
@@ -188,30 +187,37 @@ int main(){
 						maze.updateWall(po,0b1111 ,true);
 					}
 				}
-			}
-			while(1){
 				for(int i = 0;i<=2;i++){
 					for(int j =0;j<=2;j++){
 						USART_printf("%d,%d---%d\r\n",i,j,maze.getWall(i,j));
 						Delay_ms(200);
 					}
 				}
-
 			}*/
 			Delay_ms(100);
 			IndexVec po(0,0);
 			dango.setRobotVec(po);
 			agent.caclRunSequence(true);
+			Robot last_dango = dango;
 			OperationList runSequence = agent.getRunSequence();
 			runSequence.push_back({Operation::FORWARD,1});
 			runSequence.push_back({Operation::STOP,1});
+			TIM_Cmd(TIM5,ENABLE);
 			while(1){
 				for(size_t i = 0;i<runSequence.size();i++){
 					len_counter = 0;
 					dango.robotShortMove(runSequence,parameters[param_value],&i);
 				}
-				start_buzzer(10);
-				while(1);
+				TIM_Cmd(TIM5,DISABLE);
+				param_value = encoder_paramset();
+				pipi(3);
+				pipi(4);
+				pipi(5);
+				pipi(6);
+				Delay_ms(100);
+				dango = last_dango;
+				TIM_Cmd(TIM5,ENABLE);
+				//while(1);
 			}
 		}
 		else if(mode_select % 10 == 4){
