@@ -134,7 +134,7 @@ void stop_buzzer(){
 	TIM_Cmd(TIM4,DISABLE);
 }
 void pipi(uint16_t value){
-		start_buzzer(value*5);
+		start_buzzer(value * 2);
 		Delay_ms(200);
 		stop_buzzer();
 }
