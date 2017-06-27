@@ -1,7 +1,6 @@
 #define MY_MINE_H
 #include "stm32f4xx.h"
 #include "stm32f4xx_conf.h"
-
 #include "stdint.h"
 #include "stdio.h"
 #include "stdlib.h"
@@ -18,9 +17,7 @@
 
 #include "mazesolve.h"
 #include "param.h"
-#include <Eigen/Dense>
 #include <Eigen/Core>
-#include <Eigen/Geometry>
 using namespace Eigen;
 extern "C" {
 #endif /* __cplusplus */
