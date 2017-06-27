@@ -85,6 +85,7 @@ void start_ADC(){
 	race_sensor3=ADC_GetConversionValue(ADC1);
 	Delay_ms(3);
 }
+/*
 void check_line(){
 	start_ADC();
 	if(race_sensor0>boader_line) line_color0=B;
@@ -95,4 +96,4 @@ void check_line(){
 		line_color2=W;
 	if(race_sensor3>boader_line) line_color3=B;
 		line_color3=W;
-}
+}*/
