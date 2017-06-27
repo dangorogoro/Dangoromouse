@@ -70,16 +70,15 @@ int main(){
 	MPU6500_setting();
 	battery_check();
 	TIM_Cmd(TIM5,ENABLE);
-	Delay_ms(500);
 	GYRO_offset();
+	Delay_ms(100);
 	
 	led_flash_setting();
 	GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_SET);
-	const uint8_t param_value = encoder_paramset();
+	uint8_t param_value = encoder_paramset();
 	TIM2->CNT = 0;
 	TIM8->CNT = 0;
 	Delay_ms(1000); //veryvery important
-
 
 	Maze maze,maze_backup;
 	Agent agent(maze);
@@ -131,7 +130,7 @@ int main(){
 		}
 		else if(mode_select%10==3){
 			led_flash();
-			//Delay_ms(100);
+			Delay_ms(100);
 			dango.startOffSet(&agent);
 			prev_State = agent.getState();
 			while(1){
@@ -150,7 +149,7 @@ int main(){
 					while(len_counter > len_measure(-180)){
 						if(ENCODER_start==ON){
 							read_encoder();
-							speed_controller(-100,0);
+							speed_controller(-300,0);
 							ENCODER_start=OFF;
 						}
 					}
@@ -159,6 +158,8 @@ int main(){
 				if(prev_State == Agent::SEARCHING_NOT_GOAL && 
 						(agent.getState() == Agent::SEARCHING_REACHED_GOAL || agent.getState() == Agent::BACK_TO_START)){
 					maze_backup = maze;
+					start_buzzer(10);
+					break;
 				}
 				prev_State = agent.getState();
 				Direction Nextdir = agent.getNextDirection();
@@ -171,6 +172,7 @@ int main(){
 				//set_speed(0,0);
 				stop_buzzer();
 			}
+			TIM_Cmd(TIM5,DISABLE);
 			degree = 0;
 			set_speed(0,0);
 			len_counter = 0;
@@ -181,8 +183,8 @@ int main(){
 			pipi(6);
 			led_stop();
 			/*
-			for(int i = 1;i <= 15;i ++){
-				for(int j = 1;j <= 15;j ++){
+			for(int i = 0;i <= 15;i ++){
+				for(int j = 0;j <= 15;j ++){
 					if(maze.getWall(i,j) / 16 != 15){
 						IndexVec po(i,j);
 						maze.updateWall(po,0b1111 ,true);
@@ -197,65 +199,75 @@ int main(){
 					}
 				}
 
-			}*/
+			}
+			*/
 			Delay_ms(100);
 			IndexVec po(0,0);
 			dango.setRobotVec(po);
-			agent.caclRunSequence(false);
+			agent.caclRunSequence(true);
+			Robot last_dango = dango;
 			OperationList runSequence = agent.getRunSequence();
 			runSequence.push_back({Operation::FORWARD,1});
 			runSequence.push_back({Operation::STOP,1});
+			TIM_Cmd(TIM5,ENABLE);
 			while(1){
-				for(size_t i = 0;i<runSequence.size();i++){
-					len_counter = 0;
-					dango.robotShortMove(runSequence,parameters[param_value],&i);
-				}
-				start_buzzer(100);
-				while(1);
+				dango.action(param_value,runSequence,parameters);
+				param_value = encoder_paramset();
+				TIM2->CNT = 0;
+				TIM8->CNT = 0;
+				pipi(3);
+				pipi(4);
+				pipi(5);
+				pipi(6);
+				dango = last_dango;
 			}
 		}
 		else if(mode_select % 10 == 4){
+			Robot last_dango = dango;
 			pipi(3);
 			pipi(4);
 			pipi(5);
 			pipi(6);
 			Delay_ms(1000);
 			OperationList runSequence; 
-			runSequence.push_back({Operation::FORWARD,8});
-			/*
-			for(int i = 0; i<= 3; i++){
-				runSequence.push_back({Operation::FORWARD,2});
+				runSequence.push_back({Operation::FORWARD,15});
 				runSequence.push_back({Operation::TURN_RIGHT90,1});
+			for(int i = 0;i <= 11;i++){
+				runSequence.push_back({Operation::FORWARD,14});
 				runSequence.push_back({Operation::TURN_RIGHT90,1});
-			}*/
+			}
 			runSequence.push_back({Operation::STOP,1});
 			while(1){
-				for(size_t i = 0;i<runSequence.size();i++){
-					len_counter = 0;
-					dango.robotShortMove(runSequence,parameters[param_value],&i);
-				}
-				start_buzzer(100);
-				while(1);
-
+				dango.action(param_value,runSequence,parameters);
+				TIM_Cmd(TIM5,DISABLE);
+				param_value = encoder_paramset();
+				TIM2->CNT = 0;
+				TIM8->CNT = 0;
+				pipi(3);
+				pipi(4);
+				pipi(5);
+				pipi(6);
+				dango = last_dango;
+				TIM_Cmd(TIM5,ENABLE);
 			}
 		}
 		else if(mode_select % 10 == 5){
 			while(1){
+				/*
 				if(ENCODER_start == ON){
 					read_encoder();
 					speed_controller(param_value*100,(float)param_value/2.0);
 					ENCODER_start=OFF;
-				}
+				}*/
+				param_value = encoder_paramset();
+				pipi(3);
+				pipi(4);
+				pipi(5);
+				pipi(6);
+				Delay_ms(100);
+				USART_printf("param_value --> %d\r\n",param_value);
 			}
 		}
 	}
 	return 0;
 }
-
-				/*else if(mode_select%10==3){
-				while(degree*10.0<=90)
-					set_speed((int16_t)(left_speed+(int16_t)(100-left_speed)*2.4f),-(int16_t)(right_speed+(int16_t)(100-right_speed)*2.0f));
-				set_speed(0,0);
-				degree=0;
-			}*/
-					//set_speed((int16_t)(left_speed+(int16_t)(100-left_speed)*2.4f)+speed,(int16_t)(right_speed+(int16_t)(100-right_speed)*2.0f)-speed);
