@@ -15,11 +15,11 @@ INCLUDE := \
 	-Iinc \
 	-Ilib/CMSIS/Device/Include \
 	-Ilib/CMSIS/Include \
-	-Ilib/FreeRTOS/include \
-	-Ilib/FreeRTOS/portable \
 	-Ilib/STM32F4xx_StdPeriph_Driver/inc \
 	-IMazeSolver2015 \
 	-I/usr/include/eigen3
+	##-Ilib/FreeRTOS/include \
+	##-Ilib/FreeRTOS/portable \##
 DEFINE_MACRO := \
 	-DSTM32F40_41xxx \
 	-DSTM32F405xx \
