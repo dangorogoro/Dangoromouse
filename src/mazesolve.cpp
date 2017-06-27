@@ -74,11 +74,17 @@ void Robot::setRobotVecFromRun(uint8_t Direction, uint8_t n){
 }
 void Robot::robotMove(Direction Nextdir){
 	len_counter = 0;
+	float wall_value = 0.0f;
 	Direction Nowdir =  Robot::getRobotDir();
 	if(Nowdir==NORTH){
 		if(Nextdir==NORTH){
 			while(len_counter <= len_measure(ONE_BLOCK)){
-				const float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI;
+				reset_led();
+				sensor_works();
+				wall_value = 0.0;
+				if(led_1 >= 2900 && led_4 >= 2450) wall_value = ((int16_t)(led_1 - led_4) - 450) / 5000.0;
+				
+				const float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI + wall_value;
 				go_straight(target_theta);
 			}
 		}
@@ -108,7 +114,11 @@ void Robot::robotMove(Direction Nextdir){
 		}
 		if(Nextdir==WEST){
 			while(len_counter <= len_measure(ONE_BLOCK)){
-				const float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI;
+				reset_led();
+				sensor_works();
+				wall_value = 0.0;
+				if(led_1 >= 2900 && led_4 >= 2450) wall_value = ((int16_t)(led_1 - led_4) - 450) / 5000.0;
+				const float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI + wall_value;
 				go_straight(target_theta);
 			}
 		}
@@ -133,7 +143,11 @@ void Robot::robotMove(Direction Nextdir){
 		}
 		if(Nextdir==SOUTH){
 			while(len_counter <= len_measure(ONE_BLOCK)){
-				const float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI;
+				reset_led();
+				sensor_works();
+				wall_value = 0.0;
+				if(led_1 >= 2900 && led_4 >= 2450) wall_value = ((int16_t)(led_1 - led_4) - 450) / 5000.0;
+				const float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI + wall_value;
 				go_straight(target_theta);
 			}
 		}
@@ -145,7 +159,11 @@ void Robot::robotMove(Direction Nextdir){
 		}
 		if(Nextdir==EAST){
 			while(len_counter <= len_measure(ONE_BLOCK)){
-				const float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI;
+				reset_led();
+				sensor_works();
+				wall_value = 0.0;
+				if(led_1 >= 2900 && led_4 >= 2450) wall_value = ((int16_t)(led_1 - led_4) - 450) / 5000.0;
+				const float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI + wall_value;
 				go_straight(target_theta);
 			}
 		}
@@ -166,26 +184,26 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	len_counter = 0;
 	static float target_degree = 0.0f;
 
-	const static uint16_t curving_length = param.get_turn_param() / 30; // 60
+	const uint16_t curving_length = param.get_turn_param() / 30; // 60
 	static int16_t now_speed = (left_speed + right_speed) / 2 / MmConvWheel;
-	const static int16_t last_speed = param.get_last_param();
-	const static int16_t turn_speed = param.get_turn_param();
-	const static int16_t accel = param.get_accel_param();
+	const int16_t last_speed = param.get_last_param();
+	const int16_t turn_speed = param.get_turn_param();
+	const int16_t accel = param.get_accel_param();
 	uint16_t length = 0;
 	length = *i == 0 ? 130 + (root[*i].n - 1) * ONE_BLOCK - curving_length : root[*i].n * ONE_BLOCK - curving_length; //130 was
 	
 	float e_now = 0,e_sum = 0;
 	float target_theta_now = 0,target_theta_last = 0;
-	float x_p = 0.2 * 600.0 / last_speed;
-	float degree_p = 40.0 * 600.0 / last_speed;
+	float x_p = 0.1 * 600.0 / last_speed;
+	float degree_p = 50.0 * 600.0 / last_speed;
 	float degree_d = 1.0 * 600.0 / last_speed;
 
 	setRobotVecFromRun(root[*i].op,root[*i].n);
 	if(root[*i].op == Operation::FORWARD){
 		while(len_counter <= len_measure(length)){
 			if(now_speed >= 1.0){
-				x_p = 0.2 * 600.0 / now_speed;
-				degree_p = 40.0 * 600.0 / now_speed;
+				x_p = 0.1 * 600.0 / now_speed;
+				degree_p = 50.0 * 600.0 / now_speed;
 				degree_d = 1.0 * 600.0 / now_speed;
 			}
 			if(ENCODER_start == ON){
@@ -197,7 +215,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 				add_coordinate(-sin(degree * PI /180.0),cos(degree * PI / 180.0));
 				e_now =  centerDistance();
 				e_sum += e_now / 1000.0f;
-				target_theta_now = (degree - target_degree * 1.01) / 180.0 * PI;
+				target_theta_now = (degree - target_degree * 1.03) / 180.0 * PI;
 				speed_controller(now_speed,- (degree_p * target_theta_now + (-target_theta_now + target_theta_last) * degree_d) + e_now * x_p);
 				target_theta_last = target_theta_now;
 				ENCODER_start = OFF;
@@ -212,8 +230,11 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 		setRobotVecFromRun((root[*i].op == Operation::TURN_RIGHT45) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
 		Matrix2i lastRunVec = RobotRunVec;
 
+		float past_target_degree = target_degree;
+		float next_target_degree = target_degree;
 		int8_t first_diag_direction = (root[*i].op == Operation::TURN_RIGHT45) ? -1 : 1;
-		target_degree += first_diag_direction * 45;
+		float first_degree_diff = first_diag_direction * 45.0f / 100.0;
+		float initial_length = 0.0;
 		uint16_t diag_length = 254;
 		(*i)++;
 		if(root[*i].op == Operation::FORWARD_DIAG){
@@ -225,12 +246,22 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 			addRobotVec(last_diag_vec + now_diag_vec);
 			(*i)++;
 		}
-		GPIO_WriteBit(GPIOB,GPIO_Pin_14,Bit_SET);
 		int8_t last_diag_direction = (root[*i].op == Operation::TURN_RIGHT45) ? -1 : 1;
-
+		float last_degree_diff = last_diag_direction * 45.0f / 100.0;
+		bool first_flag = false;
+		bool last_flag = false;
 		while(len_counter <= len_measure(diag_length)){
-			degree_p = 50.0;
 			if(ENCODER_start == ON){
+				if(fabs(target_degree - past_target_degree) < 45.0 && first_flag == false) target_degree += first_degree_diff;
+				else if(first_flag == false){
+					first_flag = true;
+					initial_length = len_counter;
+					target_degree = past_target_degree + first_diag_direction * 45.0;
+					next_target_degree = target_degree;
+				}
+				
+				if(len_counter >= len_measure(diag_length) - initial_length  && first_flag == true && last_flag == false && fabs(target_degree - next_target_degree) < 45.0) target_degree += last_degree_diff;
+
 				if(len_counter >= len_measure(diag_length - 15.0 * (now_speed * now_speed - turn_speed * turn_speed) / 2.0 / (accel * 1000))) //conv to mm
 					now_speed = turn_speed >= now_speed ? turn_speed : now_speed - accel;
 				else
@@ -243,7 +274,8 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 				ENCODER_start = OFF;
 			}
 		}
-		target_degree += last_diag_direction * 45;
+		target_degree = next_target_degree + last_diag_direction * 45.0;
+		
 		if(firstRunVec == lastRunVec)	RobotRunVec = firstRunVec;
 		setRobotVecFromRun((root[*i].op == Operation::TURN_RIGHT45) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
 	}
@@ -323,4 +355,14 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 		}
 	}*/
 	stop_buzzer();
+}
+void Robot::action(uint8_t value,OperationList runSequence,ParamList parameters){
+	for(size_t i = 0;i<runSequence.size();i++){
+		len_counter = 0;
+		robotShortMove(runSequence,parameters[value],&i);
+	}
+	Delay_ms(100);
+	degree = 0;
+	reset_e();
+	len_counter = 0;
 }
