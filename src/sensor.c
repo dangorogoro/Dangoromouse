@@ -1,8 +1,9 @@
 #include "mine.h" 
-volatile uint8_t SENSOR_start=0;
-volatile uint8_t SENSOR_reset=0;
+volatile uint8_t SENSOR_start = 0;
+volatile uint8_t SENSOR_reset = 0;
 
-uint16_t led_1=0,led_2=0,led_3=0,led_4=0;
+uint16_t led_1 = 0,led_2 = 0,led_3 = 0,led_4 = 0;
+uint16_t sensor_sub = 0;
 void led_flash_setting(){
 	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;
 	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Disable;
@@ -63,31 +64,24 @@ void led_get(){
 }
 uint8_t read_wall(uint8_t RobotDirection){
 	volatile uint8_t WallData = 0xf0;
-	/*if(RobotDirection == 0x01)
-		DirValue = 0;
-	if(RobotDirection == 0x08)
-		DirValue = 3;
-	if(RobotDirection == 0x04)
-		DirValue = 2;
-	if(RobotDirection == 0x02)
-		DirValue = 1;
-	*/
 	volatile uint8_t DirValue = (~RobotDirection) & (RobotDirection-1);
+	//2wei 12 side 34 front
+	
 	DirValue = (DirValue & 0x55) + (DirValue >> 1 & 0x55);
 	DirValue = (DirValue & 0x33) + (DirValue >> 2 & 0x33);
 	DirValue = (DirValue & 0x0f) + (DirValue >> 4 & 0x0f); //countbits MSB
-	if(led_1 >= 2900){ //2110
+	if(led_1 >= 3130){ //2110
 		GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
 		WallData |= (0x08 << DirValue) % 0x0f;
 	}
 	else	GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_RESET);
 	//if(led_2 >= 2650 &&  led_3 >= 2900 ){ //2320
-	if(led_2 >= 2550 &&  led_3 >= 2700 ){ //2320
+	if(led_3 >= 3050 &&  led_4 >= 2650 ){ //2320
 		GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_SET);
 		WallData |= (0x01 << DirValue) % 0x0f;
 	}
 	else	GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_RESET);
-	if(led_4 >= 2450){	//2110
+	if(led_2 >= 2970){	//2110
 		GPIO_WriteBit(GPIOB,GPIO_Pin_15,Bit_SET);
 		WallData |= (0x02 << DirValue) % 0x0f;
 	}
@@ -107,8 +101,28 @@ void sensor_works(){
 	SENSOR_reset=OFF;
 }
 void reset_led(){
-	led_1=0;
-	led_2=0;
-	led_3=0;
-	led_4=0;
+	led_1 = 0;
+	led_2 = 0;
+	led_3 = 0;
+	led_4 = 0;
+}
+void mouse_start(){
+	led_flash();
+	uint8_t flag = 1;
+	while(flag){
+		if(SENSOR_reset == ON){
+			if(led_1 >= 3200 && led_2 >= 3300){
+				flag = 0;
+				GPIO_WriteBit(GPIOB,GPIO_Pin_10,Bit_SET);
+			}
+			reset_led();
+			SENSOR_reset = OFF;
+		}
+		if(SENSOR_start == ON)	led_get();
+	}
+	Delay_ms(500);
+	led_stop();
+	//reset_led();
+	//SENSOR_reset = OFF;
+	//SENSOR_start = OFF;
 }
