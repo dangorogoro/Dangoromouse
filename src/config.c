@@ -41,7 +41,7 @@ void GPIO_setting(){
 	GPIO_StructInit(&GPIO_InitStructure);
 
 	//DEBUG_LED
-	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_11 | GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
+	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
 	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_2MHz;
@@ -50,13 +50,14 @@ void GPIO_setting(){
 	GPIO_StructInit(&GPIO_InitStructure);
 	
 	//BATTERY CHECK
-	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_5;
+	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_4; //5
 	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_2MHz;
 	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_AN;
 	GPIO_Init(GPIOC,&GPIO_InitStructure);
 	GPIO_StructInit(&GPIO_InitStructure);
 
 	//USART
+	/*
 	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_9;
 	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_100MHz;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -65,9 +66,18 @@ void GPIO_setting(){
 	GPIO_Init(GPIOA,&GPIO_InitStructure);
 	GPIO_PinAFConfig(GPIOA,GPIO_PinSource9,GPIO_AF_USART1);
 	GPIO_StructInit(&GPIO_InitStructure);
-
+	*/
+	//USART --2wei
+	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_10;
+	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_100MHz;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
+	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_AF;
+	GPIO_Init(GPIOC,&GPIO_InitStructure);
+	GPIO_PinAFConfig(GPIOC,GPIO_PinSource10,GPIO_AF_USART3);
+	GPIO_StructInit(&GPIO_InitStructure);
 	//button	
-	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
+	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_13 | GPIO_Pin_14 ;//| GPIO_Pin_15;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
 	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_2MHz;
 	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_IN;
@@ -125,6 +135,19 @@ void GPIO_setting(){
 	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_AN;
 	GPIO_Init(GPIOC,&GPIO_InitStructure);
 	GPIO_StructInit(&GPIO_InitStructure);
+//////////////
+/*
+	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_2;
+	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_2MHz;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_AF;
+	GPIO_Init(GPIOA,&GPIO_InitStructure);
+	GPIO_PinAFConfig(GPIOA,GPIO_PinSource2,GPIO_AF_USART2);
+	GPIO_StructInit(&GPIO_InitStructure);
+
+	*/
+//////////////
 }
 void GPIO_setting_old(){
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
