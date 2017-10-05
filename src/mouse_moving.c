@@ -1,6 +1,7 @@
 #include "mine.h"
 int16_t left_speed=0,right_speed=0;
 volatile uint8_t ENCODER_start=0;
+uint16_t search_velocity = 400;
 void mouse_motor_setting(){
 	//motor left OC1 OC2
 	//motor right OC3 OC4
@@ -98,7 +99,7 @@ void speed_controller(int16_t target_speed,float target_rad){
 	}
 	const float left_target  = (target_speed - target_rad * WheelDistance / 2.0) * MmConvWheel;
 	const float right_target = (target_speed + target_rad * WheelDistance / 2.0) * MmConvWheel;
-	const float left_Kp = 2.5,right_Kp = 2.6; //1.0 1.10
+	const float left_Kp = 6.0,right_Kp = 6.0; // 2.5 2.6 1.0 1.10
 	const float left_Ki = 8.0,right_Ki = 8.5; //7.0 7.2
 	//const float left_Kd=0.001,right_Kd=0.001;
 	left_e_old  = left_e;
@@ -107,8 +108,8 @@ void speed_controller(int16_t target_speed,float target_rad){
 	right_e	=	right_target -  right_speed;
 	//set_speed(left_e*left_Kp+left_e_sum*left_Ki+(left_e-left_e_old)*1000.0f*left_Kd,right_e*right_Kp+right_e_sum*right_Ki+(right_e-right_e_old)*1000.0*right_Kd);
 	set_speed(left_e*left_Kp+left_e_sum*left_Ki,right_e*right_Kp+right_e_sum*right_Ki);
-	left_e_sum  += left_e/1000.0f;
-	right_e_sum += right_e/1000.0f;
+	left_e_sum  += left_e / 1000.0f;
+	right_e_sum += right_e / 1000.0f;
 }
 void mouse_turn(const uint8_t value){
 	while(1){
@@ -131,35 +132,77 @@ void mouse_turn(const uint8_t value){
 void go_straight(float po){
 	if(ENCODER_start == ON){
 		read_encoder();
-		speed_controller(300, -30.0 * po);
-		ENCODER_start=OFF;
+		speed_controller(search_velocity, -search_velocity / 18.0 * po);
+		ENCODER_start = OFF;
 	}
 }
 
 void turn_back(int16_t target_direction){
-	while(degree >= (target_direction - 2) * 90){
+	while(degree >= (target_direction - 2) * 90 + 5){
 		if(ENCODER_start == ON){
 			read_encoder();
-			speed_controller(0,-3.00);
-			ENCODER_start=OFF;
+			speed_controller(0,-10.00);
+			ENCODER_start = OFF;
 		}
 	}
 }
 void go_left(int16_t target_degree){
+	/*
+	float last_rad = search_velocity / 25.0;
+	float rad_size = last_rad / 500.0;
+	float target_rad = 0;
 	while(degree <= target_degree){
 		if(ENCODER_start == ON){
 			read_encoder();
-			speed_controller(100,100/90.0);
-			ENCODER_start=OFF;
+			target_rad = (target_rad >= last_rad) ? last_rad : target_rad + rad_size;
+			speed_controller(search_velocity,target_rad);
+			ENCODER_start = OFF;
+		}
+	}*/
+	float start_degree = degree;
+	float last_rad = search_velocity / 50.0;
+	float rad_size = last_rad / 100.0;
+	float target_rad = 0;
+	int8_t init_flag = 0;
+	float first_degree = 0.0;
+	while(degree <= target_degree){
+		if(ENCODER_start == ON){
+			read_encoder();
+			if(init_flag == 0)	target_rad = (target_rad >= last_rad) ? last_rad : target_rad + rad_size;
+			if(init_flag == 0 && target_rad >= last_rad){
+				init_flag = 1;
+				first_degree = degree;
+			}
+			if(init_flag == 1 && start_degree - first_degree <= degree - target_degree){
+				if(target_rad >= 0.0) target_rad = target_rad - rad_size;
+				else break;	
+			}
+			speed_controller(search_velocity,target_rad);
+			ENCODER_start = OFF;
 		}
 	}
 }
 void go_right(int16_t target_degree){
+	float start_degree = degree;
+	float last_rad = search_velocity / 50.0;
+	float rad_size = last_rad / 100.0;
+	float target_rad = 0;
+	int8_t init_flag = 0;
+	float first_degree = 0.0;
 	while(degree >= target_degree){
 		if(ENCODER_start == ON){
 			read_encoder();
-			speed_controller(100,-100/90.0);
-			ENCODER_start=OFF;
+			if(init_flag == 0)	target_rad = (target_rad >= last_rad) ? last_rad : target_rad + rad_size;
+			if(init_flag == 0 && target_rad >= last_rad){
+				init_flag = 1;
+				first_degree = degree;
+			}
+			if(init_flag == 1 && start_degree - first_degree >= degree - target_degree){
+				if(target_rad >= 0.0) target_rad = target_rad - rad_size;
+				else break;	
+			}
+			speed_controller(search_velocity,- target_rad);
+			ENCODER_start = OFF;
 		}
 	}
 }
@@ -177,7 +220,7 @@ void start_wall(int16_t po){
 	while(len_counter > len_measure(-170)){
 		if(ENCODER_start==ON){
 			read_encoder();
-			speed_controller(-300,0);
+			speed_controller(-400,0);
 			ENCODER_start=OFF;
 		}
 	}
@@ -186,11 +229,11 @@ void start_wall(int16_t po){
 	len_counter = 0;
 	set_speed(0,0);
 	Delay_ms(1000);
-	while(len_counter < len_measure(140)){
+	while(len_counter < len_measure(150)){
 		const float target_theta =  (degree - po * 90.0) / 180.0 * PI;
 		if(ENCODER_start == ON){
 			read_encoder();
-			speed_controller(100,- 30.0f *  target_theta);
+			speed_controller(search_velocity,- 30.0f *  target_theta);
 			ENCODER_start=OFF;
 		}
 	}
