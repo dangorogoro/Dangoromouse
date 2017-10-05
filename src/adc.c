@@ -35,7 +35,7 @@ void ADC_setting(){
 	ADC_Cmd(ADC1,ENABLE);
 }
 void battery_check(){
-	ADC_RegularChannelConfig(ADC1,ADC_Channel_15,1,ADC_SampleTime_56Cycles);//
+	ADC_RegularChannelConfig(ADC1,ADC_Channel_14,1,ADC_SampleTime_56Cycles);//
 	ADC_SoftwareStartConv(ADC1);
 	while(ADC_GetFlagStatus(ADC1,ADC_FLAG_EOC)==RESET);
 	const uint16_t value=ADC_GetConversionValue(ADC1);
