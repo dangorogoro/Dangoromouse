@@ -50,18 +50,42 @@ int main(){
 	SystemInit();
 	TIMER_setting();
 	SysTickTimer_Config();
-	while(button_return==0){
-		if(button_a==1){
+	//////////////////
+  
+	/*
+	USART_setting();
+	SPI_setting();
+	GPIO_WriteBit(GPIOB,GPIO_Pin_10,Bit_SET);
+	GPIO_WriteBit(GPIOB,GPIO_Pin_11,Bit_SET);
+	GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
+	GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_SET);
+	GPIO_WriteBit(GPIOB,GPIO_Pin_14,Bit_SET);
+	GPIO_WriteBit(GPIOB,GPIO_Pin_15,Bit_SET);
+
+	WriteReg(0x6B,0x80);
+	Delay_ms(100);
+	USART_printf("WHOAM!!---%d\r\n",ReadReg(117));
+	WriteReg(0x6B,0x00);
+	Delay_ms(100);
+	WriteReg(0x1A,0x00);
+	Delay_ms(100);
+	WriteReg(0x1B,0x18);
+	while(1){
+		USART_printf("Z---%d\r\n",ReadGYRO());
+		Delay_ms(10);
+	}
+	*/
+	//////
+	while(button_return == 0){
+		if(button_a == 1){
 			GPIO_WriteBit(GPIOB,GPIO_Pin_15,Bit_SET);
 			mode_select += 1;
 			pipi(mode_select);
-			while(button_a==1);
-			Delay_ms(100);
+			while(button_a == 1);
+			Delay_ms(10);
 		}
 		GPIO_WriteBit(GPIOB,GPIO_Pin_15,Bit_RESET);
 	}
-	Delay_ms(100);
-	GPIO_WriteBit(GPIOB,GPIO_Pin_11,Bit_SET);
 	mouse_motor_setting();
 	ADC_setting();
 	USART_setting();
@@ -87,25 +111,32 @@ int main(){
 	ParamList parameters;
 	parameters.setting();
 
+	mouse_start();
+	GYRO_offset();
+	Delay_ms(100);
+
+
 	while(1){
-		if(mode_select%10==0){
+		if(mode_select % 10 == 0){
 			led_flash();
 			while(1){
-				if(SENSOR_reset==ON){
+				if(SENSOR_reset == ON){
 					read_wall(0x00);
+					USART_printf("%wall 1-> %d 2-> %d\r\n",led_1,led_2);
+					USART_printf("%wall 3-> %d 4->%d\r\n",led_3,led_4);
 					reset_led();
 					SENSOR_reset=OFF;
 				}
-				if(SENSOR_start==ON)
+				if(SENSOR_start == ON)
 					led_get();
 			}
 		}
-		else if(mode_select%10==1){
+		else if(mode_select % 10 == 1){
 			while(1){
-				if(ENCODER_start==ON){
+				if(ENCODER_start == ON){
 					read_encoder();
 					speed_controller(param_value*100,0);
-					ENCODER_start=OFF;
+					ENCODER_start = OFF;
 				}
 				/*if(len_counter>=4096*4*5){
 					GPIO_WriteBit(GPIOB,GPIO_Pin_11,Bit_RESET);
@@ -115,9 +146,9 @@ int main(){
 				}*/
 			}
 		}
-		else if(mode_select%10==2){
+		else if(mode_select % 10 == 2){
 			while(1){
-				if(GYRO_start==ON){
+				if(GYRO_start == ON){
 					GYRO_sampling();
 					GYRO_start=OFF;
 				}
@@ -126,9 +157,14 @@ int main(){
 					set_speed(-(left_speed+right_speed)/2.0f*0.9f+speed,-speed-(left_speed+right_speed)/2.0f*0.9f);
 					ENCODER_start = OFF;
 				}
+				
+				if(degree >= 90.0)
+					GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
+				else
+					GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_RESET);
 			}
 		}
-		else if(mode_select%10==3){
+		else if(mode_select % 10 == 3){
 			led_flash();
 			Delay_ms(100);
 			dango.startOffSet(&agent);
@@ -147,24 +183,23 @@ int main(){
 					reset_e();
 					len_counter = 0;
 					while(len_counter > len_measure(-180)){
-						if(ENCODER_start==ON){
+						if(ENCODER_start == ON){
 							read_encoder();
 							speed_controller(-300,0);
-							ENCODER_start=OFF;
+							ENCODER_start = OFF;
 						}
 					}
 					break;
 				}
 				if(prev_State == Agent::SEARCHING_NOT_GOAL && 
-						(agent.getState() == Agent::SEARCHING_REACHED_GOAL || agent.getState() == Agent::BACK_TO_START)){
+						(agent.getState() == Agent::SEARCHING_REACHED_GOAL)){
 					maze_backup = maze;
 					start_buzzer(10);
-					break;
 				}
 				prev_State = agent.getState();
 				Direction Nextdir = agent.getNextDirection();
 				//Delay_ms(100);
-				reset_e();
+				//reset_e();
 				len_counter = 0;
 				dango.robotMove(Nextdir);
 				dango.setRobotDir(Nextdir);
@@ -204,7 +239,7 @@ int main(){
 			Delay_ms(100);
 			IndexVec po(0,0);
 			dango.setRobotVec(po);
-			agent.caclRunSequence(true);
+			agent.caclRunSequence(false);
 			Robot last_dango = dango;
 			OperationList runSequence = agent.getRunSequence();
 			runSequence.push_back({Operation::FORWARD,1});
@@ -230,16 +265,13 @@ int main(){
 			pipi(6);
 			Delay_ms(1000);
 			OperationList runSequence; 
-				runSequence.push_back({Operation::FORWARD,15});
-				runSequence.push_back({Operation::TURN_RIGHT90,1});
-			for(int i = 0;i <= 11;i++){
-				runSequence.push_back({Operation::FORWARD,14});
-				runSequence.push_back({Operation::TURN_RIGHT90,1});
-			}
+			runSequence.push_back({Operation::FORWARD,3});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::FORWARD,3});
 			runSequence.push_back({Operation::STOP,1});
 			while(1){
 				dango.action(param_value,runSequence,parameters);
-				TIM_Cmd(TIM5,DISABLE);
 				param_value = encoder_paramset();
 				TIM2->CNT = 0;
 				TIM8->CNT = 0;
@@ -248,24 +280,29 @@ int main(){
 				pipi(5);
 				pipi(6);
 				dango = last_dango;
-				TIM_Cmd(TIM5,ENABLE);
 			}
 		}
 		else if(mode_select % 10 == 5){
+			led_flash();
 			while(1){
-				/*
+				if(SENSOR_reset == ON){
+					read_wall(0x00);
+					SENSOR_reset = OFF;
+				}
 				if(ENCODER_start == ON){
+					float target_speed = 0.0,target_rad = 0.0;
+					int16_t target_left_value = 3576,target_right_value = 3332;
+					float speed_gain = 0.3,rad_gain = 0.04;
 					read_encoder();
-					speed_controller(param_value*100,(float)param_value/2.0);
-					ENCODER_start=OFF;
-				}*/
-				param_value = encoder_paramset();
-				pipi(3);
-				pipi(4);
-				pipi(5);
-				pipi(6);
-				Delay_ms(100);
-				USART_printf("param_value --> %d\r\n",param_value);
+					if(led_3 >= 3200 || led_4 >= 3000)
+						target_rad = rad_gain * (led_3 - target_left_value - (led_4 - target_right_value));
+					if(led_3 >= 3200 || led_4 >= 3000)
+						target_speed = speed_gain * (led_3 - target_left_value + (led_4 - target_right_value));
+					speed_controller(-target_speed,target_rad);
+					ENCODER_start = OFF;
+					reset_led();
+				}
+				if(SENSOR_start == ON)	led_get();
 			}
 		}
 	}
