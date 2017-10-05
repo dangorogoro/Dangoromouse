@@ -10,6 +10,7 @@ class Robot{
 		int8_t RobotDegreeDir;
 		float x_point;
 		float y_point;
+		bool sideWall;
 	public:
 		Matrix2i RobotRunVec;
 		Matrix2i getRIGHT(){Matrix2i po; po << 0, -1,1,0; return po;}
@@ -24,6 +25,11 @@ class Robot{
 		void setRobotDir(Direction dir);
 		void addRobotDirToVec(Direction dir);
 		void startOffSet(Agent* agent);
+		void goLeft();
+		void goBack(int8_t Nextdir);
+		void goStraight();
+		void goStraight(uint16_t length);
+		void goRight();
 		void robotMove(Direction Nextdir);
 		void robotShortMove(OperationList root,Param param,size_t *i);
 		IndexVec getRobotVec();
@@ -40,6 +46,7 @@ class Robot{
 		void setRobotDegreeDir(int8_t dir){RobotDegreeDir	 = dir;}
 		int8_t getRobotDegreeDir()const{return RobotDegreeDir;}
 		void setRobotVecFromRun(uint8_t Direction,uint8_t n);
+		void setSideWall();
 		void action(uint8_t value,OperationList runSequence,ParamList param);
 };
 #endif
