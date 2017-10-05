@@ -10,9 +10,9 @@ void GYRO_offset();
 void GYRO_sampling();
 extern float degree;
 extern float degree_old;
-extern int16_t GYRO_offset_data;
-extern volatile int16_t GYRO_old;
-extern volatile int16_t GYRO_new;
+extern float GYRO_offset_data;
+extern volatile float GYRO_old;
+extern volatile float GYRO_new;
 extern volatile uint8_t GYRO_start;
 extern int32_t speed;
 #endif
