@@ -70,7 +70,7 @@ uint8_t read_wall(uint8_t RobotDirection){
 	DirValue = (DirValue & 0x55) + (DirValue >> 1 & 0x55);
 	DirValue = (DirValue & 0x33) + (DirValue >> 2 & 0x33);
 	DirValue = (DirValue & 0x0f) + (DirValue >> 4 & 0x0f); //countbits MSB
-	if(led_1 >= 3130){ //2110
+	if(led_1 >= 3120){ //2110
 		GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
 		WallData |= (0x08 << DirValue) % 0x0f;
 	}
@@ -98,7 +98,7 @@ void sensor_works(){
 		if(SENSOR_start == ON)
 			led_get();
 	}
-	SENSOR_reset=OFF;
+	SENSOR_reset = OFF;
 }
 void reset_led(){
 	led_1 = 0;

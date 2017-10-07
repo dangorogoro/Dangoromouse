@@ -132,13 +132,16 @@ void mouse_turn(const uint8_t value){
 void go_straight(float po){
 	if(ENCODER_start == ON){
 		read_encoder();
-		speed_controller(search_velocity, -search_velocity / 18.0 * po);
+		speed_controller(search_velocity, -search_velocity / 25.0 * po);
 		ENCODER_start = OFF;
 	}
 }
-
 void turn_back(int16_t target_direction){
-	while(degree >= (target_direction - 2) * 90 + 5){
+	/*sensor_works();
+	bool dir;
+	if(led_1 >= 3120) dir = 1;
+	else if(led_2 >= 2970) dir = 0; */
+	while(degree >= (target_direction - 2) * 90 + 10){
 		if(ENCODER_start == ON){
 			read_encoder();
 			speed_controller(0,-10.00);
@@ -161,7 +164,7 @@ void go_left(int16_t target_degree){
 	}*/
 	float start_degree = degree;
 	float last_rad = search_velocity / 50.0;
-	float rad_size = last_rad / 100.0;
+	float rad_size = last_rad / 10.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
@@ -185,7 +188,7 @@ void go_left(int16_t target_degree){
 void go_right(int16_t target_degree){
 	float start_degree = degree;
 	float last_rad = search_velocity / 50.0;
-	float rad_size = last_rad / 100.0;
+	float rad_size = last_rad / 10.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
