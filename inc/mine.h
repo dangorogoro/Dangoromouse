@@ -17,6 +17,7 @@
 
 #include "mazesolve.h"
 #include "param.h"
+#include "plot.h"
 #include <Eigen/Core>
 using namespace Eigen;
 extern "C" {
