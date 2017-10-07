@@ -78,45 +78,46 @@ void Robot::goStraight(){
 	while(len_counter <= len_measure(ONE_BLOCK)){
 		float wall_value = 0.0f;
 		if(SENSOR_reset == ON){
-			if(sideWall == true && led_1 >= 3130 && led_2 >= 2970) wall_value = (led_1 - led_2 - sensor_sub) / 20.0;
+			if(sideWall == true && led_1 >= 3120 && led_2 >= 2970) wall_value = (led_1 - led_2 - sensor_sub) / 25.0;
 			reset_led();
 			SENSOR_reset = OFF;
 		}
 		if(SENSOR_start == ON)	led_get();
-		//	const float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI + wall_value;
-		//float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI;
 		float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI + wall_value;
 		go_straight(target_theta);
 	}
 }
 void Robot::goStraight(uint16_t length){
-	float wall_value = 0.0f;
 	while(len_counter <= len_measure(length)){
-		/*reset_led();
-		sensor_works();
-		wall_value = 0.0;
-		const float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI + wall_value;
-		*/
-		float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI;
+		float wall_value = 0.0f;
+		if(SENSOR_reset == ON){
+			if(sideWall == true && led_1 >= 3120 && led_2 >= 2970) wall_value = (led_1 - led_2 - sensor_sub) / 25.0;
+			reset_led();
+			SENSOR_reset = OFF;
+		}
+		if(SENSOR_start == ON)	led_get();
+		float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI + wall_value;
 		go_straight(target_theta);
 	}
 }
 void Robot::goRight(){
-	//uint16_t turn_R = 25;
-	//goStraight(ONE_BLOCK / 2 - turn_R);
-	//len_counter = 0;
+	uint16_t offset = 10;
+	goStraight(offset);
+	len_counter = 0;
 	addRobotDegreeDir(-1);
 	go_right(getRobotDegreeDir() * 90 );
+	len_counter = 0;
+	goStraight(offset);
 	//goStraight(ONE_BLOCK / 2 - turn_R);
 }
 void Robot::goLeft(){
-	/*
-	uint16_t turn_R = 25;
-	goStraight(ONE_BLOCK / 2 - turn_R);
+	uint16_t offset = 10;
+	goStraight(offset);
 	len_counter = 0;
-	goStraight(ONE_BLOCK / 2 - turn_R);*/
 	addRobotDegreeDir(1);
 	go_left(getRobotDegreeDir() * 90);
+	len_counter = 0;
+	goStraight(offset);
 }
 void Robot::goBack(int8_t Nextdir){
 	turn_back(getRobotDegreeDir());
@@ -129,7 +130,7 @@ void Robot::goBack(int8_t Nextdir){
 	start_wall(getRobotDegreeDir());
 }
 void Robot::setSideWall(){
-	if(led_1 >= 3130 && led_2 >= 2970)	sideWall = true;
+	if(led_1 >= 3120 && led_2 >= 2970)	sideWall = true;
 	else sideWall = false;
 }
 void Robot::robotMove(Direction Nextdir){
@@ -321,7 +322,7 @@ void Robot::robotMove(Direction Nextdir){
 						clothoid_flag = false;
 					}
 					else{
-						second_clothoid_degree =  clothoid_flag == false ? target_degree + (float)operation_direction * (current_degree - first_clothoid_degree) : second_clothoid_degree;
+						second_clothoid_degree = clothoid_flag == false ? target_degree + (float)operation_direction * (current_degree - first_clothoid_degree) : second_clothoid_degree;
 						clothoid_flag = true;
 						speed_controller(turn_speed,(float)operation_direction * target_rad);
 						if(operation_direction == -1 && degree <= second_clothoid_degree)	target_rad -= turn_speed / 90.0 / 10.0;
