@@ -100,7 +100,7 @@ void speed_controller(int16_t target_speed,float target_rad){
 	const float left_target  = (target_speed - target_rad * WheelDistance / 2.0) * MmConvWheel;
 	const float right_target = (target_speed + target_rad * WheelDistance / 2.0) * MmConvWheel;
 	const float left_Kp = 6.0,right_Kp = 6.0; // 2.5 2.6 1.0 1.10
-	const float left_Ki = 8.0,right_Ki = 8.5; //7.0 7.2
+	const float left_Ki = 10.0,right_Ki = 10.5; //7.0 7.2
 	//const float left_Kd=0.001,right_Kd=0.001;
 	left_e_old  = left_e;
 	right_e_old = right_e;
@@ -132,11 +132,13 @@ void mouse_turn(const uint8_t value){
 void go_straight(float po){
 	if(ENCODER_start == ON){
 		read_encoder();
-		speed_controller(search_velocity, -search_velocity / 25.0 * po);
+		speed_controller(search_velocity, -search_velocity / 15.0 * po);
 		ENCODER_start = OFF;
 	}
 }
 void turn_back(int16_t target_direction){
+	set_speed(0,0);
+	Delay_ms(300);
 	/*sensor_works();
 	bool dir;
 	if(led_1 >= 3120) dir = 1;
@@ -144,7 +146,7 @@ void turn_back(int16_t target_direction){
 	while(degree >= (target_direction - 2) * 90 + 10){
 		if(ENCODER_start == ON){
 			read_encoder();
-			speed_controller(0,-10.00);
+			speed_controller(0,-8.00);
 			ENCODER_start = OFF;
 		}
 	}
@@ -163,8 +165,8 @@ void go_left(int16_t target_degree){
 		}
 	}*/
 	float start_degree = degree;
-	float last_rad = search_velocity / 50.0;
-	float rad_size = last_rad / 10.0;
+	float last_rad = search_velocity / 50.0; //50 30 15
+	float rad_size = last_rad / 30.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
@@ -188,7 +190,7 @@ void go_left(int16_t target_degree){
 void go_right(int16_t target_degree){
 	float start_degree = degree;
 	float last_rad = search_velocity / 50.0;
-	float rad_size = last_rad / 10.0;
+	float rad_size = last_rad / 30.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
@@ -221,10 +223,10 @@ void start_wall(int16_t po){
 	reset_e();
 	len_counter = 0;
 	while(len_counter > len_measure(-170)){
-		if(ENCODER_start==ON){
+		if(ENCODER_start == ON){
 			read_encoder();
 			speed_controller(-400,0);
-			ENCODER_start=OFF;
+			ENCODER_start = OFF;
 		}
 	}
 	degree = po * 90.0;
