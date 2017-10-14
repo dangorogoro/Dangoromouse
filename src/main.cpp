@@ -166,14 +166,17 @@ int main(){
 		}
 		else if(mode_select % 10 == 3){
 			led_flash();
-			Delay_ms(100);
+			Delay_ms(400);
 			dango.startOffSet(&agent);
 			prev_State = agent.getState();
 			while(1){
 				reset_led();
 				sensor_works();
 				Direction WallData = read_wall(dango.getRobotDir());
-				agent.update(dango.getRobotVec(),WallData);
+				if((maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y) & Direction(0b11110000)) != (Direction)0xf0)
+					agent.update(dango.getRobotVec(),WallData);
+				else
+					agent.update(dango.getRobotVec(),maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y));
 				if(agent.getState() == Agent::FINISHED){
 					dango.setRobotVec(NORTH);
 					set_speed(0,0);
@@ -198,13 +201,10 @@ int main(){
 				}
 				prev_State = agent.getState();
 				Direction Nextdir = agent.getNextDirection();
-				//Delay_ms(100);
-				//reset_e();
 				len_counter = 0;
 				dango.robotMove(Nextdir);
 				dango.setRobotDir(Nextdir);
 				dango.addRobotDirToVec(Nextdir);
-				//set_speed(0,0);
 				stop_buzzer();
 			}
 			TIM_Cmd(TIM5,DISABLE);
@@ -239,7 +239,7 @@ int main(){
 			Delay_ms(100);
 			IndexVec po(0,0);
 			dango.setRobotVec(po);
-			agent.caclRunSequence(false);
+			agent.caclRunSequence(true);
 			Robot last_dango = dango;
 			OperationList runSequence = agent.getRunSequence();
 			runSequence.push_back({Operation::FORWARD,1});
@@ -267,8 +267,10 @@ int main(){
 			OperationList runSequence; 
 			runSequence.push_back({Operation::FORWARD,3});
 			runSequence.push_back({Operation::TURN_RIGHT90,1});
-			runSequence.push_back({Operation::TURN_RIGHT90,1});
-			runSequence.push_back({Operation::FORWARD,3});
+			for(int i = 0;i <= 9;i++){
+				runSequence.push_back({Operation::FORWARD,2});
+				runSequence.push_back({Operation::TURN_RIGHT90,1});
+			}
 			runSequence.push_back({Operation::STOP,1});
 			while(1){
 				dango.action(param_value,runSequence,parameters);
@@ -291,13 +293,15 @@ int main(){
 				}
 				if(ENCODER_start == ON){
 					float target_speed = 0.0,target_rad = 0.0;
-					int16_t target_left_value = 3576,target_right_value = 3332;
-					float speed_gain = 0.3,rad_gain = 0.04;
+					int16_t target_left_value = 2760,target_right_value = 2570;
+					//2835 2971
+					//3185 3145
+					float speed_gain = 0.3,rad_gain = 0.02;
 					read_encoder();
-					if(led_3 >= 3200 || led_4 >= 3000)
+					if(led_3 >= led_3_threshold || led_4 >= led_4_threshold){
 						target_rad = rad_gain * (led_3 - target_left_value - (led_4 - target_right_value));
-					if(led_3 >= 3200 || led_4 >= 3000)
 						target_speed = speed_gain * (led_3 - target_left_value + (led_4 - target_right_value));
+					}
 					speed_controller(-target_speed,target_rad);
 					ENCODER_start = OFF;
 					reset_led();
