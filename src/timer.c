@@ -1,8 +1,9 @@
 #include "mine.h"
 NVIC_InitTypeDef NVIC_InitStructure;
 TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-uint32_t timer_counter=0;
-static uint16_t buzzer_counter=0;
+int8_t timer_clock = OFF;
+uint32_t timer_counter = 0;
+static uint16_t buzzer_counter = 0;
 int32_t len_counter = 0;
 void TIMER_setting(){
  	NVIC_InitStructure.NVIC_IRQChannel=TIM7_IRQn;
@@ -88,7 +89,8 @@ void TIM5_IRQHandler(){ //100khz
 		}
 		//if(timer_counter%100000==0)
 		//	GPIO_ToggleBits(GPIOB,GPIO_Pin_11);
-		SENSOR_start=ON;
+		SENSOR_start = ON;
+		if(timer_counter % 100000 == 0)	timer_clock = ON;
 	}
 }
 void TIM2_IRQHandler(){
