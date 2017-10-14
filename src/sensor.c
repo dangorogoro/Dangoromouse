@@ -3,7 +3,8 @@ volatile uint8_t SENSOR_start = 0;
 volatile uint8_t SENSOR_reset = 0;
 
 uint16_t led_1 = 0,led_2 = 0,led_3 = 0,led_4 = 0;
-uint16_t sensor_sub = 0;
+uint16_t led_1_threshold = 2380,led_2_threshold = 2320,led_3_threshold= 2230,led_4_threshold = 2580;
+int16_t sensor_sub = 0;
 void led_flash_setting(){
 	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;
 	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Disable;
@@ -70,18 +71,18 @@ uint8_t read_wall(uint8_t RobotDirection){
 	DirValue = (DirValue & 0x55) + (DirValue >> 1 & 0x55);
 	DirValue = (DirValue & 0x33) + (DirValue >> 2 & 0x33);
 	DirValue = (DirValue & 0x0f) + (DirValue >> 4 & 0x0f); //countbits MSB
-	if(led_1 >= 3120){ //2110
+	if(led_1 >= led_1_threshold){ //2110
 		GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
 		WallData |= (0x08 << DirValue) % 0x0f;
 	}
 	else	GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_RESET);
 	//if(led_2 >= 2650 &&  led_3 >= 2900 ){ //2320
-	if(led_3 >= 3050 &&  led_4 >= 2650 ){ //2320
+	if(led_3 >= led_3_threshold && led_4 >= led_4_threshold ){ //2320
 		GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_SET);
 		WallData |= (0x01 << DirValue) % 0x0f;
 	}
 	else	GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_RESET);
-	if(led_2 >= 2970){	//2110
+	if(led_2 >= led_2_threshold){	//2110
 		GPIO_WriteBit(GPIOB,GPIO_Pin_15,Bit_SET);
 		WallData |= (0x02 << DirValue) % 0x0f;
 	}
@@ -111,7 +112,7 @@ void mouse_start(){
 	uint8_t flag = 1;
 	while(flag){
 		if(SENSOR_reset == ON){
-			if(led_1 >= 3200 && led_2 >= 3300){
+			if(led_1 >= 3000 && led_2 >= 3000){
 				flag = 0;
 				GPIO_WriteBit(GPIOB,GPIO_Pin_10,Bit_SET);
 			}
