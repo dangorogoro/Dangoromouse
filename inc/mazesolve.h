@@ -12,6 +12,7 @@ class Robot{
 		float y_point;
 		bool sideWall;
 	public:
+		//Direction RobotRunVec = NORTH;
 		Matrix2i RobotRunVec;
 		Matrix2i getRIGHT(){Matrix2i po; po << 0, -1,1,0; return po;}
 		Matrix2i getFORWARD(){Matrix2i po; po << 1,0,0,1; return po;}
