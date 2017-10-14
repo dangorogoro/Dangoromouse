@@ -1,12 +1,11 @@
 #define MY_MINE_H
 #include "stm32f4xx.h"
 #include "stm32f4xx_conf.h"
-#include "stdint.h"
 #include "stdio.h"
 #include "stdlib.h"
 #include "stdarg.h"
-#include "float.h"
-#include "math.h"
+//#include "float.h"
+//#include "math.h"
 #define PI 3.14159
 
 #ifdef __cplusplus
