@@ -10,7 +10,10 @@ class Robot{
 		int8_t RobotDegreeDir;
 		float x_point;
 		float y_point;
+		bool leftWall;
+		bool rightWall;
 		bool sideWall;
+		bool frontWall;
 	public:
 		//Direction RobotRunVec = NORTH;
 		Matrix2i RobotRunVec;
@@ -30,6 +33,7 @@ class Robot{
 		void goBack(int8_t Nextdir);
 		void goStraight();
 		void goStraight(uint16_t length);
+		void slalomStraight(uint16_t length);
 		void goRight();
 		void robotMove(Direction Nextdir);
 		void robotShortMove(OperationList root,Param param,size_t *i);
@@ -47,7 +51,7 @@ class Robot{
 		void setRobotDegreeDir(int8_t dir){RobotDegreeDir	 = dir;}
 		int8_t getRobotDegreeDir()const{return RobotDegreeDir;}
 		void setRobotVecFromRun(uint8_t Direction,uint8_t n);
-		void setSideWall();
+		void setWallStatus();
 		void action(uint8_t value,OperationList runSequence,ParamList param);
 };
 #endif

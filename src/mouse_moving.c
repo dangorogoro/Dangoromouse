@@ -143,7 +143,23 @@ void turn_back(int16_t target_direction){
 	bool dir;
 	if(led_1 >= 3120) dir = 1;
 	else if(led_2 >= 2970) dir = 0; */
-	while(degree >= (target_direction - 2) * 90 + 10){
+	while(degree >= (target_direction - 2) * 90 + 5){
+		if(ENCODER_start == ON){
+			read_encoder();
+			speed_controller(0,-8.00);
+			ENCODER_start = OFF;
+		}
+	}
+}
+void turn_side(int16_t target_direction,uint8_t wall_dir){
+	int8_t dir = (wall_dir == 0) ? -1 : 1;
+	set_speed(0,0);
+	Delay_ms(300);
+	/*sensor_works();
+	bool dir;
+	if(led_1 >= 3120) dir = 1;
+	else if(led_2 >= 2970) dir = 0; */
+	while(degree >= (target_direction - dir) * 90 + 5){
 		if(ENCODER_start == ON){
 			read_encoder();
 			speed_controller(0,-8.00);
@@ -165,8 +181,8 @@ void go_left(int16_t target_degree){
 		}
 	}*/
 	float start_degree = degree;
-	float last_rad = search_velocity / 50.0; //50 30 15
-	float rad_size = last_rad / 30.0;
+	float last_rad = search_velocity / 40.0; //50 30 15
+	float rad_size = last_rad / 20.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
@@ -189,8 +205,8 @@ void go_left(int16_t target_degree){
 }
 void go_right(int16_t target_degree){
 	float start_degree = degree;
-	float last_rad = search_velocity / 50.0;
-	float rad_size = last_rad / 30.0;
+	float last_rad = search_velocity / 40.0;
+	float rad_size = last_rad / 20.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
@@ -222,7 +238,7 @@ void start_wall(int16_t po){
 	set_speed(0,0);
 	reset_e();
 	len_counter = 0;
-	while(len_counter > len_measure(-170)){
+	while(len_counter > len_measure(-120)){
 		if(ENCODER_start == ON){
 			read_encoder();
 			speed_controller(-400,0);

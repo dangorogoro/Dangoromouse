@@ -10,13 +10,13 @@ void Robot::addRobotVec(IndexVec vec){
 	RobotVec += vec;
 }
 void Robot::addRobotDirToVec(Direction dir){
-	if(dir==NORTH)
+	if(dir == NORTH)
 		addRobotVec(IndexVec::vecNorth);
-	else if(dir==WEST)
+	else if(dir == WEST)
 		addRobotVec(IndexVec::vecWest);
-	else if(dir==SOUTH)
+	else if(dir == SOUTH)
 		addRobotVec(IndexVec::vecSouth);
-	else if(dir==EAST)
+	else if(dir == EAST)
 		addRobotVec(IndexVec::vecEast);
 }
 
@@ -80,7 +80,7 @@ void Robot::goStraight(){
 	while(len_counter <= len_measure(ONE_BLOCK)){
 		float wall_value = 0.0f;
 		if(SENSOR_reset == ON){
-			if(sideWall == true && led_1 >= led_1_threshold && led_2 >= led_2_threshold) wall_value = (led_2 - led_1 - sensor_sub) / 25.0;
+			if(sideWall == true && led_1 >= led_1_threshold && led_2 >= led_2_threshold) wall_value = (led_2 - led_1 - sensor_sub) / 100.0;
 			reset_led();
 			SENSOR_reset = OFF;
 		}
@@ -93,7 +93,7 @@ void Robot::goStraight(uint16_t length){
 	while(len_counter <= len_measure(length)){
 		float wall_value = 0.0f;
 		if(SENSOR_reset == ON){
-			if(sideWall == true && led_1 >= led_1_threshold && led_2 >= led_2_threshold) wall_value = (led_2 - led_1 - sensor_sub) / 25.0;
+			if(sideWall == true && led_1 >= led_1_threshold && led_2 >= led_2_threshold) wall_value = (led_2 - led_1 - sensor_sub) / 100.0;
 			reset_led();
 			SENSOR_reset = OFF;
 		}
@@ -102,26 +102,52 @@ void Robot::goStraight(uint16_t length){
 		go_straight(target_theta);
 	}
 }
+void Robot::slalomStraight(uint16_t length){
+	if(frontWall == true){
+		bool frontThreshold = false;
+		while(frontThreshold == false){
+			if(SENSOR_reset == ON){
+				if(led_3 >= 2320 && led_4 >= 2640) frontThreshold = true;
+				reset_led();
+				SENSOR_reset = OFF;
+			}
+			if(SENSOR_start == ON)	led_get();
+			float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI;
+			go_straight(target_theta);
+		}
+	}
+	else	goStraight(length);
+}
 void Robot::goRight(){
-	uint16_t offset = 15;
-	goStraight(offset);
+
+	uint16_t offset = 20;
+	len_counter = 0;
+	slalomStraight(offset);
 	len_counter = 0;
 	addRobotDegreeDir(-1);
 	go_right(getRobotDegreeDir() * 90 );
 	len_counter = 0;
-	goStraight(offset);
-	//goStraight(ONE_BLOCK / 2 - turn_R);
+	goStraight(offset + 20);
+
 }
 void Robot::goLeft(){
-	uint16_t offset = 15;
-	goStraight(offset);
+	uint16_t offset = 20;
+	len_counter = 0;
+	slalomStraight(offset);
 	len_counter = 0;
 	addRobotDegreeDir(1);
 	go_left(getRobotDegreeDir() * 90);
 	len_counter = 0;
-	goStraight(offset);
+	goStraight(offset + 20);
 }
 void Robot::goBack(int8_t Nextdir){
+	goStraight(80);
+	bool wall_dir;
+	if(leftWall == true) wall_dir = false;
+	else if(rightWall == true) wall_dir = true;
+	goStraight(50);
+	////////////////////////////////////////write here!!!!!!!!!!!!!!!!!!!!!!!!
+	set_speed(0,0);
 	turn_back(getRobotDegreeDir());
 	int8_t value;
 	if(Nextdir == NORTH)	value = 0;
@@ -131,67 +157,73 @@ void Robot::goBack(int8_t Nextdir){
 	setRobotDegreeDir(value);
 	start_wall(getRobotDegreeDir());
 }
-void Robot::setSideWall(){
+void Robot::setWallStatus(){
+	if(led_1 >= led_1_threshold)	leftWall = true;
+	else leftWall = false;
+	if(led_2 >= led_2_threshold)	rightWall = true;
+	else rightWall = false;
 	if(led_1 >= led_1_threshold && led_2 >= led_2_threshold)	sideWall = true;
 	else sideWall = false;
+	if(led_3 >= led_3_threshold && led_4 >= led_4_threshold)	frontWall = true;
+	else frontWall = false;
 }
 void Robot::robotMove(Direction Nextdir){
-	setSideWall();
+	setWallStatus();
 	len_counter = 0;
-	Direction Nowdir =  Robot::getRobotDir();
-	if(Nowdir==NORTH){
-		if(Nextdir==NORTH){
+	Direction Nowdir = Robot::getRobotDir();
+	if(Nowdir == NORTH){
+		if(Nextdir == NORTH){
 			goStraight();
 		}
-		if(Nextdir==EAST){
+		if(Nextdir == EAST){
 			goRight();
 		}
-		if(Nextdir==WEST){
+		if(Nextdir == WEST){
 			goLeft();
 		}
-		if(Nextdir==SOUTH){
+		if(Nextdir == SOUTH){
 			goBack(Nextdir);
 		}
 	}
-	if(Nowdir==WEST){
-		if(Nextdir==NORTH){
+	if(Nowdir == WEST){
+		if(Nextdir == NORTH){
 			goRight();
 		}
-		if(Nextdir==EAST){
+		if(Nextdir == EAST){
 			goBack(Nextdir);
 		}
-		if(Nextdir==WEST){
+		if(Nextdir == WEST){
 			goStraight();
 		}
-		if(Nextdir==SOUTH){
+		if(Nextdir == SOUTH){
 			goLeft();
 		}
 	}
-	if(Nowdir==SOUTH){
-		if(Nextdir==NORTH){
+	if(Nowdir == SOUTH){
+		if(Nextdir == NORTH){
 			goBack(Nextdir);
 		}
-		if(Nextdir==EAST){
+		if(Nextdir == EAST){
 			goLeft();
 		}
-		if(Nextdir==WEST){
+		if(Nextdir == WEST){
 			goRight();
 		}
-		if(Nextdir==SOUTH){
+		if(Nextdir == SOUTH){
 			goStraight();
 		}
 	}
-	if(Nowdir==EAST){
-		if(Nextdir==NORTH){
+	if(Nowdir == EAST){
+		if(Nextdir == NORTH){
 			goLeft();
 		}
-		if(Nextdir==EAST){
+		if(Nextdir == EAST){
 			goStraight();
 		}
-		if(Nextdir==WEST){
+		if(Nextdir == WEST){
 			goBack(Nextdir);
 		}
-		if(Nextdir==SOUTH){
+		if(Nextdir == SOUTH){
 			goRight();
 		}
 	}
