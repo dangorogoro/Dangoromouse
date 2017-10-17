@@ -90,7 +90,7 @@ void TIM5_IRQHandler(){ //100khz
 		//if(timer_counter%100000==0)
 		//	GPIO_ToggleBits(GPIOB,GPIO_Pin_11);
 		SENSOR_start = ON;
-		if(timer_counter % 100000 == 0)	timer_clock = ON;
+		if(timer_counter % 100000 == 0)	timer_clock = ON; // 1sec
 	}
 }
 void TIM2_IRQHandler(){
