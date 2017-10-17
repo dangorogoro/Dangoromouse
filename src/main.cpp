@@ -77,14 +77,14 @@ int main(){
 	*/
 	//////
 	while(button_return == 0){
+		GPIO_WriteBit(GPIOB,mode_select<<10,Bit_SET);
+		GPIO_WriteBit(GPIOB,(15 - mode_select)<<10,Bit_RESET);
 		if(button_a == 1){
-			GPIO_WriteBit(GPIOB,GPIO_Pin_15,Bit_SET);
 			mode_select += 1;
 			pipi(mode_select);
 			while(button_a == 1);
 			Delay_ms(10);
 		}
-		GPIO_WriteBit(GPIOB,GPIO_Pin_15,Bit_RESET);
 	}
 	mouse_motor_setting();
 	ADC_setting();
@@ -105,9 +105,9 @@ int main(){
 	Delay_ms(1000); //veryvery important
 
 	Maze maze,maze_backup;
+	Robot dango;
 	Agent agent(maze);
 	Agent::State prev_State = Agent::IDLE;
-	Robot dango;
 	ParamList parameters;
 	parameters.setting();
 
@@ -173,10 +173,12 @@ int main(){
 				reset_led();
 				sensor_works();
 				Direction WallData = read_wall(dango.getRobotDir());
+				TIM_Cmd(TIM5,DISABLE);
 				if((maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y) & Direction(0b11110000)) != (Direction)0xf0)
 					agent.update(dango.getRobotVec(),WallData);
 				else
 					agent.update(dango.getRobotVec(),maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y));
+				TIM_Cmd(TIM5,ENABLE);
 				if(agent.getState() == Agent::FINISHED){
 					dango.setRobotVec(NORTH);
 					set_speed(0,0);
@@ -194,6 +196,7 @@ int main(){
 					}
 					break;
 				}
+
 				if(prev_State == Agent::SEARCHING_NOT_GOAL && 
 						(agent.getState() == Agent::SEARCHING_REACHED_GOAL)){
 					maze_backup = maze;
@@ -237,8 +240,7 @@ int main(){
 			}
 			*/
 			Delay_ms(100);
-			IndexVec po(0,0);
-			dango.setRobotVec(po);
+			dango.setRobotVec(IndexVec());
 			agent.caclRunSequence(true);
 			Robot last_dango = dango;
 			OperationList runSequence = agent.getRunSequence();
@@ -258,6 +260,7 @@ int main(){
 			}
 		}
 		else if(mode_select % 10 == 4){
+			Robot dango;
 			Robot last_dango = dango;
 			pipi(3);
 			pipi(4);
@@ -265,10 +268,10 @@ int main(){
 			pipi(6);
 			Delay_ms(1000);
 			OperationList runSequence; 
-			runSequence.push_back({Operation::FORWARD,3});
+			runSequence.push_back({Operation::FORWARD,15});
 			runSequence.push_back({Operation::TURN_RIGHT90,1});
 			for(int i = 0;i <= 9;i++){
-				runSequence.push_back({Operation::FORWARD,2});
+				runSequence.push_back({Operation::FORWARD,14});
 				runSequence.push_back({Operation::TURN_RIGHT90,1});
 			}
 			runSequence.push_back({Operation::STOP,1});
@@ -287,18 +290,14 @@ int main(){
 		else if(mode_select % 10 == 5){
 			led_flash();
 			while(1){
-				if(SENSOR_reset == ON){
-					read_wall(0x00);
-					SENSOR_reset = OFF;
-				}
+				sensor_works();
 				if(ENCODER_start == ON){
 					float target_speed = 0.0,target_rad = 0.0;
-					int16_t target_left_value = 2760,target_right_value = 2570;
-					//2835 2971
-					//3185 3145
-					float speed_gain = 0.3,rad_gain = 0.02;
+					int16_t target_left_value = 2603,target_right_value = 2800;
+					// target_left_value = 2603,target_right_value = 2800; center
+					float speed_gain = 0.3,rad_gain = 0.005;
 					read_encoder();
-					if(led_3 >= led_3_threshold || led_4 >= led_4_threshold){
+					if(led_3 >= led_3_threshold && led_4 >= led_4_threshold){
 						target_rad = rad_gain * (led_3 - target_left_value - (led_4 - target_right_value));
 						target_speed = speed_gain * (led_3 - target_left_value + (led_4 - target_right_value));
 					}
@@ -306,9 +305,37 @@ int main(){
 					ENCODER_start = OFF;
 					reset_led();
 				}
-				if(SENSOR_start == ON)	led_get();
 			}
 		}
+		else if(mode_select % 10 == 6){
+			Robot dango;
+			for(int i = 0;i <= 10;i++){
+				IndexVec po(0,i);
+				agent.update(po,0b11110000);
+
+				/*agent.update(IndexVec(1,2),0b1010);
+					agent.update(IndexVec(1,3),0b0010);
+					agent.update(IndexVec(1,4),0b1001);
+					agent.update(IndexVec(2,4),0b0011);
+					agent.update(IndexVec(2,3),0b1010);
+					agent.update(IndexVec(2,2),0b1010);
+					agent.update(IndexVec(2,1),0b1010);
+					agent.update(IndexVec(2,0),0b0110);*/
+				USART_printf("maze-data %d\r\n",maze.getWall(0,i));
+			}
+			agent.caclRunSequence(true);
+			OperationList runSequence = agent.getRunSequence();
+			runSequence.push_back({Operation::FORWARD,1});
+			runSequence.push_back({Operation::STOP,1});
+			dango.action(param_value,runSequence,parameters);
+			GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
+					GPIO_WriteBit(GPIOB,GPIO_Pin_14,Bit_SET);
+
+			while(1);
+			
+		}
+
+
 	}
 	return 0;
 }
