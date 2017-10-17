@@ -277,8 +277,8 @@ uint8_t encoder_paramset(){
 	uint8_t param_value = 0;
 	while(button_return == 0){
 		param_value = set_param();
-		GPIO_WriteBit(GPIOB,param_value<<11,Bit_SET);
-		GPIO_WriteBit(GPIOB,(15-param_value)<<11,Bit_RESET);
+		GPIO_WriteBit(GPIOB,param_value<<10,Bit_SET);
+		GPIO_WriteBit(GPIOB,(15-param_value)<<10,Bit_RESET);
 	}
 	GPIO_WriteBit(GPIOB,0x1f<11,Bit_RESET);
 	return param_value;
