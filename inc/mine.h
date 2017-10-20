@@ -1,3 +1,4 @@
+#ifndef MY_MINE_H
 #define MY_MINE_H
 #include "stm32f4xx.h"
 #include "stm32f4xx_conf.h"
@@ -9,16 +10,15 @@
 #define PI 3.14159
 
 #ifdef __cplusplus
+#include <Eigen/Core>
+using namespace Eigen;
 #include "Maze.h"
 #include "Agent.h"
 #include "mazeData.h"
 #include <vector>
-
 #include "mazesolve.h"
 #include "param.h"
 #include "plot.h"
-#include <Eigen/Core>
-using namespace Eigen;
 extern "C" {
 #endif /* __cplusplus */
 #include "config.h"
@@ -33,3 +33,4 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+#endif
