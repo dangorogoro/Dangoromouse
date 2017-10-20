@@ -120,6 +120,7 @@ void GPIO_setting(){
 	GPIO_StructInit(&GPIO_InitStructure);
 
 	//LED flash
+	///////////////////////////////////////////////////////////////
 	GPIO_PinAFConfig(GPIOA,GPIO_PinSource2,GPIO_AF_TIM9);
 	GPIO_PinAFConfig(GPIOA,GPIO_PinSource3,GPIO_AF_TIM9);
 	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_2 | GPIO_Pin_3;
@@ -128,6 +129,7 @@ void GPIO_setting(){
 	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_AF;
 	GPIO_Init(GPIOA,&GPIO_InitStructure);
 	GPIO_StructInit(&GPIO_InitStructure);
+	///////////////////////////////////////////////////////////////
 	
 	//LED get
 	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;
@@ -138,7 +140,7 @@ void GPIO_setting(){
 //////////////
 /*
 	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_2;
-	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_2MHz;
+	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_AF;
@@ -146,8 +148,8 @@ void GPIO_setting(){
 	GPIO_PinAFConfig(GPIOA,GPIO_PinSource2,GPIO_AF_USART2);
 	GPIO_StructInit(&GPIO_InitStructure);
 
-	*/
-//////////////
+*/
+/////////////
 }
 void GPIO_setting_old(){
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
