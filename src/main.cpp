@@ -50,18 +50,38 @@ int main(){
 	SystemInit();
 	TIMER_setting();
 	SysTickTimer_Config();
-	//////////////////
-  
-	/*
-	USART_setting();
-	SPI_setting();
-	GPIO_WriteBit(GPIOB,GPIO_Pin_10,Bit_SET);
-	GPIO_WriteBit(GPIOB,GPIO_Pin_11,Bit_SET);
-	GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
-	GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_SET);
-	GPIO_WriteBit(GPIOB,GPIO_Pin_14,Bit_SET);
-	GPIO_WriteBit(GPIOB,GPIO_Pin_15,Bit_SET);
 
+	//////////////////
+	/*
+	
+  
+	
+	USART_setting();
+	agent.update(IndexVec(0,0),0b1110);
+	agent.update(IndexVec(0,1),0b1010);
+	agent.update(IndexVec(0,2),0b1010);
+	agent.update(IndexVec(0,3),0b1010);
+	agent.update(IndexVec(0,4),0b1010);
+	agent.update(IndexVec(0,5),0b1010);
+	agent.update(IndexVec(0,6),0b1010);
+	agent.update(IndexVec(0,7),0b1010);
+	agent.update(IndexVec(0,8),0b1010);
+	agent.update(IndexVec(0,7),0b1010);
+	agent.update(IndexVec(0,6),0b1010);
+	agent.update(IndexVec(0,5),0b1010);
+	agent.update(IndexVec(0,4),0b1010);
+	agent.update(IndexVec(0,3),0b1010);
+	agent.update(IndexVec(0,2),0b1010);
+	agent.update(IndexVec(0,1),0b1010);
+	agent.update(IndexVec(0,0),0b1110);
+	agent.caclRunSequence(true);
+
+	OperationList runSequence = agent.getRunSequence();
+	runSequence.print();
+	while(1){
+		Delay_ms(100);
+	}
+	SPI_setting();
 	WriteReg(0x6B,0x80);
 	Delay_ms(100);
 	USART_printf("WHOAM!!---%d\r\n",ReadReg(117));
@@ -75,6 +95,7 @@ int main(){
 		Delay_ms(10);
 	}
 	*/
+	
 	//////
 	while(button_return == 0){
 		GPIO_WriteBit(GPIOB,mode_select<<10,Bit_SET);
@@ -104,10 +125,6 @@ int main(){
 	TIM8->CNT = 0;
 	Delay_ms(1000); //veryvery important
 
-	Maze maze,maze_backup;
-	Robot dango;
-	Agent agent(maze);
-	Agent::State prev_State = Agent::IDLE;
 	ParamList parameters;
 	parameters.setting();
 
@@ -115,6 +132,10 @@ int main(){
 	GYRO_offset();
 	Delay_ms(100);
 
+	Maze maze,maze_backup;
+	Robot dango;
+	Agent agent(maze);
+	Agent::State prev_State = Agent::IDLE;
 
 	while(1){
 		if(mode_select % 10 == 0){
@@ -166,19 +187,17 @@ int main(){
 		}
 		else if(mode_select % 10 == 3){
 			led_flash();
-			Delay_ms(400);
+			Delay_ms(1000);
 			dango.startOffSet(&agent);
 			prev_State = agent.getState();
 			while(1){
 				reset_led();
 				sensor_works();
 				Direction WallData = read_wall(dango.getRobotDir());
-				TIM_Cmd(TIM5,DISABLE);
 				if((maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y) & Direction(0b11110000)) != (Direction)0xf0)
 					agent.update(dango.getRobotVec(),WallData);
 				else
 					agent.update(dango.getRobotVec(),maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y));
-				TIM_Cmd(TIM5,ENABLE);
 				if(agent.getState() == Agent::FINISHED){
 					dango.setRobotVec(NORTH);
 					set_speed(0,0);
@@ -204,6 +223,11 @@ int main(){
 				}
 				prev_State = agent.getState();
 				Direction Nextdir = agent.getNextDirection();
+				if(Nextdir.byte == 0){
+					set_speed(0,0);
+					Delay_ms(1000);
+					break;
+				}
 				len_counter = 0;
 				dango.robotMove(Nextdir);
 				dango.setRobotDir(Nextdir);
@@ -268,8 +292,10 @@ int main(){
 			pipi(6);
 			Delay_ms(1000);
 			OperationList runSequence; 
+			/*
 			runSequence.push_back({Operation::FORWARD,15});
 			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			*/
 			for(int i = 0;i <= 9;i++){
 				runSequence.push_back({Operation::FORWARD,14});
 				runSequence.push_back({Operation::TURN_RIGHT90,1});
