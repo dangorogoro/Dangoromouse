@@ -20,10 +20,10 @@ uint8_t set_param();
 void go_straight(float target_theta);
 void go_left(int16_t degree);
 void go_right(int16_t degree);
-void go_back();
+void go_back(float po);
 void start_wall(int16_t po);
 void turn_back(int16_t po);
-void turn_side(int16_t target_direction,uint8_t wall_dir);
+void turn_side(int16_t target_direction,int8_t wall_dir);
 int32_t len_measure(int32_t length);
 void reset_e();
 #endif

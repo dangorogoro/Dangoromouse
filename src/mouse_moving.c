@@ -1,6 +1,6 @@
 #include "mine.h"
-int16_t left_speed=0,right_speed=0;
-volatile uint8_t ENCODER_start=0;
+int16_t left_speed = 0,right_speed = 0;
+volatile uint8_t ENCODER_start = 0;
 uint16_t search_velocity = 400;
 void mouse_motor_setting(){
 	//motor left OC1 OC2
@@ -139,10 +139,6 @@ void go_straight(float po){
 void turn_back(int16_t target_direction){
 	set_speed(0,0);
 	Delay_ms(300);
-	/*sensor_works();
-	bool dir;
-	if(led_1 >= 3120) dir = 1;
-	else if(led_2 >= 2970) dir = 0; */
 	while(degree >= (target_direction - 2) * 90 + 5){
 		if(ENCODER_start == ON){
 			read_encoder();
@@ -151,28 +147,37 @@ void turn_back(int16_t target_direction){
 		}
 	}
 }
-void turn_side(int16_t target_direction,uint8_t wall_dir){
-	int8_t dir = (wall_dir == 0) ? -1 : 1;
+void turn_side(int16_t target_direction,int8_t wall_dir){
 	set_speed(0,0);
 	Delay_ms(300);
-	/*sensor_works();
-	bool dir;
-	if(led_1 >= 3120) dir = 1;
-	else if(led_2 >= 2970) dir = 0; */
-	while(degree >= (target_direction - dir) * 90 + 5){
-		if(ENCODER_start == ON){
-			read_encoder();
-			speed_controller(0,-8.00);
-			ENCODER_start = OFF;
+	if(wall_dir == 1){
+		while(degree <= (target_direction + wall_dir) * 90 + 5){
+			if(ENCODER_start == ON){
+				read_encoder();
+				speed_controller(0,8.00);
+				ENCODER_start = OFF;
+			}
 		}
 	}
+	else{
+		while(degree >= (target_direction + wall_dir) * 90 + 5){
+			if(ENCODER_start == ON){
+				read_encoder();
+				speed_controller(0,-8.00);
+				ENCODER_start = OFF;
+			}
+		}
+
+	}
+	set_speed(0,0);
+	Delay_ms(300);
 }
 void go_left(int16_t target_degree){
 	/*
-	float last_rad = search_velocity / 25.0;
-	float rad_size = last_rad / 500.0;
-	float target_rad = 0;
-	while(degree <= target_degree){
+		 float last_rad = search_velocity / 25.0;
+		 float rad_size = last_rad / 500.0;
+		 float target_rad = 0;
+		 while(degree <= target_degree){
 		if(ENCODER_start == ON){
 			read_encoder();
 			target_rad = (target_rad >= last_rad) ? last_rad : target_rad + rad_size;
@@ -227,11 +232,11 @@ void go_right(int16_t target_degree){
 		}
 	}
 }
-void go_back(){
+void go_back(float po){
 	if(ENCODER_start == ON){
 		read_encoder();
-		speed_controller(-300,0);
-		ENCODER_start=OFF;
+		speed_controller(-search_velocity,search_velocity / 15.0 * po);
+		ENCODER_start = OFF;
 	}
 }
 void start_wall(int16_t po){
