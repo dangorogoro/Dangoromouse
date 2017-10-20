@@ -54,10 +54,11 @@
 #include <sys/times.h>
 
 
+#include "mine.h"
 /* Variables */
 //#undef errno
 extern int errno;
-extern int __io_putchar(int ch) __attribute__((weak));
+//extern int __io_putchar(int ch) __attribute__((weak));
 extern int __io_getchar(void) __attribute__((weak));
 
 register char * stack_ptr asm("sp");
@@ -101,14 +102,13 @@ int _read (int file, char *ptr, int len)
 return len;
 }
 
-int _write(int file, char *ptr, int len)
-{
+int _write(int file, char *ptr, int len){
+	
 	int DataIdx;
-
-	for (DataIdx = 0; DataIdx < len; DataIdx++)
-	{
-		__io_putchar(*ptr++);
+	for (DataIdx = 0; DataIdx < len; DataIdx++){
+		USART_putc(USART3,ptr[DataIdx]);
 	}
+
 	return len;
 }
 
