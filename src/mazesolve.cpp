@@ -48,9 +48,13 @@ float Robot::centerDistance(){
 	return distance;
 }
 void Robot::startOffSet(Agent *agent){
-	sensor_works();
-	sensor_sub = led_2 - led_1;
-	Direction WallData = read_wall(NORTH);
+	sensor_sub = 0;
+	for(int i=0;i<10;i++){
+		reset_led();
+		sensor_works();
+		sensor_sub += led_2 - led_1;
+	}
+		sensor_sub /= 10;
 	agent->update(Robot::getRobotVec(),0b11111110);
 	while(len_counter <= len_measure(150)){
 		//go_straight(0.01 * degree);
@@ -80,7 +84,7 @@ void Robot::goStraight(){
 	while(len_counter <= len_measure(ONE_BLOCK)){
 		float wall_value = 0.0f;
 		if(SENSOR_reset == ON){
-			if(sideWall == true && led_1 >= led_1_threshold && led_2 >= led_2_threshold) wall_value = (led_2 - led_1 - sensor_sub) / 100.0;
+			if(sideWall == true && led_1 >= led_1_threshold && led_2 >= led_2_threshold) wall_value = (led_2 - led_1 - sensor_sub) / 20.0;
 			reset_led();
 			SENSOR_reset = OFF;
 		}
@@ -93,7 +97,7 @@ void Robot::goStraight(uint16_t length){
 	while(len_counter <= len_measure(length)){
 		float wall_value = 0.0f;
 		if(SENSOR_reset == ON){
-			if(sideWall == true && led_1 >= led_1_threshold && led_2 >= led_2_threshold) wall_value = (led_2 - led_1 - sensor_sub) / 100.0;
+			if(sideWall == true && led_1 >= led_1_threshold && led_2 >= led_2_threshold) wall_value = (led_2 - led_1 - sensor_sub) / 20.0;
 			reset_led();
 			SENSOR_reset = OFF;
 		}
@@ -141,14 +145,39 @@ void Robot::goLeft(){
 	goStraight(offset + 20);
 }
 void Robot::goBack(int8_t Nextdir){
-	goStraight(80);
-	bool wall_dir;
-	if(leftWall == true) wall_dir = false;
-	else if(rightWall == true) wall_dir = true;
-	goStraight(50);
+	goStraight(20);
+	int8_t wall_dir = 0; // 1 right -1 left
+	if(leftWall == true) wall_dir = -1;
+	else if(rightWall == true) wall_dir = 1;
 	////////////////////////////////////////write here!!!!!!!!!!!!!!!!!!!!!!!!
+	len_counter = 0;
 	set_speed(0,0);
-	turn_back(getRobotDegreeDir());
+	Delay_ms(300);
+	if(wall_dir != 0){
+		turn_side(getRobotDegreeDir(),wall_dir);
+		addRobotDegreeDir(wall_dir);
+		while(len_counter > len_measure(-70)){
+			const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
+			go_back(-target_theta);
+		}
+		reset_e();
+		len_counter = 0;
+		set_speed(0,0);
+		Delay_ms(100);
+		while(len_counter < len_measure(30)){
+			const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
+			if(ENCODER_start == ON){
+				read_encoder();
+				speed_controller(search_velocity,-30.0 * target_theta);
+				ENCODER_start = OFF;
+			}
+		}
+		set_speed(0,0);
+		Delay_ms(100);
+		turn_side(getRobotDegreeDir(),wall_dir);
+		addRobotDegreeDir(wall_dir);
+	}
+	else turn_back(getRobotDegreeDir());
 	int8_t value;
 	if(Nextdir == NORTH)	value = 0;
 	if(Nextdir == WEST)	value = 1;
