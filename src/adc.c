@@ -38,7 +38,7 @@ void battery_check(){
 	ADC_RegularChannelConfig(ADC1,ADC_Channel_14,1,ADC_SampleTime_56Cycles);//
 	ADC_SoftwareStartConv(ADC1);
 	while(ADC_GetFlagStatus(ADC1,ADC_FLAG_EOC)==RESET);
-	const uint16_t value=ADC_GetConversionValue(ADC1);
+	const uint16_t value = ADC_GetConversionValue(ADC1);
 	USART_printf("BATTERY%d\n\r",value);
 	if(value>=4096){
 		ADC_setting();
