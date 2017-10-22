@@ -13,8 +13,7 @@ SIZE := arm-none-eabi-size
 
 INCLUDE := \
 	-Iinc \
-	-Ilib/CMSIS/Device/Include \
-	-Ilib/CMSIS/Include \
+	-Ilib/CMSIS/inc \
 	-Ilib/STM32F4xx_StdPeriph_Driver/inc \
 	-IMazeSolver2015 \
 	-I/usr/include/eigen3
@@ -53,7 +52,7 @@ CXXFLAGS := $(CFLAGS) \
 
 ASFLAGS := -x assembler-with-cpp -c $(CFLAGS)
 
-LDFLAGS := $(TARGET_ARCH) -T LinkerScript.ld -Wl,--gc-sections
+LDFLAGS := $(TARGET_ARCH) -L ldscripts -T libs.ld -T mem.ld -T sections.ld -Wl,--gc-sections
 LDLIBS := -lm -L lib/CMSIS -larm_cortexM4lf_math
 
 
@@ -61,7 +60,7 @@ LDLIBS := -lm -L lib/CMSIS -larm_cortexM4lf_math
 # Dependencies
 #######################################
 C_SRCS := $(wildcard src/*.c) \
-	$(wildcard lib/CMSIS/Device/Source/*.c) \
+	$(wildcard lib/CMSIS/device/*.c) \
 	$(wildcard lib/STM32F4xx_StdPeriph_Driver/src/*.c)
 #	$(wildcard lib/FreeRTOS/*.c) \
 #	$(wildcard lib/FreeRTOS/portable/*.c) \
@@ -72,10 +71,7 @@ C_SRCS := $(filter-out %/stm32f4xx_fmc.c, $(C_SRCS))
 CPP_SRCS := $(wildcard src/*.cpp) \
 	$(wildcard MazeSolver2015/*.cpp)
 
-ASM_SRCS := $(wildcard src/*.s) \
-	lib/CMSIS/Device/Source/startup_stm32f405xx.s
-
-OBJS := $(patsubst %,$(OUTPUT_DIR)/%, $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o) $(ASM_SRCS:.s=.o))
+OBJS := $(patsubst %,$(OUTPUT_DIR)/%, $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o))
 DEPS := $(OBJS:.o=.d)
 
 
