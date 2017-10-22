@@ -54,7 +54,7 @@ CXXFLAGS := $(CFLAGS) \
 ASFLAGS := -x assembler-with-cpp -c $(CFLAGS)
 
 LDFLAGS := $(TARGET_ARCH) -T LinkerScript.ld -Wl,--gc-sections
-LDLIBS := -lm
+LDLIBS := -lm -L lib/CMSIS -larm_cortexM4lf_math
 
 
 #######################################
