@@ -39,7 +39,3 @@ void USART_printf(const char* format, ...){
 	return ;
 }
 
-void _sbrk_r(){
-	return ;
-}
-

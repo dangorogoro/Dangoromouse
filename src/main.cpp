@@ -47,7 +47,6 @@
 }*/
 int main(){
 	GPIO_setting();
-	SystemInit();
 	TIMER_setting();
 	SysTickTimer_Config();
 
