@@ -1,3 +1,4 @@
+#include "mine.h"
 #include <sys/types.h>
 #include <errno.h>
 #include "my_usart.h"

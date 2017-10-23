@@ -50,6 +50,17 @@ int main(){
 	TIMER_setting();
 	SysTickTimer_Config();
 
+	int *p1 = new int[500];
+	GPIO_WriteBit(GPIOB,GPIO_Pin_10,Bit_SET);
+	int *p2 = new int[500];
+	GPIO_WriteBit(GPIOB,GPIO_Pin_11,Bit_SET);
+	int *p3 = new int[500];
+	GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
+	int *p4 = new int[500];
+	GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_SET);
+	int *p5 = new int[500];
+	GPIO_WriteBit(GPIOB,GPIO_Pin_14,Bit_SET);
+	while(1);
 	//////////////////
 	/*
 	
