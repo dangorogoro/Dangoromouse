@@ -1,93 +1,14 @@
 #include "mine.h"
-/*int main(void){
-	SystemInit();
-	GPIO_setting();
-	TIMER_setting();
-	set_servo();
-	motor_setting();
-	ADC_setting();
-	USART_setting();
-	z_point=19;
-	while (1){
-		
-		USART_printf("hello%d\n",z_point);
-		Delay_ms(100);
-		check_button_status();
-		
-		if(button_forward==ON)
-			go_stright();
-		else if(button_back==ON)
-			go_back();
-		else if(button_left==ON)
-			turn_left();
-		else if(button_right==ON)
-			turn_right();
-		else
-			stop_motor();
-		if(button_1==ON){
-			if(button_b==ON)
-				release_servo();
-			else
-				get_servo();
-		}
-		else if(button_2==ON){
-			if(button_b==ON)
-				z_point++;
-			else 
-				z_point--;
-			z_servo();
-		}
-				if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_3))
-			GPIO_WriteBit(GPIOC,GPIO_Pin_1,Bit_RESET);
-		else
-			GPIO_WriteBit(GPIOC,GPIO_Pin_1,Bit_SET);
-
-	}
-	return 0;
-}*/
 int main(){
 	GPIO_setting();
 	TIMER_setting();
 	SysTickTimer_Config();
 
-	int *p1 = new int[500];
-	GPIO_WriteBit(GPIOB,GPIO_Pin_10,Bit_SET);
-	int *p2 = new int[500];
-	GPIO_WriteBit(GPIOB,GPIO_Pin_11,Bit_SET);
-	int *p3 = new int[500];
-	GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
-	int *p4 = new int[500];
-	GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_SET);
-	int *p5 = new int[500];
-	GPIO_WriteBit(GPIOB,GPIO_Pin_14,Bit_SET);
-	while(1);
 	//////////////////
 	/*
 	
   
 	
-	USART_setting();
-	agent.update(IndexVec(0,0),0b1110);
-	agent.update(IndexVec(0,1),0b1010);
-	agent.update(IndexVec(0,2),0b1010);
-	agent.update(IndexVec(0,3),0b1010);
-	agent.update(IndexVec(0,4),0b1010);
-	agent.update(IndexVec(0,5),0b1010);
-	agent.update(IndexVec(0,6),0b1010);
-	agent.update(IndexVec(0,7),0b1010);
-	agent.update(IndexVec(0,8),0b1010);
-	agent.update(IndexVec(0,7),0b1010);
-	agent.update(IndexVec(0,6),0b1010);
-	agent.update(IndexVec(0,5),0b1010);
-	agent.update(IndexVec(0,4),0b1010);
-	agent.update(IndexVec(0,3),0b1010);
-	agent.update(IndexVec(0,2),0b1010);
-	agent.update(IndexVec(0,1),0b1010);
-	agent.update(IndexVec(0,0),0b1110);
-	agent.caclRunSequence(true);
-
-	OperationList runSequence = agent.getRunSequence();
-	runSequence.print();
 	while(1){
 		Delay_ms(100);
 	}
@@ -141,6 +62,10 @@ int main(){
 	mouse_start();
 	GYRO_offset();
 	Delay_ms(100);
+	pipi(3);
+	pipi(4);
+	pipi(5);
+	pipi(6);
 
 	Maze maze,maze_backup;
 	Robot dango;
@@ -169,12 +94,6 @@ int main(){
 					speed_controller(param_value*100,0);
 					ENCODER_start = OFF;
 				}
-				/*if(len_counter>=4096*4*5){
-					GPIO_WriteBit(GPIOB,GPIO_Pin_11,Bit_RESET);
-					set_speed(0,0);
-					stop_motor();
-					while(1);
-				}*/
 			}
 		}
 		else if(mode_select % 10 == 2){
@@ -201,6 +120,7 @@ int main(){
 			dango.startOffSet(&agent);
 			prev_State = agent.getState();
 			while(1){
+				Direction Lastdir = agent.getNextDirection();
 				reset_led();
 				sensor_works();
 				Direction WallData = read_wall(dango.getRobotDir());
@@ -225,20 +145,24 @@ int main(){
 					}
 					break;
 				}
-
 				if(prev_State == Agent::SEARCHING_NOT_GOAL && 
 						(agent.getState() == Agent::SEARCHING_REACHED_GOAL)){
 					maze_backup = maze;
 					start_buzzer(10);
 				}
 				prev_State = agent.getState();
+				
 				Direction Nextdir = agent.getNextDirection();
+				if(Lastdir == Nextdir && len_counter >= 170){
+					len_counter -= 180.0;
+				}
+				else len_counter = 0;
+
 				if(Nextdir.byte == 0){
 					set_speed(0,0);
 					Delay_ms(1000);
 					break;
 				}
-				len_counter = 0;
 				dango.robotMove(Nextdir);
 				dango.setRobotDir(Nextdir);
 				dango.addRobotDirToVec(Nextdir);
@@ -254,25 +178,7 @@ int main(){
 			pipi(5);
 			pipi(6);
 			led_stop();
-			/*
-			for(int i = 0;i <= 15;i ++){
-				for(int j = 0;j <= 15;j ++){
-					if(maze.getWall(i,j) / 16 != 15){
-						IndexVec po(i,j);
-						maze.updateWall(po,0b1111 ,true);
-					}
-				}
-			}
-			while(1){
-				for(int i = 0;i<=2;i++){
-					for(int j =0;j<=2;j++){
-						USART_printf("%d,%d---%d\r\n",i,j,maze.getWall(i,j));
-						Delay_ms(200);
-					}
-				}
 
-			}
-			*/
 			Delay_ms(100);
 			dango.setRobotVec(IndexVec());
 			agent.caclRunSequence(true);
@@ -284,6 +190,7 @@ int main(){
 			while(1){
 				dango.action(param_value,runSequence,parameters);
 				param_value = encoder_paramset();
+				mouse_start();
 				TIM2->CNT = 0;
 				TIM8->CNT = 0;
 				pipi(3);
