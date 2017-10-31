@@ -37,6 +37,9 @@ int16_t ReadGYRO(){
 	data=(int16_t)(((uint16_t)ReadReg(0x47)<<8) | ((uint16_t)ReadReg(0x48)));
 	return data;
 }
+int16_t ReadZAccel(){
+	return (int16_t)(((uint16_t)ReadReg(0x3f)<<8) | ((uint16_t)ReadReg(0x40)));
+}
 uint8_t SPI_exchange(uint8_t TX_Data){
 	uint8_t RX_Data = 0;
 	while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_TXE) == RESET);
@@ -77,6 +80,7 @@ void GYRO_sampling(){
 	GYRO_new = ReadGYRO() - GYRO_offset_data;
 	degree_old = degree;
 	degree += (float)(GYRO_old + GYRO_new) / 16.4 / 2.0 / 1000.0;
+	//USART_printf("accel   %d\r\n",ReadZAccel());
 	//USART_printf("degree%d\r\n",(int32_t)(degree));
 	//USART_printf("%d...%d\r\n",left_speed,right_speed);
 	const float p = 14.0,d = 0.2;//80
