@@ -132,14 +132,14 @@ void mouse_turn(const uint8_t value){
 void go_straight(float po){
 	if(ENCODER_start == ON){
 		read_encoder();
-		speed_controller(search_velocity, -search_velocity / 15.0 * po);
+		speed_controller(search_velocity, -search_velocity / 20.0 * po);
 		ENCODER_start = OFF;
 	}
 }
 void turn_back(int16_t target_direction){
 	set_speed(0,0);
 	Delay_ms(300);
-	while(degree >= (target_direction - 2) * 90 + 5){
+	while(degree >= (target_direction - 2) * 90){
 		if(ENCODER_start == ON){
 			read_encoder();
 			speed_controller(0,-8.00);
@@ -151,7 +151,7 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 	set_speed(0,0);
 	Delay_ms(300);
 	if(wall_dir == 1){
-		while(degree <= (target_direction + wall_dir) * 90 + 5){
+		while(degree <= (target_direction + wall_dir) * 90){
 			if(ENCODER_start == ON){
 				read_encoder();
 				speed_controller(0,8.00);
@@ -160,7 +160,7 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 		}
 	}
 	else{
-		while(degree >= (target_direction + wall_dir) * 90 + 5){
+		while(degree >= (target_direction + wall_dir) * 90){
 			if(ENCODER_start == ON){
 				read_encoder();
 				speed_controller(0,-8.00);
@@ -173,21 +173,9 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 	Delay_ms(300);
 }
 void go_left(int16_t target_degree){
-	/*
-		 float last_rad = search_velocity / 25.0;
-		 float rad_size = last_rad / 500.0;
-		 float target_rad = 0;
-		 while(degree <= target_degree){
-		if(ENCODER_start == ON){
-			read_encoder();
-			target_rad = (target_rad >= last_rad) ? last_rad : target_rad + rad_size;
-			speed_controller(search_velocity,target_rad);
-			ENCODER_start = OFF;
-		}
-	}*/
 	float start_degree = degree;
 	float last_rad = search_velocity / 40.0; //50 30 15
-	float rad_size = last_rad / 20.0;
+	float rad_size = last_rad / 30.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
@@ -211,7 +199,7 @@ void go_left(int16_t target_degree){
 void go_right(int16_t target_degree){
 	float start_degree = degree;
 	float last_rad = search_velocity / 40.0;
-	float rad_size = last_rad / 20.0;
+	float rad_size = last_rad / 30.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
@@ -235,7 +223,7 @@ void go_right(int16_t target_degree){
 void go_back(float po){
 	if(ENCODER_start == ON){
 		read_encoder();
-		speed_controller(-search_velocity,search_velocity / 15.0 * po);
+		speed_controller(-search_velocity / 2,search_velocity / 15.0 * po);
 		ENCODER_start = OFF;
 	}
 }
@@ -243,10 +231,10 @@ void start_wall(int16_t po){
 	set_speed(0,0);
 	reset_e();
 	len_counter = 0;
-	while(len_counter > len_measure(-120)){
+	while(len_counter > len_measure(-100)){
 		if(ENCODER_start == ON){
 			read_encoder();
-			speed_controller(-400,0);
+			speed_controller(-200,0);
 			ENCODER_start = OFF;
 		}
 	}
@@ -254,7 +242,7 @@ void start_wall(int16_t po){
 	reset_e();
 	len_counter = 0;
 	set_speed(0,0);
-	Delay_ms(1000);
+	Delay_ms(300);
 	while(len_counter < len_measure(150)){
 		const float target_theta =  (degree - po * 90.0) / 180.0 * PI;
 		if(ENCODER_start == ON){
