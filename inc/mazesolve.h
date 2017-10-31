@@ -46,10 +46,11 @@ class Robot{
 		inline void add_x(float coordinate){ x_point += coordinate;}
 		inline void add_y(float coordinate){ y_point += coordinate;}
 		void set_coordinate(float coordinate_x, float coordinate_y);
-		void add_coordinate(float coordinate_x, float coordinate_y);
+		void add_coordinate(float degre);
 		void addRobotDegreeDir(int8_t dir){RobotDegreeDir += dir;}
 		void setRobotDegreeDir(int8_t dir){RobotDegreeDir	 = dir;}
 		int8_t getRobotDegreeDir()const{return RobotDegreeDir;}
+		float runningCoordinate();
 		void setRobotVecFromRun(uint8_t Direction,uint8_t n);
 		void setWallStatus();
 		void action(uint8_t value,OperationList runSequence,ParamList param);
