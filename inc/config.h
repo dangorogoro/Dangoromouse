@@ -9,5 +9,6 @@
 extern uint8_t mode_select;
 void GPIO_setting();
 uint8_t encoder_paramset();
-//void check_button_status();
+void led_fullon();
+void led_fulloff();
 #endif

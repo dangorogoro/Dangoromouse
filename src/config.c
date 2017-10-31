@@ -285,14 +285,9 @@ uint8_t encoder_paramset(){
 	GPIO_WriteBit(GPIOB,0x1f<11,Bit_RESET);
 	return param_value;
 }
-/*
-void check_button_status(){
-	button_1 = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_10) ? ON : OFF;
-	button_2 = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_11) ? ON : OFF;
-	button_b = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_12) ? ON : OFF;
-
-	button_left			= GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0) ? ON : OFF;
-	button_right	 	= GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_1) ? ON : OFF;
-	button_forward 	= GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_4) ? ON : OFF;
-	button_back 		= GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0) ? ON : OFF;
-}*/
+void led_fullon(){
+	GPIO_WriteBit(GPIOB,0x1f<<11,Bit_SET);
+}
+void led_fulloff(){
+	GPIO_WriteBit(GPIOB,0x1f<<11,Bit_RESET);
+}
