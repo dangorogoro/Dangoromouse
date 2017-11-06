@@ -129,22 +129,9 @@ int main(){
 				else
 					agent.update(dango.getRobotVec(),maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y));
 				if(agent.getState() == Agent::FINISHED){
-					dango.setRobotVec(NORTH);
-					set_speed(0,0);
-					Delay_ms(500);
-					turn_back(dango.getRobotDegreeDir());
-					set_speed(0,0);
-					reset_e();
-					len_counter = 0;
-					while(len_counter > len_measure(-180)){
-						if(ENCODER_start == ON){
-							read_encoder();
-							speed_controller(-300,0);
-							ENCODER_start = OFF;
-						}
-					}
+					dango.startBack();
 					break;
-				}
+			}
 				if(prev_State == Agent::SEARCHING_NOT_GOAL && 
 						(agent.getState() == Agent::SEARCHING_REACHED_GOAL)){
 					maze_backup = maze;
@@ -223,6 +210,7 @@ int main(){
 				param_value = encoder_paramset();
 				TIM2->CNT = 0;
 				TIM8->CNT = 0;
+				mouse_start();
 				pipi(3);
 				pipi(4);
 				pipi(5);
