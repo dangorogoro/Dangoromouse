@@ -1,12 +1,15 @@
 #include "mine.h"
 
+
 float degree = 0;
 float degree_old = 0;
 float GYRO_offset_data;
 volatile float GYRO_old = 0;
 volatile float GYRO_new = 0;
 volatile uint8_t GYRO_start = 0;
-int32_t speed=0;
+int32_t speed = 0;
+int32_t GYRO_flag = 0;
+
 void SPI_setting(){
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
 	SPI_InitTypeDef  SPI_InitStructure;
@@ -80,9 +83,18 @@ void GYRO_sampling(){
 	GYRO_new = ReadGYRO() - GYRO_offset_data;
 	degree_old = degree;
 	degree += (float)(GYRO_old + GYRO_new) / 16.4 / 2.0 / 1000.0;
-	//USART_printf("accel   %d\r\n",ReadZAccel());
 	//USART_printf("degree%d\r\n",(int32_t)(degree));
 	//USART_printf("%d...%d\r\n",left_speed,right_speed);
 	const float p = 14.0,d = 0.2;//80
 	speed = (int32_t)(degree * p + (degree - degree_old) * 1000.0 * d);
 }
+bool checkZAccel(){
+	int16_t threshold =  -2000;
+
+	if(threshold > ReadZAccel()){
+		GYRO_flag ++;
+	}
+	else GYRO_flag = 0;
+	if(GYRO_flag >= 1000)return true;
+	else return false;
+}	
