@@ -1,11 +1,15 @@
 #ifndef MY_MOVING_H
 #define MY_MOVING_H
-#define MmConvWheel (4096.0 * 44.0 / 9.0 / 1000.0 / 78.0)  //79.0
 #define ONE_BLOCK 180
 #define WheelDistance 70.0 //69
-extern int16_t left_speed,right_speed;
 extern volatile uint8_t ENCODER_start;
-extern uint16_t search_velocity;
+extern int16_t search_velocity;
+extern float target_velocity;
+extern float left_e_sum,right_e_sum;
+extern float left_e,right_e;
+extern float MmConvWheel;
+extern int16_t left_speed,right_speed;
+extern int16_t last_left_speed,last_right_speed;
 void mouse_motor_setting();
 void mouse_motor_moving();
 void stop_motor();
