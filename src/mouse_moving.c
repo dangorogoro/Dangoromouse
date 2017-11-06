@@ -166,7 +166,7 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 		while(degree <= (target_direction + wall_dir) * 90){
 			if(ENCODER_start == ON){
 				read_encoder();
-				if(target_rad < last_rad) target_rad += 0.5;
+				if(target_rad < last_rad) target_rad += 0.1;
 				else target_rad = 8.0;
 				speed_controller(0,target_rad);
 				ENCODER_start = OFF;
@@ -177,7 +177,7 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 		while(degree >= (target_direction + wall_dir) * 90){
 			if(ENCODER_start == ON){
 				read_encoder();
-				if(target_rad > -last_rad) target_rad -= 0.5;
+				if(target_rad > -last_rad) target_rad -= 0.1;
 				else target_rad = -last_rad;
 				speed_controller(0,target_rad);
 				ENCODER_start = OFF;
@@ -241,7 +241,7 @@ void go_back(float po){
 	float target_speed = now_speed;
 	if(ENCODER_start == ON){
 		read_encoder();
-		if(target_speed > -search_velocity / 2) target_speed -= 80;
+		if(target_speed > -search_velocity / 2) target_speed -= 30;
 		else target_speed = -search_velocity / 2;
 		speed_controller(target_speed, -target_speed / 15.0 * po);
 		ENCODER_start = OFF;

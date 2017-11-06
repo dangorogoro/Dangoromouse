@@ -150,6 +150,7 @@ void Robot::goLeft(){
 	goStraight(offset);
 }
 void Robot::startBack(){
+	setWallStatus();
 	len_counter = 0;
 	goStraight(70);
 	int8_t wall_dir = 0; // 1 right -1 left
@@ -179,18 +180,18 @@ void Robot::startBack(){
 		Delay_ms(100);
 		turn_side(getRobotDegreeDir(),wall_dir);
 		addRobotDegreeDir(wall_dir);
-		degree = getRobotDegreeDir() * 90.0 ;
 	}
 	else turn_back(getRobotDegreeDir());
-	setRobotDegreeDir(NORTH);
 	len_counter = 0;
 	while(len_counter > len_measure(-75)){
-		go_back(0);
+		const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
+		go_back(-target_theta);
 	}
 	reset_e();
 	degree = 0;
 	set_speed(0,0);
 	len_counter = 0;
+	setRobotDegreeDir(NORTH);
 }
 void Robot::goBack(int8_t Nextdir){
 	goStraight(70);
