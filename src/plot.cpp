@@ -12,11 +12,15 @@ void Plot::prin(){
 //	std::cout<<data.front()[2]<<std::endl;
 //	std::cout<<data.front()[3]<<std::endl;
 }
-template<typename First,typename... Rest>void Plot::push_back(const First& first,const Rest&... rest){
-	if(flag == false){
-		flag = true;
-		data.push_back(std::vector<int>());
+void Plot::all_print(){
+	std::string text;
+	for(auto itr = data.begin();itr != data.end(); ++ itr){
+		text.clear();
+		for(auto itr2 = (*itr).begin(); itr2 != (*itr).end(); ++itr2){
+			text += std::to_string(*itr2) + " ,";
+		}
+		text.pop_back();
+		printf("%s\r\n",text.c_str());
 	}
-	data.back().push_back(first);
-	Plot::push_back(rest...);
 }
+Plot plot;

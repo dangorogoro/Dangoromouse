@@ -7,10 +7,19 @@ class Plot{
 
 	public:
 		Plot(){}
-		template<typename First,typename... Rest>void push_back(const First& first, const Rest&... rest);
-		inline void push_back(){flag = false;}
 		void prin();
+		void all_print();
 		void back_prin();
+		inline void push_back(){flag = false;}
+		template<typename First,typename... Rest>void push_back(const First& first, const Rest&... rest);
 };
-//pomu.push_back(14,5,6,7);
+template<typename First,typename... Rest>void Plot::push_back(const First& first,const Rest&... rest){
+	if(flag == false){
+		flag = true;
+		data.push_back(std::vector<int>());
+	}
+	data.back().push_back(first);
+	Plot::push_back(rest...);
+}
+extern Plot plot;
 #endif
