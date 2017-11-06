@@ -3,10 +3,11 @@
 #include "stm32f4xx.h"
 #include "stm32f4xx_conf.h"
 #include "stdio.h"
+#include "stdbool.h"
 #include "stdlib.h"
 #include "stdarg.h"
 //#include "float.h"
-//#include "math.h"
+#include "math.h"
 #define PI 3.14159
 
 #ifdef __cplusplus
@@ -19,6 +20,7 @@ using namespace Eigen;
 #include "mazesolve.h"
 #include "param.h"
 #include "plot.h"
+#include <string>
 extern "C" {
 #endif /* __cplusplus */
 #include "config.h"
