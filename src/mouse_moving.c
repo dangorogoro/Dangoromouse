@@ -103,17 +103,17 @@ void speed_controller(int16_t target_speed,float target_rad){
 	}
 	const float left_target  = (float)(target_speed - target_rad * WheelDistance / 2.0);
 	const float right_target = (float)(target_speed + target_rad * WheelDistance / 2.0);
-	const float left_Kp = 3.0,right_Kp = 3.0; // 2.5 2.6 1.0 1.10
-	const float left_Ki = 8.0 / 1000.0,right_Ki = 8.0 / 1000.0; //7.0 7.2
+	const float left_Kp = 2.5,right_Kp = 2.5; // 2.5 2.6 1.0 1.10
+	const float left_Ki = 4.0,right_Ki = 4.0; //7.0 7.2
 	//const float left_Kd=0.001,right_Kd=0.001;
 	left_e_old  = left_e;
 	right_e_old = right_e;
 	left_e	=	(float)(left_target  - left_speed / (float)MmConvWheel);
 	right_e	=	(float)(right_target - right_speed / (float)MmConvWheel);
-	if(fabs(left_e_old - left_e) > 500) left_e = left_e_old;
-	if(fabs(right_e_old - right_e) > 500) right_e = right_e_old;
-	left_e_sum  += left_e;
-	right_e_sum += right_e;
+	//if(fabs(left_e_old - left_e) > 100) left_e = left_e_old;
+	//if(fabs(right_e_old - right_e) > 100) right_e = right_e_old;
+	left_e_sum  += left_e / 1000.0;
+	right_e_sum += right_e / 1000.0;
 	//set_speed(left_e*left_Kp+left_e_sum*left_Ki+(left_e-left_e_old)*1000.0f*left_Kd,right_e*right_Kp+right_e_sum*right_Ki+(right_e-right_e_old)*1000.0*right_Kd);
 	set_speed(left_e * left_Kp + left_e_sum * left_Ki,right_e * right_Kp + right_e_sum * right_Ki);
 }
@@ -189,8 +189,8 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 }
 void go_left(int16_t target_degree){
 	float start_degree = degree;
-	float last_rad = search_velocity / 50.0; //50 30 15
-	float rad_size = last_rad / 30.0;
+	float last_rad = search_velocity / 40.0; //50 30 15
+	float rad_size = last_rad / 40.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
@@ -213,8 +213,8 @@ void go_left(int16_t target_degree){
 }
 void go_right(int16_t target_degree){
 	float start_degree = degree;
-	float last_rad = search_velocity / 50.0;
-	float rad_size = last_rad / 30.0;
+	float last_rad = search_velocity / 40.0;
+	float rad_size = last_rad / 40.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
@@ -241,7 +241,7 @@ void go_back(float po){
 	float target_speed = now_speed;
 	if(ENCODER_start == ON){
 		read_encoder();
-		if(target_speed > -search_velocity / 2) target_speed -= 30;
+		if(target_speed > -search_velocity / 2) target_speed -= 50;
 		else target_speed = -search_velocity / 2;
 		speed_controller(target_speed, -target_speed / 15.0 * po);
 		ENCODER_start = OFF;
