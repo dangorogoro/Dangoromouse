@@ -177,6 +177,7 @@ int main(){
 			while(1){
 				dango.action(param_value,runSequence,parameters);
 				param_value = encoder_paramset();
+				plot.all_print();
 				mouse_start();
 				TIM2->CNT = 0;
 				TIM8->CNT = 0;
@@ -196,18 +197,21 @@ int main(){
 			pipi(6);
 			Delay_ms(1000);
 			OperationList runSequence; 
-			/*
-			runSequence.push_back({Operation::FORWARD,15});
+			runSequence.push_back({Operation::FORWARD,3});
 			runSequence.push_back({Operation::TURN_RIGHT90,1});
-			*/
-			for(int i = 0;i <= 9;i++){
-				runSequence.push_back({Operation::FORWARD,14});
-				runSequence.push_back({Operation::TURN_RIGHT90,1});
-			}
+			runSequence.push_back({Operation::FORWARD,1});
+			runSequence.push_back({Operation::TURN_RIGHT45,1});
+			runSequence.push_back({Operation::FORWARD_DIAG,1});
+			runSequence.push_back({Operation::TURN_RIGHT45,1});
+			runSequence.push_back({Operation::FORWARD,1});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::FORWARD,2});
+
 			runSequence.push_back({Operation::STOP,1});
 			while(1){
 				dango.action(param_value,runSequence,parameters);
 				param_value = encoder_paramset();
+				plot.all_print();
 				TIM2->CNT = 0;
 				TIM8->CNT = 0;
 				mouse_start();
