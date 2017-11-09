@@ -12,6 +12,7 @@
 
 #ifdef __cplusplus
 #include <Eigen/Core>
+#include <Eigen/Dense>
 using namespace Eigen;
 #include "Maze.h"
 #include "Agent.h"
