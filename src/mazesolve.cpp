@@ -88,7 +88,7 @@ void Robot::goStraight(){
 	while(len_counter <= len_measure(ONE_BLOCK)){
 		float wall_value = 0.0f;
 		if(SENSOR_reset == ON){
-			if(sideWall == true && led_1 >= led_1_threshold && led_2 >= led_2_threshold) wall_value = (led_2 - led_1 - sensor_sub) / 20.0;
+			if(sideWall == true && led_1 >= led_1_threshold && led_2 >= led_2_threshold) wall_value = (led_2 - led_1 - sensor_sub) / 15.0;
 			reset_led();
 			SENSOR_reset = OFF;
 		}
@@ -101,7 +101,7 @@ void Robot::goStraight(uint16_t length){
 	while(len_counter <= len_measure(length)){
 		float wall_value = 0.0f;
 		if(SENSOR_reset == ON){
-			if(sideWall == true && led_1 >= led_1_threshold && led_2 >= led_2_threshold) wall_value = (led_2 - led_1 - sensor_sub) / 20.0;
+			if(sideWall == true && led_1 >= led_1_threshold && led_2 >= led_2_threshold) wall_value = (led_2 - led_1 - sensor_sub) / 15.0;
 			reset_led();
 			SENSOR_reset = OFF;
 		}
@@ -115,7 +115,7 @@ void Robot::slalomStraight(uint16_t length){
 		bool frontThreshold = false;
 		while(frontThreshold == false){
 			if(SENSOR_reset == ON){
-				if(led_3 >= 2325 && led_4 >= 2640) frontThreshold = true; // 2320 2640 was
+				if(led_3 >= 2450 && led_4 >= 2760) frontThreshold = true; // 2320 2640 was
 				reset_led();
 				SENSOR_reset = OFF;
 			}
@@ -317,7 +317,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	const int16_t turn_speed = param.get_turn_param();
 	const int16_t accel = param.get_accel_param();
 	uint16_t length = 0;
-	curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT45 || root[(*i)+1].op == Operation::TURN_LEFT45) ? curving_length + 90 : curving_length;
+	curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT45 || root[(*i)+1].op == Operation::TURN_LEFT45) ? curving_length + 45 : curving_length;
 	length = *i == 0 ? 150 + (root[*i].n - 1) * ONE_BLOCK - curving_length : root[*i].n * ONE_BLOCK - curving_length; //130 was
 
 	float e_now = 0,e_sum = 0;
@@ -424,10 +424,23 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 
 		bool first_flag = false;
 		bool last_flag = false;
-		while(len_counter <= len_measure(diag_length)){
+		float initial_offset = 0;
+
+		//float clothoid_startX = x();
+		//float clothoid_startY = y();
+		//float sencond_clothoid_startX;
+		//float sencond_clothoid_startY;
+		//float endX = (firstVec.x + lastVec.x) * 180 - clothoid_startX;
+		//float endY = ((firstVec.Y + lastVec.Y) * 180 / 2.0 + 60.0) - clothoid_startY;
+		//float *coordinatePointer();
+		//if(firstRunVec(0,0) != 0) coordinatePointer = x;
+		//else	coordinatePointer = y;
+
+		while(len_counter <= len_measure(diag_length) + initial_offset){
+		//while(judgeDiagCoordinate(firstVec,endX,endY,coordinatePointer){
 			float distance = 0.0f;
 			x_p = 30.0 * 600.0 / now_speed;
-			degree_p = 20.0 * 600.0 / now_speed;
+			degree_p = 30.0 * 600.0 / now_speed;
 			if(ENCODER_start == ON){
 				plot.push_back(x(),y(),degree,get_left_sensor(),get_right_sensor());
 				if(fabs(target_degree - past_target_degree) < 45.0 && first_flag == false) target_degree += first_degree_diff;
@@ -436,16 +449,20 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 					initial_length = len_counter;
 					target_degree = past_target_degree + first_diag_direction * 45.0;
 					next_target_degree = target_degree;
+					initial_offset = initial_length;
+
+					//second_clothoid_startX = endX - (x() - clothoid_startX);
+					//second_clothoid_startY = endY - (y() - clothoid_starty);
 				}
 
-				if(len_counter >= len_measure(diag_length) - initial_length  && first_flag == true && last_flag == false) last_flag = true;
+				if(len_counter >= len_measure(diag_length) - initial_length + initial_offset && first_flag == true && last_flag == false) last_flag = true;
 				if(last_flag == true)	target_degree += last_degree_diff;
 				if(first_flag == true && last_flag == false && len_counter >= len_measure(diag_length - 15.0 * (now_speed * now_speed - turn_speed * turn_speed) / 2.0 / (accel * 1000))) //conv to mm
 					now_speed = turn_speed >= now_speed ? turn_speed : now_speed - accel;
-				else if(first_flag == true && last_flag == false && len_counter >= initial_length + 300){
-					now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
+				else if(first_flag == true && last_flag == false){
+					if(len_counter >= initial_length + 50) now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
+					else distance = centerDistance(firstVec,lastVec,firstRunVec, firstOP.op);
 				}
-				else if(first_flag == true && last_flag == false) distance = centerDistance(firstVec,lastVec,firstRunVec, firstOP.op);
 				read_encoder();
 				add_coordinate(degree);
 				target_theta_now = (degree - target_degree) / 180.0 * PI;
@@ -619,4 +636,9 @@ float Robot::centerDistance(IndexVec firstVec,IndexVec lastVec,Matrix2i vecStatu
 
 	if(vecStatus(0,0) != 0)	return  -vecStatus(0,0) * targetPoint(0,1); //50.0
 	else	return vecStatus(0,1) * targetPoint(0,0);
+}
+
+bool judgeDiagCoordinate(Matrix2i firstVec,float targetX,float targetY,float coordinatePoint){
+	if(firstVec(0,0) != 0)	return  (0 < firstVec(0,0) *	(targetX - coordinatePoint)) ? true : false;
+	else	return  (0 < firstVec(0,1) *	(targetY - coordinatePoint)) ? true : false;
 }
