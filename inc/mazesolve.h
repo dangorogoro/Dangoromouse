@@ -68,4 +68,5 @@ class Robot{
 		float centerDistance(IndexVec firstVec,IndexVec lastVec,Matrix2i vecStatus, Operation::OperationType op);
 };
 
+OperationList rebuildOperation(OperationList list,bool diagFlag);
 #endif
