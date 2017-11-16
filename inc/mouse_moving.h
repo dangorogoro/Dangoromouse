@@ -29,4 +29,5 @@ void turn_back(int16_t po);
 void turn_side(int16_t target_direction,int8_t wall_dir);
 int32_t len_measure(int32_t length);
 void reset_e();
+void start_withoutwall(int16_t po);
 #endif

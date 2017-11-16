@@ -104,7 +104,7 @@ void speed_controller(int16_t target_speed,float target_rad){
 	const float left_target  = (float)(target_speed - target_rad * WheelDistance / 2.0);
 	const float right_target = (float)(target_speed + target_rad * WheelDistance / 2.0);
 	const float left_Kp = 2.5,right_Kp = 2.5; // 2.5 2.6 1.0 1.10
-	const float left_Ki = 6.0,right_Ki = 6.0; //7.0 7.2
+	const float left_Ki = 7.0,right_Ki = 7.0; //7.0 7.2
 	//const float left_Kd=0.001,right_Kd=0.001;
 	left_e_old  = left_e;
 	right_e_old = right_e;
@@ -275,4 +275,21 @@ void reset_e(){
 	right_e = 0;
 	left_e_sum  = 0;
 	right_e_sum = 0;
+}
+void start_withoutwall(int16_t po){
+	set_speed(0,0);
+	reset_e();
+	len_counter = 0;
+	while(len_counter > len_measure(-60)){
+		go_back(0);
+	}
+	reset_e();
+	len_counter = 0;
+	set_speed(0,0);
+	Delay_ms(300);
+	while(len_counter < len_measure(150)){
+		const float target_theta =  (degree - po * 90.0) / 180.0 * PI;
+		go_straight(target_theta);
+	}
+	len_counter = 0;
 }
