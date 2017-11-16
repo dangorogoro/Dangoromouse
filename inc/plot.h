@@ -10,6 +10,7 @@ class Plot{
 		void prin();
 		void all_print();
 		void back_prin();
+		inline void clear(){data.clear();}
 		inline void push_back(){flag = false;}
 		template<typename First,typename... Rest>void push_back(const First& first, const Rest&... rest);
 };
