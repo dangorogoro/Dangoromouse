@@ -5,6 +5,7 @@ int8_t timer_clock = OFF;
 uint32_t timer_counter = 0;
 static uint16_t buzzer_counter = 0;
 int32_t len_counter = 0;
+bool stop_flag = false;
 void TIMER_setting(){
  	NVIC_InitStructure.NVIC_IRQChannel=TIM7_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0;
@@ -86,6 +87,7 @@ void TIM5_IRQHandler(){ //100khz
 			GYRO_start = ON;
 			ENCODER_start = ON;
 			SENSOR_reset = ON;
+			if(button_return == true) stop_flag = true;
 		}
 		//if(timer_counter%100000==0)
 		//	GPIO_ToggleBits(GPIOB,GPIO_Pin_11);

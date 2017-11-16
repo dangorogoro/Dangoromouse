@@ -5,6 +5,7 @@ extern TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 extern int8_t timer_clock;
 extern uint32_t timer_counter;
 extern int32_t len_counter;
+extern bool stop_flag;
 #define TIM2_Period 65535-1
 #define TIM3_Period 1000-1
 #define TIM4_Period 1000-1 
