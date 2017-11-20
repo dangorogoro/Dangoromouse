@@ -21,6 +21,7 @@ using namespace Eigen;
 #include "mazesolve.h"
 #include "param.h"
 #include "plot.h"
+#include "flash.h"
 #include <string>
 extern "C" {
 #endif /* __cplusplus */

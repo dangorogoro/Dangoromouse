@@ -87,13 +87,45 @@ int main(){
 			}
 		}
 		else if(mode_select % 10 == 1){
+			maze = upload_mazedata();
+			maze.printWall();
+			agent.resumeAt(Agent::FINISHED,maze);
+			agent.caclRunSequence(false);
+			Robot last_dango = dango;
+			OperationList runSequence = agent.getRunSequence();
+			runSequence.push_back({Operation::FORWARD,1});
+			runSequence.push_back({Operation::STOP,1});
+			runSequence = rebuildOperation(runSequence,0);
+			TIM_Cmd(TIM5,ENABLE);
+			while(1){
+				dango.action(param_value,runSequence,parameters);
+				param_value = encoder_paramset();
+				plot.all_print();
+				mouse_start();
+				TIM2->CNT = 0;
+				TIM8->CNT = 0;
+				pipi(3);
+				pipi(4);
+				pipi(5);
+				pipi(6);
+				dango = last_dango;
+				plot.clear();
+			}
+
+			/*
+			uint32_t *flash_data = (uint32_t*)Flash_load();
+			printf("flash_data:%lu\r\n", *flash_data);
+			(*flash_data)++;
+			if (!Flash_write_back()) {
+				printf("Failed to write flash\n");
+			}
 			while(1){
 				if(ENCODER_start == ON){
 					read_encoder();
 					speed_controller(param_value*100,0);
 					ENCODER_start = OFF;
 				}
-			}
+			}*/
 		}
 		else if(mode_select % 10 == 2){
 			while(1){
@@ -114,6 +146,7 @@ int main(){
 			}
 		}
 		else if(mode_select % 10 == 3){
+			Flash_clear();
 			stop_flag = false;
 			led_flash();
 			Delay_ms(1000);
@@ -174,6 +207,7 @@ int main(){
 			//agent.caclRunSequence(true);
 			
 			if(stop_flag == true){
+				save_mazedata(maze_backup);
 				pipi(2);
 				pipi(5);
 				pipi(6);
@@ -185,6 +219,7 @@ int main(){
 				mouse_start();
 				led_fulloff();
 			}
+			else	save_mazedata(maze);
 			agent.caclRunSequence(false);
 			Robot last_dango = dango;
 			OperationList runSequence = agent.getRunSequence();
