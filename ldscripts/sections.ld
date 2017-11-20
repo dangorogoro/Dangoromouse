@@ -66,7 +66,13 @@ SECTIONS
         *(.after_vectors .after_vectors.*)	/* Startup code and ISR */
 
         . = ALIGN(4);
-    } >FLASH
+    } >FLASH_SECTOR0
+    
+    .backup_flash :
+    {
+    	_backup_flash_start = .;
+    	. = . + LENGTH(FLASH_SECTOR1);
+    } >FLASH_SECTOR1
 
     ._inits :
     {
