@@ -3,7 +3,7 @@ volatile uint8_t SENSOR_start = 0;
 volatile uint8_t SENSOR_reset = 0;
 
 uint16_t led_1 = 0,led_2 = 0,led_3 = 0,led_4 = 0;
-uint16_t led_1_threshold = 2330,led_2_threshold = 2335,led_3_threshold= 2310,led_4_threshold = 2650;
+uint16_t led_1_threshold = 2330,led_2_threshold = 2335,led_3_threshold= 2310,led_4_threshold = 2650; //2330
 int16_t sensor_sub = 0;
 void led_flash_setting(){
 	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;
