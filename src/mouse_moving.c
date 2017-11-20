@@ -158,34 +158,59 @@ void turn_back(int16_t target_direction){
 	}
 }
 void turn_side(int16_t target_direction,int8_t wall_dir){
+	float current_degree = degree;
+	float first_turn_degree,second_turn_degree;
 	set_speed(0,0);
-	Delay_ms(300);
-	float last_rad = 8.0;
+	Delay_ms(100);
+	float last_rad = 5.0;
 	float target_rad = 0.0;
+	bool first_flag = false;
+	bool second_flag = false;
 	if(wall_dir == 1){
-		while(degree <= (target_direction + wall_dir) * 90){
+		while(degree <= (target_direction + (int16_t)wall_dir) * 90){
 			if(ENCODER_start == ON){
 				read_encoder();
-				if(target_rad < last_rad) target_rad += 0.1;
-				else target_rad = 8.0;
+				if(target_rad < last_rad && first_flag == false) target_rad += 0.30;
+				else if(first_flag == false && target_rad >= last_rad){
+					target_rad = last_rad;
+					first_flag = true;
+					first_turn_degree = degree;
+					second_turn_degree = (target_direction + wall_dir) * 90 + current_degree - first_turn_degree;
+				}
+				if(first_flag == true && degree >= second_turn_degree && second_flag == false)	second_flag = true;
+				if(second_flag == true){
+					target_rad -= 0.30;
+					if(target_rad <= 0.0f)	break;
+				}
 				speed_controller(0,target_rad);
 				ENCODER_start = OFF;
 			}
 		}
 	}
 	else{
-		while(degree >= (target_direction + wall_dir) * 90){
+		while(degree >= (target_direction + (int16_t)wall_dir) * 90){
 			if(ENCODER_start == ON){
 				read_encoder();
-				if(target_rad > -last_rad) target_rad -= 0.1;
-				else target_rad = -last_rad;
+				if(target_rad > -last_rad && first_flag == false) target_rad -= 0.30;
+				else if(first_flag == false && target_rad <= -last_rad){
+					target_rad = -last_rad;
+					first_flag = true;
+					first_turn_degree = degree;
+					second_turn_degree = (target_direction + wall_dir) * 90 + current_degree - first_turn_degree;
+				}
+				if(first_flag == true && degree <= second_turn_degree && second_flag == false)	second_flag = true;
+				if(second_flag == true){
+					target_rad += 0.30;
+					if(target_rad >= 0.0f)	break;
+				}
+
 				speed_controller(0,target_rad);
 				ENCODER_start = OFF;
 			}
 		}
 	}
 	set_speed(0,0);
-	Delay_ms(300);
+	Delay_ms(100);
 }
 void go_left(int16_t target_degree){
 	float start_degree = degree;

@@ -227,8 +227,13 @@ void Robot::goBack(int8_t Nextdir){
 		turn_side(getRobotDegreeDir(),wall_dir);
 		addRobotDegreeDir(wall_dir);
 	}
-	else turn_back(getRobotDegreeDir());
+	else{
+		turn_back(getRobotDegreeDir());
+		setRobotDegreeDir(value);
+		degree = getRobotDegreeDir() * 90.0;
+	}
 	if(wall_dir != 0 && frontWall == true)	setRobotDegreeDir(value);
+
 	if(frontWall == false)	start_withoutwall(getRobotDegreeDir());
 	else start_wall(getRobotDegreeDir());
 }
