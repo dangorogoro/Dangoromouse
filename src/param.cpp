@@ -19,9 +19,9 @@ void ParamList::setting(){
 	Param param1(0,300,300,400,10);
 	Param param2(0,600,600,400,10);
 	Param param3(0,1500,600,400,5);
-	Param param4(0,1000,1000,400,5);
+	Param param4(0,2000,1000,400,5);
 	Param param5(0,1800,600,400,5);
-	Param param6(0,1500,800,400,5);
+	Param param6(0,3500,800,400,5);
 
 	param_list.push_back(param0);
 	param_list.push_back(param1);
