@@ -92,7 +92,7 @@ bool checkZAccel(){
 	int16_t threshold =  -2000;
 
 	if(threshold > ReadZAccel())	GYRO_flag ++;
-	if(button_return == 1) GYRO_flag += 1000;
+	else if(button_return == 1) GYRO_flag += 1000;
 	else GYRO_flag = 0;
 	if(GYRO_flag >= 1000){
 		start_buzzer(10);
