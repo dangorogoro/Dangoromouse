@@ -33,6 +33,7 @@ void TIMER_setting(){
 	 * TIM8----ENCODER
 	 * TIM9----FLASH
 	 */
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1,ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2,ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3,ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4,ENABLE);
@@ -40,6 +41,12 @@ void TIMER_setting(){
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM7,ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8,ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9,ENABLE);
+
+	TIM_TimeBaseStructure.TIM_Period = TIM1_Period;
+	TIM_TimeBaseStructure.TIM_Prescaler = 0;
+	TIM_TimeBaseStructure.TIM_ClockDivision= 0;
+	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
+	TIM_TimeBaseInit(TIM1,&TIM_TimeBaseStructure);
 
 	TIM_TimeBaseStructure.TIM_Period=TIM2_Period;
 	TIM_TimeBaseStructure.TIM_Prescaler=1-1;
@@ -54,7 +61,7 @@ void TIMER_setting(){
 	TIM_TimeBaseInit(TIM7,&TIM_TimeBaseStructure);
 */
 	TIM_TimeBaseStructure.TIM_Period=TIM5_Period;//100khz
-	TIM_TimeBaseStructure.TIM_Prescaler=40-1;
+	TIM_TimeBaseStructure.TIM_Prescaler=25-1;
 	TIM_TimeBaseInit(TIM5,&TIM_TimeBaseStructure);
 
 	TIM_TimeBaseStructure.TIM_Period=TIM4_Period;
@@ -67,7 +74,7 @@ void TIMER_setting(){
 	TIM_TimeBaseInit(TIM3,&TIM_TimeBaseStructure);
 
 	TIM_TimeBaseStructure.TIM_Period=TIM9_Period;
-	TIM_TimeBaseStructure.TIM_Prescaler=1680-1;
+	TIM_TimeBaseStructure.TIM_Prescaler=168-1;
 	TIM_TimeBaseInit(TIM9,&TIM_TimeBaseStructure);
 
 	TIM_TimeBaseStructure.TIM_Period=TIM8_Period;
@@ -77,24 +84,26 @@ void TIMER_setting(){
 
 	TIM_ITConfig(TIM4,TIM_IT_Update,ENABLE);
   TIM_ITConfig(TIM5,TIM_IT_Update,ENABLE);
+	TIM_Cmd(TIM2,ENABLE);
+	TIM_Cmd(TIM8,ENABLE);
 }
 
-void TIM5_IRQHandler(){ //100khz
+void TIM5_IRQHandler(){ //100khz -> 160khz
 	if(TIM_GetITStatus(TIM5,TIM_IT_Update)!=RESET){
 		TIM_ClearITPendingBit(TIM5,TIM_IT_Update);
 		timer_counter = timer_counter % 200000 + 1;
-		if(timer_counter % 100 == 0){
+		if(timer_counter % 160 == 0){
 			GYRO_start = ON;
 			ENCODER_start = ON;
-			SENSOR_reset = ON;
+			//SENSOR_reset = ON;
 			if(button_return == true) stop_flag = true;
 		}
-		//if(timer_counter%100000==0)
-		//	GPIO_ToggleBits(GPIOB,GPIO_Pin_11);
 		SENSOR_start = ON;
-		if(timer_counter % 1000 == 0)	timer_clock = ON; // 0.01sec
+		if(timer_counter % 64 == 0)	SENSOR_reset = ON;
+		if(timer_counter % 1600 == 0)	timer_clock = ON; // 0.01sec
 	}
 }
+/*
 void TIM2_IRQHandler(){
 	if(TIM_GetITStatus(TIM2,TIM_IT_Update)!=RESET){
 		TIM_ClearITPendingBit(TIM2,TIM_IT_Update);
@@ -102,7 +111,7 @@ void TIM2_IRQHandler(){
 	//GPIO_ToggleBits(GPIOB,GPIO_Pin_11);
 	}
 }
-
+*/
 void TIM3_IRQHandler(){
 	if(TIM_GetITStatus(TIM3,TIM_IT_Update)!=RESET){
 		TIM_ClearITPendingBit(TIM3,TIM_IT_Update);

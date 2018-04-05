@@ -6,8 +6,9 @@ extern int8_t timer_clock;
 extern uint32_t timer_counter;
 extern int32_t len_counter;
 extern bool stop_flag;
+#define TIM1_Period 500 - 1
 #define TIM2_Period 65535-1
-#define TIM3_Period 1000-1
+#define TIM3_Period 4200-1
 #define TIM4_Period 1000-1 
 #define TIM5_Period 21-1
 #define TIM7_Period 84-1
