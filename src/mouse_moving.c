@@ -2,8 +2,40 @@
 int16_t left_speed = 0,right_speed = 0;
 int16_t last_left_speed = 0,last_right_speed = 0;
 volatile uint8_t ENCODER_start = 0;
-int16_t search_velocity = 400;
+int16_t search_velocity = 600;
 float MmConvWheel = (4096.0 * 44.0 / 9.0 / 1000.0 / 78.0);  //79.0
+void suction_motor_setting(){
+	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;
+	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Disable;
+	TIM_OCInitStructure.TIM_OCPolarity=TIM_OCPolarity_High;
+	TIM_OCInitStructure.TIM_Pulse=70-1;//look period
+	TIM_OC1Init(TIM1,&TIM_OCInitStructure);
+	TIM_OC1PreloadConfig(TIM1,TIM_OCPreload_Enable);
+	TIM_OC2Init(TIM1,&TIM_OCInitStructure);
+	TIM_OC2PreloadConfig(TIM1,TIM_OCPreload_Enable);
+
+	TIM_ARRPreloadConfig(TIM1,ENABLE);
+	TIM_CtrlPWMOutputs(TIM1,ENABLE);
+	TIM_Cmd(TIM1,ENABLE);
+}
+void suction_start(uint16_t po){
+	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
+	TIM_OCInitStructure.TIM_Pulse = po; //to-1000
+	TIM_OC1Init(TIM1,&TIM_OCInitStructure);
+
+	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
+	TIM_OCInitStructure.TIM_Pulse = 0; //to-1000
+	TIM_OC2Init(TIM1,&TIM_OCInitStructure);
+}
+void suction_stop(){
+	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;
+	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Disable;
+	TIM_OCInitStructure.TIM_OCPolarity=TIM_OCPolarity_High;
+	TIM_OCInitStructure.TIM_Pulse = 0;//look period
+
+	TIM_OC1Init(TIM1,&TIM_OCInitStructure);
+	TIM_OC2Init(TIM1,&TIM_OCInitStructure);
+}
 void mouse_motor_setting(){
 	//motor left OC1 OC2
 	//motor right OC3 OC4
@@ -49,8 +81,8 @@ void set_left_motor(int16_t speed){
 	}
 }
 void set_speed(int16_t left_speed,int16_t right_speed){
-	set_left_motor(left_speed);
-	set_right_motor(right_speed);
+	set_left_motor(-left_speed);
+	set_right_motor(-right_speed);
 }
 void set_right_motor(int16_t speed){
 	if(speed>=0){
@@ -77,13 +109,13 @@ void encoder_setting(){
 void read_encoder(){
 	left_speed = TIM2->CNT;
 	right_speed = TIM8->CNT;
+	if((mode_select % 10) != 2){
 	TIM2->CNT = 0;
 	TIM8->CNT = 0;
-	//if((mode_select % 10) != 2){
 	//if(left_speed - last_left_speed > 150) left_speed = last_left_speed;
 	//if(right_speed - last_right_speed > 150) right_speed = last_right_speed;
 	len_counter += (left_speed + right_speed) / 2;
-	//}
+	}
 }
 uint8_t set_param(){
 	uint8_t value = (uint16_t)TIM_GetCounter(TIM2) / 1000 % 16;
@@ -103,8 +135,8 @@ void speed_controller(int16_t target_speed,float target_rad){
 	}
 	const float left_target  = (float)(target_speed - target_rad * WheelDistance / 2.0);
 	const float right_target = (float)(target_speed + target_rad * WheelDistance / 2.0);
-	const float left_Kp = 2.5,right_Kp = 2.5; // 2.5 2.6 1.0 1.10
-	const float left_Ki = 7.0,right_Ki = 7.0; //7.0 7.2
+	const float left_Kp = 12.0,right_Kp = 12.0; // 2.5 2.6 1.0 1.10
+	const float left_Ki = 40.0,right_Ki = 40.0; //7.0 7.2
 	//const float left_Kd=0.001,right_Kd=0.001;
 	left_e_old  = left_e;
 	right_e_old = right_e;
@@ -214,8 +246,8 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 }
 void go_left(int16_t target_degree){
 	float start_degree = degree;
-	float last_rad = search_velocity / 40.0; //50 30 15
-	float rad_size = last_rad / 40.0;
+	float last_rad = search_velocity / 50.0; //50 30 15
+	float rad_size = last_rad / 20.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
@@ -238,8 +270,8 @@ void go_left(int16_t target_degree){
 }
 void go_right(int16_t target_degree){
 	float start_degree = degree;
-	float last_rad = search_velocity / 40.0;
-	float rad_size = last_rad / 40.0;
+	float last_rad = search_velocity / 50.0;
+	float rad_size = last_rad / 20.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;

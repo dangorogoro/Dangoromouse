@@ -10,6 +10,12 @@ extern float left_e,right_e;
 extern float MmConvWheel;
 extern int16_t left_speed,right_speed;
 extern int16_t last_left_speed,last_right_speed;
+
+
+void suction_motor_setting();
+void suction_start(uint16_t po);
+void suction_stop();
+
 void mouse_motor_setting();
 void mouse_motor_moving();
 void stop_motor();
