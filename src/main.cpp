@@ -458,7 +458,9 @@ int main(){
 			runSequence = rebuildOperation(runSequence,0);
 			TIM_Cmd(TIM5,ENABLE);
 			while(1){
+				suction_start(40);
 				dango.action(param_value,runSequence,parameters);
+				suction_stop();
 				param_value = encoder_paramset();
 				plot.all_print();
 				mouse_start();
@@ -495,7 +497,7 @@ int main(){
 				}
 				if(ENCODER_start==ON){
 					read_encoder();
-					set_speed(-(left_speed+right_speed)/2.0f*0.9f+speed,-speed-(left_speed+right_speed)/2.0f*0.9f);
+					set_speed(-(left_speed+right_speed)/2.0f * 1.5f + speed,-speed - (left_speed + right_speed) / 2.0f * 1.5f);
 					ENCODER_start = OFF;
 				}
 				
@@ -613,7 +615,9 @@ int main(){
 			pipi(6);
 			Delay_ms(1000);
 			OperationList runSequence; 
-			runSequence.push_back({Operation::FORWARD,10});
+			runSequence.push_back({Operation::FORWARD,4});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::FORWARD,4});
 			/*
 			runSequence.push_back({Operation::TURN_RIGHT90,1});
 			runSequence.push_back({Operation::FORWARD,2});
@@ -640,7 +644,7 @@ int main(){
 			runSequence.push_back({Operation::STOP,1});
 			runSequence = rebuildOperation(runSequence,0);
 			while(1){
-				suction_start(200);
+				//suction_start(40);
 				dango.action(param_value,runSequence,parameters);
 				suction_stop();
 				param_value = encoder_paramset();
@@ -703,8 +707,8 @@ int main(){
 		}
 		else if(mode_select % 10 == 7){
 			led_fullon();
-			suction_start(300);
-			Delay_ms(5000);
+			suction_start(60);
+			Delay_ms(4000);
 			led_fulloff();
 			suction_stop();
 			while(1);

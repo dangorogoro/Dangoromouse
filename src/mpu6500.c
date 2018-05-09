@@ -85,7 +85,7 @@ void GYRO_sampling(){
 	degree += (float)(GYRO_old + GYRO_new) / 16.4 / 2.0 / 1000.0;
 	//USART_printf("degree%d\r\n",(int32_t)(degree));
 	//USART_printf("%d...%d\r\n",left_speed,right_speed);
-	const float p = 14.0,d = 0.2;//80
+	const float p = 50.0,d = 0.05;//80
 	speed = (int32_t)(degree * p + (degree - degree_old) * 1000.0 * d);
 }
 bool checkZAccel(){
