@@ -15,13 +15,13 @@ void Param::set_all_param(uint16_t first_speed,uint16_t last_speed,uint16_t turn
 	speed_param[4] = accel;
 }
 void ParamList::setting(){
-	Param param0(0,100,100,400,10);
-	Param param1(0,300,300,400,10);
-	Param param2(0,600,600,400,10);
-	Param param3(0,1500,600,400,5);
-	Param param4(0,2000,1000,400,5);
-	Param param5(0,1800,600,400,5);
-	Param param6(0,3500,800,400,5);
+	Param param0(0,100,100,600,10);
+	Param param1(0,300,300,600,10);
+	Param param2(0,1000,600,600,10);
+	Param param3(0,1800,600,600,5);
+	Param param4(0,1800,1000,600,5);
+	Param param5(0,2000,1000,600,5);
+	Param param6(0,3500,800,600,5);
 
 	param_list.push_back(param0);
 	param_list.push_back(param1);
