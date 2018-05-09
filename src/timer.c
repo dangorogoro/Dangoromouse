@@ -43,7 +43,7 @@ void TIMER_setting(){
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9,ENABLE);
 
 	TIM_TimeBaseStructure.TIM_Period = TIM1_Period;
-	TIM_TimeBaseStructure.TIM_Prescaler = 0;
+	TIM_TimeBaseStructure.TIM_Prescaler = 5;
 	TIM_TimeBaseStructure.TIM_ClockDivision= 0;
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
 	TIM_TimeBaseInit(TIM1,&TIM_TimeBaseStructure);
