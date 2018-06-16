@@ -495,7 +495,7 @@ int main(){
 					GYRO_sampling();
 					GYRO_start=OFF;
 				}
-				if(ENCODER_start==ON){
+				if(ENCODER_start == ON){
 					read_encoder();
 					set_speed(-(left_speed+right_speed)/2.0f * 1.5f + speed,-speed - (left_speed + right_speed) / 2.0f * 1.5f);
 					ENCODER_start = OFF;
@@ -530,12 +530,13 @@ int main(){
 				else
 					agent.update(dango.getRobotVec(),maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y));
 				if(agent.getState() == Agent::FINISHED){
-					dango.startBack();
+					dango.startBack(NORTH, 0);
 					break;
 				}
 				if(prev_State == Agent::SEARCHING_NOT_GOAL && agent.getState() != prev_State){
 					set_speed(0,0);
 					maze_backup = maze;
+					save_mazedata(maze_backup);
 					//save_mazedata(maze_backup);
 					start_buzzer(10);
 					led_fullon();
@@ -615,36 +616,33 @@ int main(){
 			pipi(6);
 			Delay_ms(1000);
 			OperationList runSequence; 
-			runSequence.push_back({Operation::FORWARD,4});
-			runSequence.push_back({Operation::TURN_RIGHT90,1});
-			runSequence.push_back({Operation::FORWARD,4});
-			/*
-			runSequence.push_back({Operation::TURN_RIGHT90,1});
-			runSequence.push_back({Operation::FORWARD,2});
-			runSequence.push_back({Operation::TURN_RIGHT90S,1});
-			runSequence.push_back({Operation::TURN_RIGHT90S,1});
-			runSequence.push_back({Operation::TURN_LEFT90S,1});
-			runSequence.push_back({Operation::TURN_LEFT90S,1});
-			runSequence.push_back({Operation::TURN_RIGHT90S,1});
-			runSequence.push_back({Operation::TURN_RIGHT90S,1});
-			runSequence.push_back({Operation::FORWARD,1});
-			runSequence.push_back({Operation::TURN_RIGHT90,1});
-			runSequence.push_back({Operation::FORWARD,1});
-			
 			runSequence.push_back({Operation::FORWARD,3});
 			runSequence.push_back({Operation::TURN_RIGHT90,1});
-			runSequence.push_back({Operation::FORWARD,1});
-			runSequence.push_back({Operation::TURN_RIGHT45,1});
-			runSequence.push_back({Operation::FORWARD_DIAG,1});
-			runSequence.push_back({Operation::TURN_RIGHT45,1});
-			runSequence.push_back({Operation::FORWARD,1});
-			runSequence.push_back({Operation::TURN_RIGHT90,1});
 			runSequence.push_back({Operation::FORWARD,2});
-			*/
+			runSequence.push_back({Operation::TURN_LEFT90,1});
+			runSequence.push_back({Operation::FORWARD,7});
+			runSequence.push_back({Operation::TURN_LEFT90,1});
+			runSequence.push_back({Operation::FORWARD,2});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::FORWARD,6});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::FORWARD,9});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::FORWARD,12});
+			runSequence.push_back({Operation::TURN_LEFT90,1});
+			runSequence.push_back({Operation::FORWARD,10});
+			runSequence.push_back({Operation::TURN_LEFT90,1});
+			runSequence.push_back({Operation::FORWARD,7});
+			runSequence.push_back({Operation::TURN_LEFT90,1});
+			runSequence.push_back({Operation::FORWARD,4});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::FORWARD,8});
+			runSequence.push_back({Operation::TURN_RIGHT90,1});
+			runSequence.push_back({Operation::FORWARD,3});
 			runSequence.push_back({Operation::STOP,1});
 			runSequence = rebuildOperation(runSequence,0);
 			while(1){
-				//suction_start(40);
+				suction_start(40);
 				dango.action(param_value,runSequence,parameters);
 				suction_stop();
 				param_value = encoder_paramset();
