@@ -46,7 +46,7 @@ CXXFLAGS := $(CFLAGS) \
 	-fno-exceptions \
 	-fno-rtti \
 	-fno-threadsafe-statics \
-	-std=c++11 \
+	-std=c++14 \
 	-include stdint.h
 
 ASFLAGS := -x assembler-with-cpp -c $(CFLAGS)
