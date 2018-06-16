@@ -62,11 +62,12 @@ class Robot{
 		void setRobotVecFromRun(uint8_t Direction,uint8_t n);
 		void setWallStatus();
 		void action(uint8_t value,OperationList runSequence,ParamList param);
-		void startBack();
+		void startBack(Direction dir, bool reverse_flag);
 		float targetLength(IndexVec targetIndex,Matrix2i vecStatus,uint16_t offset);
 		bool judgeTargetCoordinate(IndexVec targetIndex, Matrix2i vecStatus,uint16_t offset);
 		float centerDistance(IndexVec firstVec,IndexVec lastVec,Matrix2i vecStatus, Operation::OperationType op);
 };
 
 OperationList rebuildOperation(OperationList list,bool diagFlag);
+OperationList reverseOperation(OperationList list,bool flag);
 #endif
