@@ -137,8 +137,8 @@ void speed_controller(int16_t target_speed,float target_rad){
 	}
 	float left_target  = (float)((float)target_speed - target_rad * WheelDistance / 2.0);
 	float right_target = (float)((float)target_speed + target_rad * WheelDistance / 2.0);
-	float left_Kp = 6.0,right_Kp = 6.0; // 2.5 2.6 1.0 1.10
-	float left_Ki = 60.0,right_Ki = 60.0; //7.0 7.2
+	float left_Kp = 7.0,right_Kp = 7.0; // 2.5 2.6 1.0 1.10
+	float left_Ki = 70.0,right_Ki = 70.0; //7.0 7.2
 	//const float left_Kd=0.001,right_Kd=0.001;
 	left_e_old  = left_e;
 	right_e_old = right_e;
@@ -174,10 +174,10 @@ void go_straight(float po){
 	float target_speed = now_speed;
 	if(ENCODER_start == ON){
 		read_encoder();
-		if(target_speed < search_velocity - 30 ) target_speed += 30;
+		if(target_speed < search_velocity - 30) target_speed += 30;
 		else target_speed = search_velocity;
 		//speed_controller(target_speed, -target_speed / 30.0 * po);
-		speed_controller(target_speed, -10.0 * po);
+		speed_controller(target_speed, -15.0 * po);
 		ENCODER_start = OFF;
 	}
 }
@@ -197,7 +197,7 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 	float first_turn_degree,second_turn_degree;
 	set_speed(0,0);
 	Delay_ms(100);
-	float last_rad = 5.0;
+	float last_rad = 10.0;
 	float target_rad = 0.0;
 	bool first_flag = false;
 	bool second_flag = false;
@@ -205,7 +205,7 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 		while(degree <= (target_direction + (int16_t)wall_dir) * 90){
 			if(ENCODER_start == ON){
 				read_encoder();
-				if(target_rad < last_rad && first_flag == false) target_rad += 0.30;
+				if(target_rad < last_rad && first_flag == false) target_rad += 0.5;
 				else if(first_flag == false && target_rad >= last_rad){
 					target_rad = last_rad;
 					first_flag = true;
@@ -214,7 +214,7 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 				}
 				if(first_flag == true && degree >= second_turn_degree && second_flag == false)	second_flag = true;
 				if(second_flag == true){
-					target_rad -= 0.30;
+					target_rad -= 0.5;
 					if(target_rad <= 0.0f)	break;
 				}
 				speed_controller(0,target_rad);
@@ -226,7 +226,7 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 		while(degree >= (target_direction + (int16_t)wall_dir) * 90){
 			if(ENCODER_start == ON){
 				read_encoder();
-				if(target_rad > -last_rad && first_flag == false) target_rad -= 0.30;
+				if(target_rad > -last_rad && first_flag == false) target_rad -= 0.5;
 				else if(first_flag == false && target_rad <= -last_rad){
 					target_rad = -last_rad;
 					first_flag = true;
@@ -235,7 +235,7 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 				}
 				if(first_flag == true && degree <= second_turn_degree && second_flag == false)	second_flag = true;
 				if(second_flag == true){
-					target_rad += 0.30;
+					target_rad += 0.5;
 					if(target_rad >= 0.0f)	break;
 				}
 
