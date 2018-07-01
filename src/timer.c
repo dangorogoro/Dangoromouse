@@ -60,7 +60,7 @@ void TIMER_setting(){
 	TIM_TimeBaseStructure.TIM_CounterMode=TIM_CounterMode_Up;
 	TIM_TimeBaseInit(TIM7,&TIM_TimeBaseStructure);
 */
-	TIM_TimeBaseStructure.TIM_Period=TIM5_Period;//100khz
+	TIM_TimeBaseStructure.TIM_Period=TIM5_Period; //160kHz
 	TIM_TimeBaseStructure.TIM_Prescaler=25-1;
 	TIM_TimeBaseInit(TIM5,&TIM_TimeBaseStructure);
 
