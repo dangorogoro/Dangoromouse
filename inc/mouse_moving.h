@@ -2,6 +2,7 @@
 #define MY_MOVING_H
 #define ONE_BLOCK 180
 #define WheelDistance 70.0 //69
+#define WheelFromWall 40
 extern volatile uint8_t ENCODER_start;
 extern int16_t search_velocity;
 extern float target_velocity;
