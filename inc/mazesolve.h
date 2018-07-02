@@ -2,14 +2,20 @@
 #define MY_MAZESOLVE_H
 #include "mine.h"
 #include "param.h"
+#include "flag.h"
+extern Maze maze,maze_backup;
+struct Position{
+	float x;
+	float y;
+};
+
 class Robot{
 	private:
 		int16_t LeftEncoder,RightEncoder;
 		IndexVec RobotVec;
 		Direction RobotDir;
 		int8_t RobotDegreeDir;
-		float x_point;
-		float y_point;
+		struct Position position;
 		bool leftWall;
 		bool rightWall;
 		bool sideWall;
@@ -17,6 +23,7 @@ class Robot{
 		bool zStatus;
 		uint16_t left_sensor;
 		uint16_t right_sensor;
+		Flag flag;
 	public:
 		//Direction RobotRunVec = NORTH;
 		Matrix2i RobotRunVec;
@@ -24,7 +31,9 @@ class Robot{
 		Matrix2i getFORWARD(){Matrix2i po; po << 1,0,0,1; return po;}
 		Matrix2i getLEFT(){Matrix2i po; po << 0, 1,-1,0; return po;}
 		Matrix2i setRunVec(){Matrix2i po; po << 0, 1 ,0 ,0; return po;}
-		Robot() : RobotDir{NORTH}, RobotDegreeDir{0}, x_point{0.0}, y_point{0.0},zStatus{false}, RobotRunVec{setRunVec()}{}
+		Robot() : RobotDir{NORTH}, RobotDegreeDir{0}, position{0,0},zStatus{false}, RobotRunVec{setRunVec()}{}
+		inline void saveMazeStart(){flag.setSaveMaze(true);}
+		inline bool getSaveMazeFlag(){return flag.getSaveMaze();}
 		float centerDistance();
 		void setSpeed();
 		void setRobotVec(IndexVec vec);
@@ -42,12 +51,12 @@ class Robot{
 		void robotShortMove(OperationList root,Param param,size_t *i);
 		IndexVec getRobotVec();
 		Direction getRobotDir();
-		inline float x()const{return x_point;}
-		inline float y()const{return y_point;}
-		inline void set_x(float coordinate){ x_point = coordinate;}
-		inline void set_y(float coordinate){ y_point = coordinate;}
-		inline void add_x(float coordinate){ x_point += coordinate;}
-		inline void add_y(float coordinate){ y_point += coordinate;}
+		inline float x()const{return position.x;}
+		inline float y()const{return position.y;}
+		inline void set_x(float coordinate){ position.x = coordinate;}
+		inline void set_y(float coordinate){ position.y = coordinate;}
+		inline void add_x(float coordinate){ position.x += coordinate;}
+		inline void add_y(float coordinate){ position.y += coordinate;}
 		void fixCoordinate();
 		inline void set_left_sensor(uint16_t sensor){ left_sensor = sensor;}
 		inline void set_right_sensor(uint16_t sensor){ right_sensor = sensor;}
@@ -69,5 +78,7 @@ class Robot{
 };
 
 OperationList rebuildOperation(OperationList list,bool diagFlag);
+OperationList reverseOperation(OperationList list);
 OperationList reverseOperation(OperationList list,bool flag);
+struct Position setStartPosition(Robot &dango);
 #endif
