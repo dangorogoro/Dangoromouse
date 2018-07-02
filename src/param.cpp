@@ -16,7 +16,7 @@ void Param::set_all_param(uint16_t first_speed,uint16_t last_speed,uint16_t turn
 }
 void ParamList::setting(){
 	Param param0(0,100,100,600,10);
-	Param param1(0,300,300,600,10);
+	Param param1(0,600,600,600,10);
 	Param param2(0,1000,600,600,10);
 	Param param3(0,1800,600,600,5);
 	Param param6(0,2300,600,600,5);
