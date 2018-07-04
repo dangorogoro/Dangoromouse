@@ -42,12 +42,12 @@ class Robot{
 		void addRobotDirToVec(Direction dir);
 		void startOffSet(Agent* agent);
 		void goLeft();
-		void goBack(int8_t Nextdir);
+		void goBack(int8_t Nextdir, bool goal_flag);
 		void goStraight();
 		void goStraight(uint16_t length);
 		void slalomStraight(uint16_t length);
 		void goRight();
-		void robotMove(Direction Nextdir);
+		void robotMove(Direction Nextdir, bool goal_flag);
 		void robotShortMove(OperationList root,Param param,size_t *i);
 		IndexVec getRobotVec();
 		Direction getRobotDir();

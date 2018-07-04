@@ -1,6 +1,6 @@
 #include "mine.h"
 Maze maze,maze_backup;
-uint16_t frontWallThreshold_3 = 2175, frontWallThreshold_4 = 2115; //3 was 2180
+uint16_t frontWallThreshold_3 = 2190, frontWallThreshold_4 = 2130; //3 was 2180
 void Robot::setSpeed(){
 	LeftEncoder = left_speed;
 	RightEncoder = right_speed;
@@ -94,7 +94,7 @@ void Robot::goStraight(){
 		}
 		if(SENSOR_start == ON)	led_get();
 		float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI - wall_value;
-		go_straight(target_theta);
+		go_straight(target_theta); //*- 15
 	}
 }
 void Robot::goStraight(uint16_t length){
@@ -194,7 +194,7 @@ void Robot::startBack(Direction target_dir, bool reverse_flag){
 	len_counter = 0;
 	setRobotDegreeDir(target_dir);
 }
-void Robot::goBack(int8_t Nextdir){
+void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
 	goStraight(70);
 	int8_t wall_dir = 0; // 1 right -1 left
 	if(leftWall == true) wall_dir = -1;
@@ -212,7 +212,7 @@ void Robot::goBack(int8_t Nextdir){
 	if(wall_dir != 0){
 		turn_side(getRobotDegreeDir(),wall_dir);
 		addRobotDegreeDir(wall_dir);
-		while(len_counter > len_measure(-70)){
+		while(len_counter > len_measure(-40)){
 			const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
 			go_back(-target_theta);
 		}
@@ -222,14 +222,17 @@ void Robot::goBack(int8_t Nextdir){
 		len_counter = 0;
 		set_speed(0,0);
 		Delay_ms(100);
-		while(len_counter < len_measure(30)){
-			const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
-			go_straight(target_theta);
+		
+		if(false == goal_flag){
+			while(len_counter < len_measure(30)){
+				const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
+				go_straight(target_theta);
+			}
+			set_speed(0,0);
+			Delay_ms(100);
+			turn_side(getRobotDegreeDir(),wall_dir);
+			addRobotDegreeDir(wall_dir);
 		}
-		set_speed(0,0);
-		Delay_ms(100);
-		turn_side(getRobotDegreeDir(),wall_dir);
-		addRobotDegreeDir(wall_dir);
 	}
 	else{
 		turn_back(getRobotDegreeDir());
@@ -237,9 +240,10 @@ void Robot::goBack(int8_t Nextdir){
 		degree = getRobotDegreeDir() * 90.0;
 	}
 	if(wall_dir != 0 && frontWall == true)	setRobotDegreeDir(value);
-
-	if(frontWall == false)	start_withoutwall(getRobotDegreeDir());
+	
+	if(false == goal_flag && frontWall == false)	start_withoutwall(getRobotDegreeDir());
 	else start_wall(getRobotDegreeDir());
+	//Not consider wall around goal seriously (front)
 }
 void Robot::setWallStatus(){
 	if(led_1 >= led_1_threshold)	leftWall = true;
@@ -251,11 +255,13 @@ void Robot::setWallStatus(){
 	if(led_3 >= led_3_threshold && led_4 >= led_4_threshold)	frontWall = true;
 	else frontWall = false;
 }
-void Robot::robotMove(Direction Nextdir){
+void Robot::robotMove(Direction Nextdir, bool goal_flag = false){
 	setWallStatus();
 	len_counter = 0;
 	Direction Nowdir = Robot::getRobotDir();
-	if(Nowdir == NORTH){
+	if(true == goal_flag)
+		goBack(Nextdir,true);
+	else if(Nowdir == NORTH){
 		if(Nextdir == NORTH){
 			goStraight();
 		}
@@ -269,7 +275,7 @@ void Robot::robotMove(Direction Nextdir){
 			goBack(Nextdir);
 		}
 	}
-	if(Nowdir == WEST){
+	else if(Nowdir == WEST){
 		if(Nextdir == NORTH){
 			goRight();
 		}
@@ -283,7 +289,7 @@ void Robot::robotMove(Direction Nextdir){
 			goLeft();
 		}
 	}
-	if(Nowdir == SOUTH){
+	else if(Nowdir == SOUTH){
 		if(Nextdir == NORTH){
 			goBack(Nextdir);
 		}
@@ -297,7 +303,7 @@ void Robot::robotMove(Direction Nextdir){
 			goStraight();
 		}
 	}
-	if(Nowdir == EAST){
+	else if(Nowdir == EAST){
 		if(Nextdir == NORTH){
 			goLeft();
 		}
@@ -344,7 +350,8 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	float target_theta_now = 0,target_theta_last = 0;
 	float x_p = 1.0 / 600.0 * last_speed;
 	float x_i = 1.0 / 600.0 * last_speed;
-	float degree_p = 20.0;
+	float degree_p = 15.0;
+	float degree_i = 0.0;
 	float degree_d = 0.1;
 	float sensor_p = 0.6;
 
@@ -357,33 +364,35 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 		set_right_sensor(led_2);
 		reset_led();
 		uint8_t prescaler = 0;
+		float target_theta_sum = 0;
 
 		stop_buzzer();
 		while(judgeTargetCoordinate(getRobotVec(),RobotRunVec,curving_length)){
 			float wall_value = 0.0f;
 			x_p = 1.0 / 600.0 * now_speed;
 			x_i = 1.0 / 600.0 * now_speed;
-			sensor_p = 1.0 / 600.0 * now_speed;
+			sensor_p = 0.6 / 600.0 * now_speed;
+			
 			if(timer_clock == ON){
 				prescaler = (prescaler + 1) % 100;
 				timer_clock = OFF;
-				plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel,now_speed);
+				plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed,degree,left_e,right_e, left_e_sum, right_e_sum);
 				if(prescaler % 2 == 0){
-					if(/*targetLength(getRobotVec(),RobotRunVec,curving_length) <= 100 && */(fabs(led_1 - get_left_sensor()) > 150 || fabs(led_2 - get_right_sensor()) > 150)){
-						fixCoordinate();
-						start_buzzer(2);
-						led_fullon();
+					if(/*targetLength(getRobotVec(),RobotRunVec,curving_length) <= 100 &&*/ (fabs(led_1 - get_left_sensor()) > 500 || fabs(led_2 - get_right_sensor()) > 500)){
+						//fixCoordinate();
+						start_buzzer(7);
 					}
 					set_left_sensor(led_1);
 					set_right_sensor(led_2);
 				}
 			}
+			
 			if(SENSOR_reset == ON){
-				if(led_1 >= led_1_threshold && led_2 >= led_2_threshold){
+				if(led_1 >= led_1_threshold && led_2 >= led_2_threshold ){
 					wall_value = (led_2 - led_1 - sensor_sub) / 25.0;
 					led_fullon();
 				}
-//else led_fulloff();
+				else led_fulloff();
 				reset_led();
 				SENSOR_reset = OFF;
 			}
@@ -394,18 +403,20 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 					zStatus = true;
 					return;
 				}
-				if(len_counter >= len_measure(length - 2.0 * ((int32_t)now_speed * (int32_t)now_speed - (int32_t)turn_speed * (int32_t)turn_speed) / 2.0 / (accel * 1000))) //conv to mm
+				if(len_counter >= len_measure(length - 1.5 * ((int32_t)now_speed * (int32_t)now_speed - (int32_t)turn_speed * (int32_t)turn_speed) / 2.0 / (accel * 1000))) //conv to mm
 					now_speed = turn_speed >= now_speed ? turn_speed : now_speed - accel;
 				else
 					now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
 				read_encoder();
 				add_coordinate(degree);
-				e_now =  centerDistance();
-				e_sum += e_now / 1000.0f;
+				//e_now =  centerDistance();
+				//e_sum += e_now / 1000.0f;
 
 				target_theta_now = (degree - target_degree) / 180.0 * PI;
+				target_theta_sum = target_theta_now;
 				float target_theta_diff = target_theta_now - target_theta_last;
-				speed_controller(now_speed,- (degree_d * target_theta_diff + degree_p * target_theta_now - sensor_p * wall_value)/*+ (-target_theta_now + target_theta_last) * degree_d) + e_now * x_p + e_sum * x_i*/ );
+				float value = - (degree_d * target_theta_diff + degree_i * target_theta_sum + degree_p * target_theta_now - sensor_p * wall_value)/*+ (-target_theta_now + target_theta_last) * degree_d) + e_now * x_p + e_sum * x_i*/;
+				speed_controller(now_speed, value);
 				target_theta_last = target_theta_now;
 				ENCODER_start = OFF;
 			}
