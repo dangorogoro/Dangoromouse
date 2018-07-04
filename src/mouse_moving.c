@@ -64,29 +64,33 @@ void stop_motor(){
 	TIM_OC3Init(TIM3,&TIM_OCInitStructure); //
 	TIM_OC4Init(TIM3,&TIM_OCInitStructure); //
 }
-void set_left_motor(int32_t speed){
-	if(speed>=0){
+void set_left_motor(int16_t velocity){
+	//if(velocity >= (int16_t)TIM3_Period) velocity = TIM3_Period - 1;
+	//else if( velocity <= (int16_t)-TIM3_Period)	velocity = -TIM3_Period + 1; 
+	if(velocity >= 0){
 		TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
-		TIM_OCInitStructure.TIM_Pulse=TIM3_Period-speed-1; //to-1000
+		TIM_OCInitStructure.TIM_Pulse = TIM3_Period - velocity - 1; //to-1000
 		TIM_OC1Init(TIM3,&TIM_OCInitStructure); //
-		TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
-		TIM_OCInitStructure.TIM_Pulse=TIM3_Period-1; //to-1000
+		TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+		TIM_OCInitStructure.TIM_Pulse = TIM3_Period - 1; //to-1000
 		TIM_OC2Init(TIM3,&TIM_OCInitStructure); //
 	}
 	else{
 		TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
-		TIM_OCInitStructure.TIM_Pulse=TIM3_Period-1; //to-1000
+		TIM_OCInitStructure.TIM_Pulse = TIM3_Period - 1; //to-1000
 		TIM_OC1Init(TIM3,&TIM_OCInitStructure); //
 		TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
-		TIM_OCInitStructure.TIM_Pulse=TIM3_Period+speed-1; //to-1000
+		TIM_OCInitStructure.TIM_Pulse = TIM3_Period + velocity -1; //to-1000
 		TIM_OC2Init(TIM3,&TIM_OCInitStructure); //
 	}
 }
-void set_speed(int32_t left_speed,int32_t right_speed){
+void set_speed(int16_t left_speed,int16_t right_speed){
 	set_left_motor(-left_speed);
 	set_right_motor(-right_speed);
 }
-void set_right_motor(int32_t velocity){
+void set_right_motor(int16_t velocity){
+	//if(velocity >= (int16_t)TIM3_Period) velocity = TIM3_Period - 1;
+	//else if( velocity <= (int16_t)-TIM3_Period)	velocity = -TIM3_Period + 1; 
 	if(velocity>=0){
 		TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
 		TIM_OCInitStructure.TIM_Pulse=TIM3_Period-1; //to-1000
@@ -111,13 +115,13 @@ void encoder_setting(){
 void read_encoder(){
 	left_speed = TIM2->CNT;
 	right_speed = TIM8->CNT;
-	if((mode_select % 10) != 2){
+	//if((mode_select % 10) != 2){
 	TIM2->CNT = 0;
 	TIM8->CNT = 0;
 	//if(left_speed - last_left_speed > 150) left_speed = last_left_speed;
 	//if(right_speed - last_right_speed > 150) right_speed = last_right_speed;
 	len_counter += (left_speed + right_speed) / 2;
-	}
+	//}
 }
 uint8_t set_param(){
 	uint8_t value = (uint16_t)TIM_GetCounter(TIM2) / 1000 % 16;
@@ -128,7 +132,7 @@ float left_e_sum = 0.f,right_e_sum = 0.f;
 float left_e = 0.f,right_e = 0.f;
 float left_e_old = 0.f,right_e_old=0.f;
 
-void speed_controller(int32_t target_speed,float target_rad){
+void speed_controller(int16_t target_speed,float target_rad){
 	float GYRO_rad = 0;
 	if(GYRO_start == ON){
 		GYRO_rad = (float)(ReadGYRO()-GYRO_offset_data)/16.4/180.0*3.14;
@@ -137,11 +141,9 @@ void speed_controller(int32_t target_speed,float target_rad){
 	}
 	float left_target  = (float)((float)target_speed - target_rad * WheelDistance / 2.0);
 	float right_target = (float)((float)target_speed + target_rad * WheelDistance / 2.0);
-	float left_Kp = 2.2,right_Kp = 2.2; // 2.5 2.6 1.0 1.10
-	float left_Ki = 10.0,right_Ki = 10.0; //7.0 7.2
+	float left_Kp = 3.5,right_Kp = 3.5; // 2.5 2.6 1.0 1.10
+	float left_Ki = 10.0, right_Ki = 10.0; //7.0 7.2
 	//const float left_Kd=0.001,right_Kd=0.001;
-	left_e_old  = left_e;
-	right_e_old = right_e;
 	left_e	=	(float)(left_target  - (float)left_speed / (float)MmConvWheel);
 	right_e	=	(float)(right_target - (float)right_speed / (float)MmConvWheel);
 	//if(fabs(left_e_old - left_e) > 100) left_e = left_e_old;
@@ -149,7 +151,9 @@ void speed_controller(int32_t target_speed,float target_rad){
 	left_e_sum  += left_e / 1000.0;
 	right_e_sum += right_e / 1000.0;
 	//set_speed(left_e*left_Kp+left_e_sum*left_Ki+(left_e-left_e_old)*1000.0f*left_Kd,right_e*right_Kp+right_e_sum*right_Ki+(right_e-right_e_old)*1000.0*right_Kd);
-	set_speed(left_e * left_Kp + left_e_sum * left_Ki,right_e * right_Kp + right_e_sum * right_Ki);
+	set_speed(left_e * left_Kp + left_e_sum * left_Ki, right_e * right_Kp + right_e_sum * right_Ki);
+	left_e_old  = left_e;
+	right_e_old = right_e;
 }
 void mouse_turn(const uint8_t value){
 	while(1){

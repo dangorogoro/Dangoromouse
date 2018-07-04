@@ -8,7 +8,7 @@ extern int32_t len_counter;
 extern bool stop_flag;
 #define TIM1_Period 100 - 1
 #define TIM2_Period 65535-1
-#define TIM3_Period 840-1
+#define TIM3_Period 1680-1
 #define TIM4_Period 1000-1 
 #define TIM5_Period 21-1
 #define TIM7_Period 84-1
