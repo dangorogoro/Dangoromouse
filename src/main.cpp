@@ -489,15 +489,23 @@ int main(){
 			}*/
 		}
 		else if(mode_select % 10 == 2){
+			float target_theta_last = 0;
+			float target_theta_sum = 0;
+			float degree_p = 20, degree_i = 0.1, degree_d = 1.0;
 			while(1){
 				if(GYRO_start == ON){
 					GYRO_sampling();
-					GYRO_start=OFF;
+					GYRO_start = OFF;
 				}
 				if(ENCODER_start == ON){
 					read_encoder();
-					set_speed(-(left_speed+right_speed)/2.0f * 1.5f + speed,-speed - (left_speed + right_speed) / 2.0f * 1.5f);
+					float target_theta_now = degree / 180.0 * PI;
+					target_theta_sum += target_theta_now;
+					float target_theta_diff = target_theta_now - target_theta_last;
+					float value = -(target_theta_sum * degree_i + target_theta_now * degree_p + target_theta_diff * degree_d);
+					speed_controller(0, value);
 					ENCODER_start = OFF;
+					target_theta_last = target_theta_now;
 				}
 				
 				if(degree >= 90.0)
@@ -513,6 +521,7 @@ int main(){
 			Delay_ms(1000);
 			dango.startOffSet(&agent);
 			prev_State = agent.getState();
+			bool last_save_flag = false;
 			while(1){
 				prev_State = agent.getState();
 				Direction Lastdir = agent.getNextDirection();
@@ -533,26 +542,24 @@ int main(){
 					break;
 				}
 				if(prev_State == Agent::SEARCHING_NOT_GOAL && agent.getState() != prev_State){
-					set_speed(0,0);
-					Delay_ms(500);
 					maze_backup = maze;
-					save_mazedata(maze_backup);
-					Delay_ms(500);
 					start_buzzer(10);
 					dango.saveMazeStart();
 					led_fullon();
 				}
-
 				Direction Nextdir = agent.getNextDirection();
 				if(Lastdir == Nextdir && len_counter >= 170)	len_counter -= 180.0;
 				else len_counter = 0;
-
 				if(Nextdir.byte == 0){
 					set_speed(0,0);
 					Delay_ms(1000);
 					break;
 				}
-				dango.robotMove(Nextdir);
+				if(last_save_flag != dango.getSaveMazeFlag()){
+					last_save_flag = dango.getSaveMazeFlag();
+					dango.robotMove(Nextdir,true);
+				}
+				else	dango.robotMove(Nextdir,false);
 				dango.setRobotDir(Nextdir);
 				dango.addRobotDirToVec(Nextdir);
 				stop_buzzer();
