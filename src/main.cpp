@@ -702,7 +702,11 @@ int main(){
 			suction_stop();
 			while(1);
 		}
-
+		else if(mode_select % 10 == 8){
+			maze = upload_mazedata();
+			agent.resumeAt(Agent::SEARCHING_NOT_GOAL,maze);
+			mode_select = 3;
+		}
 
 	}
 	return 0;
