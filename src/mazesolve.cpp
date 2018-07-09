@@ -1,6 +1,6 @@
 #include "mine.h"
 Maze maze,maze_backup;
-uint16_t frontWallThreshold_3 = 2190, frontWallThreshold_4 = 2130; //3 was 2180
+uint16_t frontWallThreshold_3 = 2190, frontWallThreshold_4 = 2120; //3 was 2180
 void Robot::setSpeed(){
 	LeftEncoder = left_speed;
 	RightEncoder = right_speed;
@@ -56,8 +56,12 @@ void Robot::startOffSet(Agent *agent){
 		reset_led();
 		sensor_works();
 		sensor_sub += led_2 - led_1;
+		led_2_reference += led_2;
+		led_1_reference += led_1;
 	}
 		sensor_sub /= 10;
+		led_1_reference /= 10;
+		led_2_reference /= 10;
 	agent->update(Robot::getRobotVec(),0b11111110);
 	while(len_counter <= len_measure(130)){
 		go_straight(0);
@@ -88,7 +92,10 @@ void Robot::goStraight(){
 	while(len_counter <= len_measure(ONE_BLOCK)){
 		float wall_value = 0.0f;
 		if(SENSOR_reset == ON){
+			start_buzzer(10);
 			if(sideWall == true && led_1 >= led_1_threshold && led_2 >= led_2_threshold) wall_value = (led_2 - led_1 - sensor_sub) / 25.0;
+			else if(leftWall	== true && led_1 >= led_1_threshold) wall_value = (-led_1 + led_1_reference) / 15.0;
+			else if(rightWall	== true && led_2 >= led_2_threshold) wall_value = (led_2 - led_2_reference) / 15.0;
 			reset_led();
 			SENSOR_reset = OFF;
 		}
@@ -101,7 +108,10 @@ void Robot::goStraight(uint16_t length){
 	while(len_counter <= len_measure(length)){
 		float wall_value = 0.0f;
 		if(SENSOR_reset == ON){
+			start_buzzer(10);
 			if(sideWall == true && led_1 >= led_1_threshold && led_2 >= led_2_threshold) wall_value = (led_2 - led_1 - sensor_sub) / 25.0; // 15
+			else if(leftWall	== true && led_1 >= led_1_threshold) wall_value = (-led_1 + led_1_reference) / 15.0;
+			else if(rightWall	== true && led_2 >= led_2_threshold) wall_value = (led_2 - led_2_reference) / 15.0;
 			reset_led();
 			SENSOR_reset = OFF;
 		}
@@ -202,7 +212,9 @@ void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
 	////////////////////////////////////////write here!!!!!!!!!!!!!!!!!!!!!!!!
 	len_counter = 0;
 	set_speed(0,0);
-	if(true == getSaveMazeFlag())	save_mazedata(maze);
+	//if(true == getSaveMazeFlag())	save_mazedata(maze);
+	
+	save_mazedata(maze);
 	Delay_ms(300);
 	int8_t value;
 	if(Nextdir == NORTH)	value = 0;
@@ -376,9 +388,9 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 			if(timer_clock == ON){
 				prescaler = (prescaler + 1) % 100;
 				timer_clock = OFF;
-				plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed,degree,left_e,right_e, left_e_sum, right_e_sum);
+				plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed, left_e, right_e, left_e_sum, right_e_sum, left_input, right_input);
 				if(prescaler % 2 == 0){
-					if(/*targetLength(getRobotVec(),RobotRunVec,curving_length) <= 100 &&*/ (fabs(led_1 - get_left_sensor()) > 500 || fabs(led_2 - get_right_sensor()) > 500)){
+					if(led_1 > 2048 && led_2 > 2048 &&/*targetLength(getRobotVec(),RobotRunVec,curving_length) <= 100 &&*/ (fabs(led_1 - get_left_sensor()) > 500 || fabs(led_2 - get_right_sensor()) > 500)){
 						//fixCoordinate();
 						start_buzzer(7);
 					}
