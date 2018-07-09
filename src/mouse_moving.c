@@ -3,7 +3,9 @@ int16_t left_speed = 0,right_speed = 0;
 int16_t last_left_speed = 0,last_right_speed = 0;
 volatile uint8_t ENCODER_start = 0;
 int16_t search_velocity = 600;
+int16_t last_left_input = 0, last_right_input = 0;
 float MmConvWheel = (4096.0 * 44.0 / 9.0 / 1000.0 / 78.0);  //79.0
+
 void suction_motor_setting(){
 	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;
 	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Disable;
@@ -65,8 +67,7 @@ void stop_motor(){
 	TIM_OC4Init(TIM3,&TIM_OCInitStructure); //
 }
 void set_left_motor(int16_t velocity){
-	//if(velocity >= (int16_t)TIM3_Period) velocity = TIM3_Period - 1;
-	//else if( velocity <= (int16_t)-TIM3_Period)	velocity = -TIM3_Period + 1; 
+//	if(abs(velocity) >= TIM3_Period) velocity = last_left_input;
 	if(velocity >= 0){
 		TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
 		TIM_OCInitStructure.TIM_Pulse = TIM3_Period - velocity - 1; //to-1000
@@ -83,17 +84,17 @@ void set_left_motor(int16_t velocity){
 		TIM_OCInitStructure.TIM_Pulse = TIM3_Period + velocity -1; //to-1000
 		TIM_OC2Init(TIM3,&TIM_OCInitStructure); //
 	}
+	last_left_input = velocity;
 }
 void set_speed(int16_t left_speed,int16_t right_speed){
 	set_left_motor(-left_speed);
 	set_right_motor(-right_speed);
 }
 void set_right_motor(int16_t velocity){
-	//if(velocity >= (int16_t)TIM3_Period) velocity = TIM3_Period - 1;
-	//else if( velocity <= (int16_t)-TIM3_Period)	velocity = -TIM3_Period + 1; 
-	if(velocity>=0){
+//  if(abs(velocity) >= TIM3_Period) velocity = last_right_input;
+	if(velocity >= 0){
 		TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
-		TIM_OCInitStructure.TIM_Pulse=TIM3_Period-1; //to-1000
+		TIM_OCInitStructure.TIM_Pulse = TIM3_Period-1; //to-1000
 		TIM_OC3Init(TIM3,&TIM_OCInitStructure); //
 		TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
 		TIM_OCInitStructure.TIM_Pulse=TIM3_Period-velocity-1; //to-1000
@@ -107,6 +108,7 @@ void set_right_motor(int16_t velocity){
 		TIM_OCInitStructure.TIM_Pulse=TIM3_Period-1; //to-100
 		TIM_OC4Init(TIM3,&TIM_OCInitStructure); //
 	}
+	last_right_input = velocity;
 }
 void encoder_setting(){
 	TIM_Cmd(TIM2,ENABLE);
@@ -131,6 +133,7 @@ uint8_t set_param(){
 float left_e_sum = 0.f,right_e_sum = 0.f;
 float left_e = 0.f,right_e = 0.f;
 float left_e_old = 0.f,right_e_old=0.f;
+float left_input = 0.f, right_input = 0.f;
 
 void speed_controller(int16_t target_speed,float target_rad){
 	float GYRO_rad = 0;
@@ -141,8 +144,8 @@ void speed_controller(int16_t target_speed,float target_rad){
 	}
 	float left_target  = (float)((float)target_speed - target_rad * WheelDistance / 2.0);
 	float right_target = (float)((float)target_speed + target_rad * WheelDistance / 2.0);
-	float left_Kp = 3.5,right_Kp = 3.5; // 2.5 2.6 1.0 1.10
-	float left_Ki = 10.0, right_Ki = 10.0; //7.0 7.2
+	float left_Kp = 4.0,right_Kp = 4.0; // 4.0 4.0
+	float left_Ki = 10.0, right_Ki = 10.0; //8.0 8.0
 	//const float left_Kd=0.001,right_Kd=0.001;
 	left_e	=	(float)(left_target  - (float)left_speed / (float)MmConvWheel);
 	right_e	=	(float)(right_target - (float)right_speed / (float)MmConvWheel);
@@ -150,8 +153,10 @@ void speed_controller(int16_t target_speed,float target_rad){
 	//if(fabs(right_e_old - right_e) > 100) right_e = right_e_old;
 	left_e_sum  += left_e / 1000.0;
 	right_e_sum += right_e / 1000.0;
+	left_input = left_e * left_Kp + left_e_sum * left_Ki;
+	right_input = right_e * right_Kp + right_e_sum * right_Ki;
 	//set_speed(left_e*left_Kp+left_e_sum*left_Ki+(left_e-left_e_old)*1000.0f*left_Kd,right_e*right_Kp+right_e_sum*right_Ki+(right_e-right_e_old)*1000.0*right_Kd);
-	set_speed(left_e * left_Kp + left_e_sum * left_Ki, right_e * right_Kp + right_e_sum * right_Ki);
+	set_speed(left_input,right_input);
 	left_e_old  = left_e;
 	right_e_old = right_e;
 }
