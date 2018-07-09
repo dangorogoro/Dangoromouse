@@ -23,7 +23,7 @@ Maze upload_mazedata(){
 	for(int y = 0;y < MAZE_SIZE;y++){
 		for(int x = 0;x < MAZE_SIZE;x++){
 			IndexVec vec(x,y);
-			tmpMaze.updateWall(vec,work_ram[16 * y + x],true);
+			tmpMaze.updateWall(vec,work_ram[16 * y + x],false);
 		}
 	}
 
