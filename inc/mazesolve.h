@@ -33,7 +33,8 @@ class Robot{
 		Matrix2i setRunVec(){Matrix2i po; po << 0, 1 ,0 ,0; return po;}
 		Robot() : RobotDir{NORTH}, RobotDegreeDir{0}, position{0,0},zStatus{false}, RobotRunVec{setRunVec()}{}
 		inline void saveMazeStart(){flag.setSaveMaze(true);}
-		inline bool getSaveMazeFlag(){return flag.getSaveMaze();}
+		inline bool getSaveMazeFlag(){return (flag.getSaveMaze());}
+		inline bool getSearchingSaveFlag(){return (flag.getSearchingSave());}
 		float centerDistance();
 		void setSpeed();
 		void setRobotVec(IndexVec vec);

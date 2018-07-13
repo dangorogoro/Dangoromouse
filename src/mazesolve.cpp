@@ -139,7 +139,7 @@ void Robot::slalomStraight(uint16_t length){
 void Robot::goRight(){
 
 	reset_led();
-	uint16_t offset = 35;
+	uint16_t offset = 31;
 	len_counter = 0;
 	slalomStraight(offset);
 	len_counter = 0;
@@ -150,7 +150,7 @@ void Robot::goRight(){
 }
 void Robot::goLeft(){
 	reset_led();
-	uint16_t offset = 35;
+	uint16_t offset = 31;
 	len_counter = 0;
 	slalomStraight(offset);
 	len_counter = 0;
@@ -212,9 +212,12 @@ void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
 	////////////////////////////////////////write here!!!!!!!!!!!!!!!!!!!!!!!!
 	len_counter = 0;
 	set_speed(0,0);
-	//if(true == getSaveMazeFlag())	save_mazedata(maze);
-	
-	save_mazedata(maze);
+	if(true == getSaveMazeFlag() || 0 == getSearchingSaveFlag()){
+		save_mazedata(maze);
+		pipi(2);
+		pipi(3);
+		pipi(5);
+	}
 	Delay_ms(300);
 	int8_t value;
 	if(Nextdir == NORTH)	value = 0;
@@ -348,7 +351,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	if(root[(*i)].op != Operation::STOP){
 		if(root[(*i)+1].op == Operation::STOP) curving_length += 90;
 	}
-	const int16_t last_speed = param.get_last_param();
+	int16_t last_speed = (root[(*i)].n == 1) ? param.get_turn_param() :param.get_last_param();
 	int16_t turn_speed;
 	if(root[(*i)+1].op == Operation::TURN_RIGHT90S || root[(*i)+1].op == Operation::TURN_LEFT90S)	turn_speed = param.get_small_turn_param();
 	else if(root[(*i)].op == Operation::TURN_RIGHT90S || root[(*i)].op == Operation::TURN_LEFT90S)	turn_speed = param.get_small_turn_param();
@@ -362,8 +365,8 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	float target_theta_now = 0,target_theta_last = 0;
 	float x_p = 1.0 / 600.0 * last_speed;
 	float x_i = 1.0 / 600.0 * last_speed;
-	float degree_p = 15.0;
-	float degree_i = 0.0;
+	float degree_p = 9.0;
+	float degree_i = 0.5;
 	float degree_d = 0.1;
 	float sensor_p = 0.6;
 
@@ -383,21 +386,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 			float wall_value = 0.0f;
 			x_p = 1.0 / 600.0 * now_speed;
 			x_i = 1.0 / 600.0 * now_speed;
-			sensor_p = 0.6 / 600.0 * now_speed;
 			
-			if(timer_clock == ON){
-				prescaler = (prescaler + 1) % 100;
-				timer_clock = OFF;
-				plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed, left_e, right_e, left_e_sum, right_e_sum, left_input, right_input);
-				if(prescaler % 2 == 0){
-					if(led_1 > 2048 && led_2 > 2048 &&/*targetLength(getRobotVec(),RobotRunVec,curving_length) <= 100 &&*/ (fabs(led_1 - get_left_sensor()) > 500 || fabs(led_2 - get_right_sensor()) > 500)){
-						//fixCoordinate();
-						start_buzzer(7);
-					}
-					set_left_sensor(led_1);
-					set_right_sensor(led_2);
-				}
-			}
 			
 			if(SENSOR_reset == ON){
 				if(led_1 >= led_1_threshold && led_2 >= led_2_threshold ){
@@ -408,6 +397,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 				reset_led();
 				SENSOR_reset = OFF;
 			}
+			float value = 0;
 			if(SENSOR_start == ON)	led_get();
 
 			if(ENCODER_start == ON){
@@ -415,7 +405,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 					zStatus = true;
 					return;
 				}
-				if(len_counter >= len_measure(length - 1.5 * ((int32_t)now_speed * (int32_t)now_speed - (int32_t)turn_speed * (int32_t)turn_speed) / 2.0 / (accel * 1000))) //conv to mm
+				if(len_counter >= len_measure(length - 2.0 * ((int32_t)now_speed * (int32_t)now_speed - (int32_t)turn_speed * (int32_t)turn_speed) / 2.0 / (accel * 1000))) //conv to mm
 					now_speed = turn_speed >= now_speed ? turn_speed : now_speed - accel;
 				else
 					now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
@@ -427,10 +417,23 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 				target_theta_now = (degree - target_degree) / 180.0 * PI;
 				target_theta_sum = target_theta_now;
 				float target_theta_diff = target_theta_now - target_theta_last;
-				float value = - (degree_d * target_theta_diff + degree_i * target_theta_sum + degree_p * target_theta_now - sensor_p * wall_value)/*+ (-target_theta_now + target_theta_last) * degree_d) + e_now * x_p + e_sum * x_i*/;
+				value = - (degree_d * target_theta_diff + degree_i * target_theta_sum + degree_p * target_theta_now - sensor_p * wall_value)/*+ (-target_theta_now + target_theta_last) * degree_d) + e_now * x_p + e_sum * x_i*/;
 				speed_controller(now_speed, value);
 				target_theta_last = target_theta_now;
 				ENCODER_start = OFF;
+			}
+			if(timer_clock == ON){
+				prescaler = (prescaler + 1) % 100;
+				timer_clock = OFF;
+				plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed, value, left_e, right_e, left_e_sum, right_e_sum, left_input, right_input);
+				if(prescaler % 2 == 0){
+					if(led_1 > 2048 && led_2 > 2048 &&/*targetLength(getRobotVec(),RobotRunVec,curving_length) <= 100 &&*/ (fabs(led_1 - get_left_sensor()) > 500 || fabs(led_2 - get_right_sensor()) > 500)){
+						//fixCoordinate();
+						start_buzzer(7);
+					}
+					set_left_sensor(led_1);
+					set_right_sensor(led_2);
+				}
 			}
 		}
 	}
