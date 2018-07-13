@@ -145,7 +145,7 @@ void speed_controller(int16_t target_speed,float target_rad){
 	float left_target  = (float)((float)target_speed - target_rad * WheelDistance / 2.0);
 	float right_target = (float)((float)target_speed + target_rad * WheelDistance / 2.0);
 	float left_Kp = 4.0,right_Kp = 4.0; // 4.0 4.0
-	float left_Ki = 10.0, right_Ki = 10.0; //8.0 8.0
+	float left_Ki = 14.0, right_Ki = 14.0; //8.0 8.0
 	//const float left_Kd=0.001,right_Kd=0.001;
 	left_e	=	(float)(left_target  - (float)left_speed / (float)MmConvWheel);
 	right_e	=	(float)(right_target - (float)right_speed / (float)MmConvWheel);
