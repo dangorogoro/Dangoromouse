@@ -1,6 +1,6 @@
 #include "mine.h"
 Maze maze,maze_backup;
-uint16_t frontWallThreshold_3 = 2190, frontWallThreshold_4 = 2120; //3 was 2180
+uint16_t frontWallThreshold_3 = 2280, frontWallThreshold_4 = 2210; //3 was 2180
 void Robot::setSpeed(){
 	LeftEncoder = left_speed;
 	RightEncoder = right_speed;
@@ -139,7 +139,7 @@ void Robot::slalomStraight(uint16_t length){
 void Robot::goRight(){
 
 	reset_led();
-	uint16_t offset = 31;
+	uint16_t offset = 35;
 	len_counter = 0;
 	slalomStraight(offset);
 	len_counter = 0;
@@ -150,7 +150,7 @@ void Robot::goRight(){
 }
 void Robot::goLeft(){
 	reset_led();
-	uint16_t offset = 31;
+	uint16_t offset = 35;
 	len_counter = 0;
 	slalomStraight(offset);
 	len_counter = 0;

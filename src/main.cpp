@@ -669,30 +669,6 @@ int main(){
 			}
 		}
 		else if(mode_select % 10 == 6){
-			Robot dango;
-			for(int i = 0;i <= 10;i++){
-				IndexVec po(0,i);
-				agent.update(po,0b11110000);
-
-				/*agent.update(IndexVec(1,2),0b1010);
-					agent.update(IndexVec(1,3),0b0010);
-					agent.update(IndexVec(1,4),0b1001);
-					agent.update(IndexVec(2,4),0b0011);
-					agent.update(IndexVec(2,3),0b1010);
-					agent.update(IndexVec(2,2),0b1010);
-					agent.update(IndexVec(2,1),0b1010);
-					agent.update(IndexVec(2,0),0b0110);*/
-				USART_printf("maze-data %d\r\n",maze.getWall(0,i));
-			}
-			agent.caclRunSequence(true);
-			OperationList runSequence = agent.getRunSequence();
-			runSequence.push_back({Operation::FORWARD,1});
-			runSequence.push_back({Operation::STOP,1});
-			dango.action(param_value,runSequence,parameters);
-			GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
-					GPIO_WriteBit(GPIOB,GPIO_Pin_14,Bit_SET);
-
-			while(1);
 		}
 		else if(mode_select % 10 == 7){
 			led_fullon();

@@ -4,16 +4,17 @@ volatile uint8_t SENSOR_reset = 0;
 
 uint16_t led_1 = 0,led_2 = 0,led_3 = 0,led_4 = 0;
 //uint16_t led_1_threshold = 2330,led_2_threshold = 2335,led_3_threshold= 2380,led_4_threshold = 2800; //2330
-uint16_t led_1_threshold = 2140,led_2_threshold = 2120,led_3_threshold= 2095,led_4_threshold = 2085; //2330
+uint16_t led_1_threshold = 2140,led_2_threshold = 2120,led_3_threshold= 2140,led_4_threshold = 2110; //2330
 int16_t sensor_sub = 0;
 int16_t led_1_reference = 0, led_2_reference = 0;
-void led_flash_setting(){
+void led_flash_setting(){//front OC1 side PC2
 	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;
 	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Disable;
 	TIM_OCInitStructure.TIM_OCPolarity=TIM_OCPolarity_High;
-	TIM_OCInitStructure.TIM_Pulse=15-1;//look period
+	TIM_OCInitStructure.TIM_Pulse = 25-1;//look period
 	TIM_OC1Init(TIM9,&TIM_OCInitStructure);
 	TIM_OC1PreloadConfig(TIM9,TIM_OCPreload_Enable);
+	TIM_OCInitStructure.TIM_Pulse = 15-1;//look period
 	TIM_OC2Init(TIM9,&TIM_OCInitStructure);
 	TIM_OC2PreloadConfig(TIM9,TIM_OCPreload_Enable);
 	TIM_ARRPreloadConfig(TIM9,ENABLE);
@@ -22,7 +23,7 @@ void led_flash_setting(){
 }
 void led_flash(){
 	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
-	TIM_OCInitStructure.TIM_Pulse = 15-1;
+	TIM_OCInitStructure.TIM_Pulse = 25-1;
 	TIM_OC1Init(TIM9,&TIM_OCInitStructure);
 	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
 	TIM_OCInitStructure.TIM_Pulse = 15-1;
@@ -32,7 +33,7 @@ void led_stop(){
 	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;
 	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Disable;
 	TIM_OCInitStructure.TIM_OCPolarity=TIM_OCPolarity_High;
-	TIM_OCInitStructure.TIM_Pulse=15-1;//look period
+	TIM_OCInitStructure.TIM_Pulse = 15-1;//look period
 
 	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Disable;
 	TIM_OC1Init(TIM9,&TIM_OCInitStructure);
