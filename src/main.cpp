@@ -6,7 +6,6 @@ int main(){
 	GPIO_setting();
 	TIMER_setting();
 	SysTickTimer_Config();
-
 	//////////////////
 	/*
 	
@@ -669,6 +668,39 @@ int main(){
 			}
 		}
 		else if(mode_select % 10 == 6){
+			TIM_Cmd(TIM5,ENABLE);
+      float last_x, last_y;
+      len_counter = 0;
+      TIM2->CNT = 0;
+      TIM8->CNT = 0;
+      while(1){
+        if(ENCODER_start == ON){
+          if(GYRO_start == ON){
+            float GYRO_rad = (float)(ReadGYRO()-GYRO_offset_data)/16.4/180.0*3.14;
+            degree += GYRO_rad*180.0/3.14/1000.0;
+            GYRO_start = OFF;
+          }
+          read_encoder();
+          dango.add_coordinate(degree);
+          ENCODER_start = OFF;
+        }
+        if(timer_clock == ON){
+          timer_clock = OFF;
+          if(abs(last_x - dango.x()) >= 1 || abs(last_y - dango.y()) >= 1){
+            plot.push_back(dango.x(), dango.y(), degree);
+            last_x = dango.x();
+            last_y = dango.y();
+          }
+        }
+        if(button_return == 1)  break;
+      }
+      Delay_ms(500);
+      while(button_return == 0);
+      pipi(3);
+      pipi(4);
+      pipi(5);
+      pipi(6);
+      plot.all_print();
 		}
 		else if(mode_select % 10 == 7){
 			led_fullon();
