@@ -4,7 +4,7 @@ volatile uint8_t SENSOR_reset = 0;
 
 uint16_t led_1 = 0,led_2 = 0,led_3 = 0,led_4 = 0;
 //uint16_t led_1_threshold = 2330,led_2_threshold = 2335,led_3_threshold= 2380,led_4_threshold = 2800; //2330
-uint16_t led_1_threshold = 2140,led_2_threshold = 2120,led_3_threshold= 2140,led_4_threshold = 2110; //2330
+uint16_t led_1_threshold = 2140,led_2_threshold = 2120,led_3_threshold= 2130,led_4_threshold = 2100; //2330
 int16_t sensor_sub = 0;
 int16_t led_1_reference = 0, led_2_reference = 0;
 void led_flash_setting(){//front OC1 side PC2

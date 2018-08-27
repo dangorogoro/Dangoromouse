@@ -1,6 +1,6 @@
 #include "mine.h"
 Maze maze,maze_backup;
-uint16_t frontWallThreshold_3 = 2280, frontWallThreshold_4 = 2210; //3 was 2180
+uint16_t frontWallThreshold_3 = 2250, frontWallThreshold_4 = 2190; //3 was 2180
 void Robot::setSpeed(){
 	LeftEncoder = left_speed;
 	RightEncoder = right_speed;
@@ -384,6 +384,8 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 		float target_theta_sum = 0;
 
 		stop_buzzer();
+    float left_value, right_value;
+    float last_left_value, last_right_value;
 		while(judgeTargetCoordinate(getRobotVec(),RobotRunVec,curving_length)){
 			float wall_value = 0.0f;
 			x_p = 1.0 / 600.0 * now_speed;
@@ -391,6 +393,8 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 			
 			
 			if(SENSOR_reset == ON){
+        left_value = led_1;
+        right_value = led_2;
 				if(led_1 >= led_1_threshold && led_2 >= led_2_threshold ){
 					wall_value = (led_2 - led_1 - sensor_sub) / 25.0;
 					led_fullon();
@@ -427,15 +431,17 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 			if(timer_clock == ON){
 				prescaler = (prescaler + 1) % 100;
 				timer_clock = OFF;
-				plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed, value, left_e, right_e, left_e_sum, right_e_sum, left_input, right_input);
-				if(prescaler % 2 == 0){
-					if(led_1 > 2048 && led_2 > 2048 &&/*targetLength(getRobotVec(),RobotRunVec,curving_length) <= 100 &&*/ (fabs(led_1 - get_left_sensor()) > 500 || fabs(led_2 - get_right_sensor()) > 500)){
-						//fixCoordinate();
-						start_buzzer(7);
-					}
-					set_left_sensor(led_1);
-					set_right_sensor(led_2);
-				}
+				plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed, left_value, right_value, last_left_value, last_right_value);
+        //if(prescaler % 2 == 0){
+        //if(led_1 > 2048 && led_2 > 2048 &&/*targetLength(getRobotVec(),RobotRunVec,curving_length) <= 100 &&*/ (fabs(led_1 3 get_left_sensor()) > 500 || fabs(led_2 - get_right_sensor()) > 500)){
+        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(right_value - last_right_value) > 110) || (fabs(left_value - last_left_value) > 110))){
+          fixCoordinate();
+          start_buzzer(7);
+        }
+        last_left_value = left_value;
+        last_right_value = right_value;
+        set_left_sensor(led_1);
+        set_right_sensor(led_2);
 			}
 		}
 	}
@@ -604,6 +610,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 		target_degree += operation_direction * 90.0; 
 		uint8_t prescaler = 0;
 		bool frontThreshold = false;
+    sensor_works();
 		while(1){
 			if(timer_clock == ON){
 				prescaler = (prescaler + 1) % 100;
@@ -637,7 +644,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 				}
 				if(frontWall == true && runStatus % 2 == 0){
 					if(frontThreshold == true){
-						fixCoordinate(last_RobotRunVec, 34);
+						fixCoordinate(last_RobotRunVec, 31);
 						frontWall = false; // 2320 2640 was
 						runStatus++;
 						len_counter = 0;
@@ -645,11 +652,11 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 					target_theta_now = (degree - last_target_degree) / 180.0 * PI;
 					speed_controller(turn_speed,- (degree_p * target_theta_now));
 				}
-				else if(frontWall == false && runStatus == 0 && len_counter < len_measure(34)){
+				else if(frontWall == false && runStatus == 0 && len_counter < len_measure(31)){
 					target_theta_now = (degree - last_target_degree) / 180.0 * PI;
 					speed_controller(turn_speed,- (slalom_degree_p * target_theta_now));
 				}
-				else if(frontWall == false && runStatus == 2 && len_counter < len_measure(34)){
+				else if(frontWall == false && runStatus == 2 && len_counter < len_measure(31)){
 					target_theta_now = (degree - target_degree) / 180.0 * PI;
 					speed_controller(turn_speed,- (slalom_degree_p * target_theta_now));
 				}
