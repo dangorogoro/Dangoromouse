@@ -345,7 +345,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	else	now_speed = (left_speed + right_speed) / 2 / MmConvWheel;
 
 	len_counter = 0;
-	uint16_t curving_length = param.get_turn_param() / 50; // 30
+	uint16_t curving_length = param.get_turn_param() / 40; // 30
 	if(root[(*i)+1].op == Operation::TURN_LEFT90S || root[(*i)+1].op == Operation::TURN_RIGHT90S) curving_length = 0;
 
 	if(root[(*i)].op != Operation::STOP){
@@ -396,7 +396,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         left_value = led_1;
         right_value = led_2;
 				if(led_1 >= led_1_threshold && led_2 >= led_2_threshold ){
-					wall_value = (led_2 - led_1 - sensor_sub) / 20.0;
+					wall_value = (led_2 - led_1 - sensor_sub) / 25.0;
 					led_fullon();
 				}
 				else led_fulloff();
@@ -434,7 +434,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 				plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed, left_value, right_value, last_left_value, last_right_value);
         //if(prescaler % 2 == 0){
         //if(led_1 > 2048 && led_2 > 2048 &&/*targetLength(getRobotVec(),RobotRunVec,curving_length) <= 100 &&*/ (fabs(led_1 3 get_left_sensor()) > 500 || fabs(led_2 - get_right_sensor()) > 500)){
-        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(right_value - last_right_value) > 110) || (fabs(left_value - last_left_value) > 110))){
+        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(right_value - last_right_value) > 120) || (fabs(left_value - last_left_value) > 120))){
           fixCoordinate();
           start_buzzer(7);
         }
@@ -865,8 +865,8 @@ void Robot::fixCoordinate(){
 		set_x(xCoordinate);
 	}
 	else{
-		if(y() > 60){
-			uint16_t yCoordinate = (uint8_t)((int16_t)(y() + 30.0) / 180) * 180 + 60 + vecStatus(0,1) * 15.00;
+		if(y() > 50){
+			uint16_t yCoordinate = (uint8_t)((int16_t)(y() + 30.0) / 180) * 180 + 50 + vecStatus(0,1) * 15.00;
 			set_y(yCoordinate);
 		}
 	}

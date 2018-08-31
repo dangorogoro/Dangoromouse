@@ -144,8 +144,9 @@ void speed_controller(int16_t target_speed,float target_rad){
 	}
 	float left_target  = (float)((float)target_speed - target_rad * WheelDistance / 2.0);
 	float right_target = (float)((float)target_speed + target_rad * WheelDistance / 2.0);
-	float left_Kp = 4.0,right_Kp = 4.0; // 4.0 4.0
-	float left_Ki = 14.0, right_Ki = 14.0; //8.0 8.0
+	float left_Kp = 3.5, right_Kp = 3.5; // 4.0 4.0
+	float left_Ki = 13.1, right_Ki = 13.1; //8.0 8.0
+	float left_Kd = 0.230, right_Kd = 0.230; //8.0 8.0
 	//const float left_Kd=0.001,right_Kd=0.001;
 	left_e	=	(float)(left_target  - (float)left_speed / (float)MmConvWheel);
 	right_e	=	(float)(right_target - (float)right_speed / (float)MmConvWheel);
@@ -153,12 +154,15 @@ void speed_controller(int16_t target_speed,float target_rad){
 	//if(fabs(right_e_old - right_e) > 100) right_e = right_e_old;
 	left_e_sum  += left_e / 1000.0;
 	right_e_sum += right_e / 1000.0;
-	left_input = left_e * left_Kp + left_e_sum * left_Ki;
-	right_input = right_e * right_Kp + right_e_sum * right_Ki;
-	//set_speed(left_e*left_Kp+left_e_sum*left_Ki+(left_e-left_e_old)*1000.0f*left_Kd,right_e*right_Kp+right_e_sum*right_Ki+(right_e-right_e_old)*1000.0*right_Kd);
+	left_input = left_e * left_Kp + left_e_sum * left_Ki + left_Kd * (left_e - left_e_old);
+  //if(left_input >= TIM3_Period) left_input = last_left_input;
+  //if(right_input >= TIM3_Period) right_input = last_right_input;
+	right_input = right_e * right_Kp + right_e_sum * right_Ki + right_Kd * (right_e - right_e_old);
 	set_speed(left_input,right_input);
 	left_e_old  = left_e;
 	right_e_old = right_e;
+  last_left_input = left_input;
+  last_right_input = right_input;
 }
 void mouse_turn(const uint8_t value){
 	while(1){
