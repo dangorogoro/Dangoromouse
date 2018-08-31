@@ -429,7 +429,7 @@ int main(){
 	Agent::State prev_State = Agent::IDLE;
 
 	while(1){
-		if(mode_select % 10 == 0){
+		if(mode_select % 16 == 0){
 			led_flash();
 
 			while(1){
@@ -687,7 +687,7 @@ int main(){
         if(timer_clock == ON){
           timer_clock = OFF;
           if(abs(last_x - dango.x()) >= 1 || abs(last_y - dango.y()) >= 1){
-            plot.push_back(dango.x(), dango.y(), degree);
+            plot.push_back(dango.x() * 100.0, dango.y() * 100.0, degree);
             last_x = dango.x();
             last_y = dango.y();
           }
@@ -715,7 +715,106 @@ int main(){
 			agent.resumeAt(Agent::SEARCHING_NOT_GOAL,maze);
 			mode_select = 3;
 		}
-
+    else if(mode_select % 10 == 9){
+			TIM_Cmd(TIM5,ENABLE);
+      len_counter = 0;
+      TIM2->CNT = 0;
+      TIM8->CNT = 0;
+      int16_t reference_velocity = 200;
+      int16_t now_velocity = 0;
+      int16_t Kx = 0.0;
+      int16_t Ky = 0.0;
+      int16_t Ktheta = 0.0;
+      uint16_t target_index = 10;
+      uint16_t index_size = 981;
+      float last_r_x = 0.0, last_r_y = 0.0;
+      float last_c_x = 0.0, last_c_y = 0.0;
+      float e_x = 0.0, e_y = 0.0;
+      float theta_e = 0.0;
+      float w_r = 0.0;
+      while(1){
+        if(ENCODER_start == ON){
+          read_encoder();
+          dango.add_coordinate(degree);
+					now_velocity = now_velocity <= reference_velocity ? now_velocity + 5 : reference_velocity;
+          speed_controller(now_velocity /* cos(theta_e)*/ + Ky * e_y, w_r + now_velocity * (Kx * e_x + Ktheta * sin(theta_e)));
+          ENCODER_start = OFF;
+        }
+        if(button_return == 1)  break;
+        if(timer_clock == ON){
+          timer_clock = OFF;
+          int16_t dst_len = now_velocity / 200;
+          target_index = (target_index % index_size) + 1;
+          e_x = dot.x[target_index] - dango.x();
+          e_y = dot.y[target_index] - dango.y();
+          float tmp_x = dot.x[target_index] -last_r_x;
+          float tmp_y = dot.y[target_index] -last_r_y;
+          //if(tmp_x == 0 && tmp_y == 0)  w_r = 0;
+          w_r = -atan2f(tmp_x, tmp_y) * 50.0;
+          plot.push_back(100 * tmp_x, 100 * tmp_y, 100 * w_r, 100 * dot.x[target_index], 100  * last_r_x, target_index);
+          theta_e = atan2(dot.x[target_index] - last_r_x, dot.y[target_index] - last_r_y) - atan2(dango.x() - last_c_x, dango.y() - last_c_y);
+          last_r_x = dot.x[target_index];
+          last_r_y = dot.y[target_index];
+          last_c_x = dango.x();
+          last_c_y = dango.y();
+          //plot.push_back(100 * w_r, 100 * theta_e);
+        }
+      }
+      Delay_ms(500);
+      while(button_return == 0);
+      pipi(3);
+      pipi(4);
+      pipi(5);
+      pipi(6);
+      plot.all_print();
+    }
+    else if(mode_select % 16 == 10){
+      pipi(3);
+      pipi(4);
+      pipi(5);
+      pipi(6);
+      ADC_RegularChannelConfig(ADC1,ADC_Channel_14,1,ADC_SampleTime_56Cycles);//
+      ADC_SoftwareStartConv(ADC1);
+      while(ADC_GetFlagStatus(ADC1,ADC_FLAG_EOC)==RESET);
+      const uint16_t value = ADC_GetConversionValue(ADC1);
+      const int16_t voltage = (float)value / 3475.f * 8.4 ;
+      const int16_t Duty = (TIM3_Period) / voltage * 1.0;
+		  suction_start(40);
+      pipi(6);
+      pipi(5);
+      pipi(4);
+      pipi(3);
+			TIM_Cmd(TIM5,ENABLE);
+      len_counter = 0;
+      TIM2->CNT = 0;
+      TIM8->CNT = 0;
+      volatile uint16_t cnt = 0;;
+      volatile int16_t input = 0;
+      while(1){
+        if(ENCODER_start == ON){
+          read_encoder();
+          ENCODER_start = OFF;
+        }
+        if(button_return == 1)  break;
+        if(timer_clock == ON){
+          timer_clock = OFF;
+          cnt++;
+          if(cnt <= 100) input = 0;
+          else if(cnt >= 600) input = 0;
+          else input = Duty;
+          plot.push_back(left_speed / MmConvWheel, right_speed / MmConvWheel, input);
+          set_speed(input, input);
+        }
+      }
+		  suction_stop();
+      Delay_ms(500);
+      while(button_return == 0);
+      pipi(3);
+      pipi(4);
+      pipi(5);
+      pipi(6);
+      plot.all_print();
+    }
 	}
 	return 0;
 }

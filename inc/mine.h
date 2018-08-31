@@ -23,6 +23,7 @@ using namespace Eigen;
 #include "plot.h"
 #include "flash.h"
 #include "flag.h"
+#include "traject.h"
 #include <string>
 extern "C" {
 #endif /* __cplusplus */
