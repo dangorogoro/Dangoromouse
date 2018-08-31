@@ -345,7 +345,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	else	now_speed = (left_speed + right_speed) / 2 / MmConvWheel;
 
 	len_counter = 0;
-	uint16_t curving_length = param.get_turn_param() / 60; // 30
+	uint16_t curving_length = param.get_turn_param() / 50; // 30
 	if(root[(*i)+1].op == Operation::TURN_LEFT90S || root[(*i)+1].op == Operation::TURN_RIGHT90S) curving_length = 0;
 
 	if(root[(*i)].op != Operation::STOP){
@@ -362,7 +362,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT45 || root[(*i)+1].op == Operation::TURN_LEFT45) ? curving_length + 45 : curving_length;
 	length = *i == 0 ? 130 + (root[*i].n - 1) * ONE_BLOCK - curving_length : root[*i].n * ONE_BLOCK - curving_length; //130 was
 
-	float e_now = 0,e_sum = 0;
+	float e_now = 0, e_sum = 0;
 	float target_theta_now = 0,target_theta_last = 0;
 	float x_p = 1.0 / 600.0 * last_speed;
 	float x_i = 1.0 / 600.0 * last_speed;
@@ -396,7 +396,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         left_value = led_1;
         right_value = led_2;
 				if(led_1 >= led_1_threshold && led_2 >= led_2_threshold ){
-					wall_value = (led_2 - led_1 - sensor_sub) / 25.0;
+					wall_value = (led_2 - led_1 - sensor_sub) / 20.0;
 					led_fullon();
 				}
 				else led_fulloff();
@@ -581,7 +581,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 					clothoid_flag = false;
 				}
 				else{
-					second_clothoid_degree = (clothoid_flag == false) ? target_degree + (current_degree - first_clothoid_degree) : second_clothoid_degree;
+					second_clothoid_degree = (clothoid_flag == false) ? target_degree +  5.0 * (current_degree - first_clothoid_degree) : second_clothoid_degree;
 					clothoid_flag = true;
 					if(operation_direction == -1 && degree <= second_clothoid_degree)	target_rad -= turn_speed / radius / timing;
 					if(operation_direction == 1 && degree >= second_clothoid_degree)	target_rad -= turn_speed / radius / timing;

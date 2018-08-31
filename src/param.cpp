@@ -23,6 +23,7 @@ void ParamList::setting(){
 	Param param5(0,1800,800,600,5);
 	Param param6(0,2800,800,600,5);
 	Param param7(0,1800,1000,600,5);
+	Param param8(0,2800,1000,600,5);
 
 	param_list.push_back(param0);
 	param_list.push_back(param1);
@@ -32,4 +33,5 @@ void ParamList::setting(){
 	param_list.push_back(param5);
 	param_list.push_back(param6);
 	param_list.push_back(param7);
+	param_list.push_back(param8);
 }
