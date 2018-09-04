@@ -384,8 +384,7 @@ int main(){
 	
 	//////
 	GPIO_WriteBit(GPIOB,GPIO_Pin_10 | GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_15,Bit_SET);
-	while(button_return == 0){
-	}
+	while(button_return == 0);
 	mouse_motor_setting();
 	ADC_setting();
 	USART_setting();
@@ -444,7 +443,7 @@ int main(){
 					led_get();
 			}
 		}
-		else if(mode_select % 10 == 1){
+		else if(mode_select % 16 == 1){
 			maze = upload_mazedata();
 			maze.printWall();
 			agent.resumeAt(Agent::FINISHED,maze);
@@ -487,7 +486,7 @@ int main(){
 				}
 			}*/
 		}
-		else if(mode_select % 10 == 2){
+		else if(mode_select % 16 == 2){
 			float target_theta_last = 0;
 			float target_theta_sum = 0;
 			float degree_p = 20, degree_i = 0.1, degree_d = 1.0;
@@ -513,7 +512,7 @@ int main(){
 					GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_RESET);
 			}
 		}
-		else if(mode_select % 10 == 3){
+		else if(mode_select % 16 == 3){
 			Flash_clear();
 			stop_flag = false;
 			led_flash();
@@ -614,7 +613,7 @@ int main(){
 				plot.clear();
 			}
 		}
-		else if(mode_select % 10 == 4){
+		else if(mode_select % 16 == 4){
 			Robot dango;
 			Robot last_dango = dango;
 			pipi(3);
@@ -623,12 +622,13 @@ int main(){
 			pipi(6);
 			Delay_ms(1000);
 			OperationList runSequence; 
-			runSequence.push_back({Operation::FORWARD,1});
+			runSequence.push_back({Operation::FORWARD,15});
 			runSequence.push_back({Operation::TURN_RIGHT90,1});
-			runSequence.push_back({Operation::TURN_RIGHT90,1});
-			runSequence.push_back({Operation::TURN_LEFT90,1});
-			runSequence.push_back({Operation::TURN_LEFT90,1});
-			runSequence.push_back({Operation::FORWARD,9});
+      for(int i = 1;i <= 7;i++){
+        runSequence.push_back({Operation::FORWARD,14});
+        runSequence.push_back({Operation::TURN_RIGHT90,1});
+      }
+			runSequence.push_back({Operation::FORWARD,3});
 			runSequence.push_back({Operation::STOP,1});
 			runSequence = rebuildOperation(runSequence,0);
 			while(1){
@@ -648,7 +648,7 @@ int main(){
 				dango = last_dango;
 			}
 		}
-		else if(mode_select % 10 == 5){
+		else if(mode_select % 16 == 5){
 			led_flash();
 			while(1){
 				sensor_works();
@@ -667,7 +667,7 @@ int main(){
 				}
 			}
 		}
-		else if(mode_select % 10 == 6){
+		else if(mode_select % 16 == 6){
 			TIM_Cmd(TIM5,ENABLE);
       float last_x, last_y;
       len_counter = 0;
@@ -702,7 +702,7 @@ int main(){
       pipi(6);
       plot.all_print();
 		}
-		else if(mode_select % 10 == 7){
+		else if(mode_select % 16 == 7){
 			led_fullon();
 			suction_start(60);
 			Delay_ms(4000);
@@ -710,12 +710,12 @@ int main(){
 			suction_stop();
 			while(1);
 		}
-		else if(mode_select % 10 == 8){
+		else if(mode_select % 16 == 8){
 			maze = upload_mazedata();
 			agent.resumeAt(Agent::SEARCHING_NOT_GOAL,maze);
 			mode_select = 3;
 		}
-    else if(mode_select % 10 == 9){
+    else if(mode_select % 16 == 9){
 			TIM_Cmd(TIM5,ENABLE);
       len_counter = 0;
       TIM2->CNT = 0;
@@ -800,7 +800,7 @@ int main(){
           timer_clock = OFF;
           cnt++;
           if(cnt <= 100) input = 0;
-          else if(cnt >= 600) input = 0;
+          else if(cnt >= 400) input = 0;
           else input = Duty;
           plot.push_back(left_speed / MmConvWheel, right_speed / MmConvWheel, input);
           set_speed(input, input);
