@@ -1,3 +1,4 @@
+//ISDT
 #include "mine.h"
 Maze maze,maze_backup;
 uint16_t frontWallThreshold_3 = 2250, frontWallThreshold_4 = 2190; //3 was 2180
@@ -62,6 +63,8 @@ void Robot::startOffSet(Agent *agent){
 		sensor_sub /= 10;
 		led_1_reference /= 10;
 		led_2_reference /= 10;
+    //led_1_reference = 2316;
+    //led_2_reference = 2268;
 	agent->update(Robot::getRobotVec(),0b11111110);
 	while(len_counter <= len_measure(130)){
 		go_straight(0);
@@ -433,8 +436,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 				timer_clock = OFF;
 				plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed, left_value, right_value, last_left_value, last_right_value);
         //if(prescaler % 2 == 0){
-        //if(led_1 > 2048 && led_2 > 2048 &&/*targetLength(getRobotVec(),RobotRunVec,curving_length) <= 100 &&*/ (fabs(led_1 3 get_left_sensor()) > 500 || fabs(led_2 - get_right_sensor()) > 500)){
-        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(right_value - last_right_value) > 120) || (fabs(left_value - last_left_value) > 120))){
+        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(right_value - last_right_value) > 120) || (fabs(left_value - last_left_value) > 120)) && ((left_value < 2100 || last_left_value < 2100) || (right_value < 2100 || last_right_value < 2100))){
           fixCoordinate();
           start_buzzer(7);
         }
@@ -861,12 +863,12 @@ bool Robot::judgeTargetCoordinate(IndexVec targetIndex, Matrix2i vecStatus,uint1
 void Robot::fixCoordinate(){
 	Matrix2i vecStatus = RobotRunVec;
 	if(vecStatus(0,0) != 0){	//x direction
-		uint16_t xCoordinate = (uint8_t)((int16_t)(x() + 90.0) / 180) * 180 + vecStatus(0,0) * 15.0;
+		uint16_t xCoordinate = (uint8_t)((int16_t)(x() + 90.0) / 180) * 180 ;//+ vecStatus(0,0) * 15.0;
 		set_x(xCoordinate);
 	}
 	else{
 		if(y() > 50){
-			uint16_t yCoordinate = (uint8_t)((int16_t)(y() + 30.0) / 180) * 180 + 50 + vecStatus(0,1) * 15.00;
+			uint16_t yCoordinate = (uint8_t)((int16_t)(y() + 30.0) / 180) * 180 + 50;// + vecStatus(0,1) * 15.00;
 			set_y(yCoordinate);
 		}
 	}
