@@ -6,6 +6,9 @@ int16_t search_velocity = 600;
 int16_t last_left_input = 0, last_right_input = 0;
 float MmConvWheel = (4096.0 * 44.0 / 9.0 / 1000.0 / 78.0);  //79.0
 
+float left_Kp = 4.04, right_Kp = 4.04; // 4.0 4.0
+float left_Ki = 15.5, right_Ki = 15.5; //8.0 8.0
+float left_Kd = 0.236, right_Kd = 0.236; //8.0 8.0
 void suction_motor_setting(){
 	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;
 	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Disable;
@@ -144,9 +147,6 @@ void speed_controller(int16_t target_speed,float target_rad){
 	}
 	float left_target  = (float)((float)target_speed - target_rad * WheelDistance / 2.0);
 	float right_target = (float)((float)target_speed + target_rad * WheelDistance / 2.0);
-	float left_Kp = 3.5, right_Kp = 3.5; // 4.0 4.0
-	float left_Ki = 13.1, right_Ki = 13.1; //8.0 8.0
-	float left_Kd = 0.230, right_Kd = 0.230; //8.0 8.0
 	//const float left_Kd=0.001,right_Kd=0.001;
 	left_e	=	(float)(left_target  - (float)left_speed / (float)MmConvWheel);
 	right_e	=	(float)(right_target - (float)right_speed / (float)MmConvWheel);
