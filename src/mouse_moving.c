@@ -4,11 +4,13 @@ int16_t last_left_speed = 0,last_right_speed = 0;
 volatile uint8_t ENCODER_start = 0;
 int16_t search_velocity = 600;
 int16_t last_left_input = 0, last_right_input = 0;
-float MmConvWheel = (4096.0 * 44.0 / 9.0 / 1000.0 / 78.0);  //79.0
+float MmConvWheel = (4096.0 * 40.0 / 13.0 / 1000.0 / 78.0);  //79.0
 
-float left_Kp = 4.04, right_Kp = 4.04; // 4.0 4.0
-float left_Ki = 15.5, right_Ki = 15.5; //8.0 8.0
-float left_Kd = 0.236, right_Kd = 0.236; //8.0 8.0
+float left_Kp = 5.17, right_Kp = 5.17; // 4.0 4.0
+float left_Ki = 12.1, right_Ki = 12.1; //8.0 8.0
+float left_Kd = 0.54, right_Kd = 0.54; //8.0 8.0
+//Kp = 4.06, Ki = 9.76, Kd = 0.389, T
+//Kp = 0.561, Ki = 5.78, Kd = 0.00563
 void suction_motor_setting(){
 	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;
 	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Disable;
@@ -70,7 +72,6 @@ void stop_motor(){
 	TIM_OC4Init(TIM3,&TIM_OCInitStructure); //
 }
 void set_left_motor(int16_t velocity){
-//	if(abs(velocity) >= TIM3_Period) velocity = last_left_input;
 	if(velocity >= 0){
 		TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
 		TIM_OCInitStructure.TIM_Pulse = TIM3_Period - velocity - 1; //to-1000
@@ -94,7 +95,6 @@ void set_speed(int16_t left_speed,int16_t right_speed){
 	set_right_motor(-right_speed);
 }
 void set_right_motor(int16_t velocity){
-//  if(abs(velocity) >= TIM3_Period) velocity = last_right_input;
 	if(velocity >= 0){
 		TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
 		TIM_OCInitStructure.TIM_Pulse = TIM3_Period-1; //to-1000
@@ -138,6 +138,7 @@ float left_e = 0.f,right_e = 0.f;
 float left_e_old = 0.f,right_e_old=0.f;
 float left_input = 0.f, right_input = 0.f;
 
+uint16_t left_speed_counter = 0, right_speed_counter = 0;
 void speed_controller(int16_t target_speed,float target_rad){
 	float GYRO_rad = 0;
 	if(GYRO_start == ON){
@@ -155,9 +156,22 @@ void speed_controller(int16_t target_speed,float target_rad){
 	left_e_sum  += left_e / 1000.0;
 	right_e_sum += right_e / 1000.0;
 	left_input = left_e * left_Kp + left_e_sum * left_Ki + left_Kd * (left_e - left_e_old);
-  //if(left_input >= TIM3_Period) left_input = last_left_input;
-  //if(right_input >= TIM3_Period) right_input = last_right_input;
 	right_input = right_e * right_Kp + right_e_sum * right_Ki + right_Kd * (right_e - right_e_old);
+
+  if(left_input >= TIM3_Period){
+    left_speed_counter++;
+    if(left_speed_counter >= 50)left_input = 0;
+    else  left_input = TIM3_Period - 2;
+  }
+  else  left_speed_counter = 0;
+  if(right_input >= TIM3_Period){
+    right_speed_counter++;
+    if(right_speed_counter >= 50)right_input = 0;
+    else  right_input = TIM3_Period - 2;
+  }
+  else right_speed_counter = 0;
+
+
 	set_speed(left_input,right_input);
 	left_e_old  = left_e;
 	right_e_old = right_e;
@@ -285,7 +299,7 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 void go_left(int16_t target_degree){
 	float start_degree = degree;
 	float last_rad = search_velocity / 50.0; //50 30 15
-	float rad_size = last_rad / 20.0;
+	float rad_size = last_rad / 15.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
@@ -309,7 +323,7 @@ void go_left(int16_t target_degree){
 void go_right(int16_t target_degree){
 	float start_degree = degree;
 	float last_rad = search_velocity / 50.0;
-	float rad_size = last_rad / 20.0;
+	float rad_size = last_rad / 15.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
@@ -346,7 +360,7 @@ void start_wall(int16_t po){
 	set_speed(0,0);
 	reset_e();
 	len_counter = 0;
-	while(len_counter > len_measure(-80)){
+	while(len_counter > len_measure(-30)){
 		go_back(0);
 	}
 	degree = po * 90.0;

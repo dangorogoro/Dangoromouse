@@ -230,7 +230,7 @@ void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
 	if(wall_dir != 0){
 		turn_side(getRobotDegreeDir(),wall_dir);
 		addRobotDegreeDir(wall_dir);
-		while(len_counter > len_measure(-40)){
+		while(len_counter > len_measure(-20)){
 			const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
 			go_back(-target_theta);
 		}
@@ -434,10 +434,10 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 			if(timer_clock == ON){
 				prescaler = (prescaler + 1) % 100;
 				timer_clock = OFF;
-				plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed, left_value, right_value, last_left_value, last_right_value);
+				plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, left_input, right_input, now_speed, left_value, right_value, last_left_value, last_right_value);
         //if(prescaler % 2 == 0){
         if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(right_value - last_right_value) > 120) || (fabs(left_value - last_left_value) > 120)) && ((left_value < 2100 || last_left_value < 2100) || (right_value < 2100 || last_right_value < 2100))){
-          fixCoordinate();
+          //fixCoordinate();
           start_buzzer(7);
         }
         last_left_value = left_value;
@@ -637,7 +637,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 			if(SENSOR_start == ON)	led_get();
 			if(ENCODER_start == ON){
 				float radius = 50.0;
-				float timing = 20.0;
+				float timing = 15.0;
 				read_encoder();
 				add_coordinate(degree);
 				if(checkZAccel()){
