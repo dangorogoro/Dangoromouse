@@ -622,13 +622,15 @@ int main(){
 			pipi(6);
 			Delay_ms(1000);
 			OperationList runSequence; 
-			runSequence.push_back({Operation::FORWARD,15});
+			runSequence.push_back({Operation::FORWARD,8});
+      /*
 			runSequence.push_back({Operation::TURN_RIGHT90,1});
       for(int i = 1;i <= 7;i++){
         runSequence.push_back({Operation::FORWARD,14});
         runSequence.push_back({Operation::TURN_RIGHT90,1});
       }
 			runSequence.push_back({Operation::FORWARD,3});
+      */
 			runSequence.push_back({Operation::STOP,1});
 			runSequence = rebuildOperation(runSequence,0);
 			while(1){
@@ -646,6 +648,7 @@ int main(){
 				pipi(5);
 				pipi(6);
 				dango = last_dango;
+        plot.clear();
 			}
 		}
 		else if(mode_select % 16 == 5){
@@ -779,7 +782,7 @@ int main(){
       const uint16_t value = ADC_GetConversionValue(ADC1);
       const int16_t voltage = (float)value / 3475.f * 8.4 ;
       const int16_t Duty = (TIM3_Period) / voltage * 1.0;
-		  suction_start(40);
+		  //suction_start(40);
       pipi(6);
       pipi(5);
       pipi(4);
@@ -790,10 +793,15 @@ int main(){
       TIM8->CNT = 0;
       volatile uint16_t cnt = 0;;
       volatile int16_t input = 0;
+      int16_t rad = 0;
       while(1){
         if(ENCODER_start == ON){
           read_encoder();
           ENCODER_start = OFF;
+        }
+        if(GYRO_start == ON){
+          rad = (float)(ReadGYRO()-GYRO_offset_data);///16.4/180.0*3.14;
+          GYRO_start = OFF;
         }
         if(button_return == 1)  break;
         if(timer_clock == ON){
@@ -802,11 +810,12 @@ int main(){
           if(cnt <= 100) input = 0;
           else if(cnt >= 400) input = 0;
           else input = Duty;
-          plot.push_back(left_speed / MmConvWheel, right_speed / MmConvWheel, input);
-          set_speed(input, input);
+          //plot.push_back(left_speed / MmConvWheel, right_speed / MmConvWheel, input);
+          plot.push_back(rad, input);
+          set_speed(-input*3, input*3);
         }
       }
-		  suction_stop();
+		  //suction_stop();
       Delay_ms(500);
       while(button_return == 0);
       pipi(3);
