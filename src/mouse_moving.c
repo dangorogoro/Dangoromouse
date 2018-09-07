@@ -9,6 +9,9 @@ float MmConvWheel = (4096.0 * 40.0 / 13.0 / 1000.0 / 78.0);  //79.0
 float left_Kp = 5.17, right_Kp = 5.17; // 4.0 4.0
 float left_Ki = 12.1, right_Ki = 12.1; //8.0 8.0
 float left_Kd = 0.54, right_Kd = 0.54; //8.0 8.0
+float rotate_Kp = 160.12;
+float rotate_Ki = 166.90;
+float rotate_Kd = 38.18;
 //Kp = 4.06, Ki = 9.76, Kd = 0.389, T
 //Kp = 0.561, Ki = 5.78, Kd = 0.00563
 void suction_motor_setting(){
@@ -138,6 +141,9 @@ float left_e = 0.f,right_e = 0.f;
 float left_e_old = 0.f,right_e_old=0.f;
 float left_input = 0.f, right_input = 0.f;
 
+float rad_e = 0.f;
+float rad_e_sum = 0.f;
+float rad_e_old = 0.f;
 uint16_t left_speed_counter = 0, right_speed_counter = 0;
 void speed_controller(int16_t target_speed,float target_rad){
 	float GYRO_rad = 0;
@@ -146,27 +152,35 @@ void speed_controller(int16_t target_speed,float target_rad){
 		degree += GYRO_rad*180.0/3.14/1000.0;
 		GYRO_start = OFF;
 	}
+  /*
 	float left_target  = (float)((float)target_speed - target_rad * WheelDistance / 2.0);
 	float right_target = (float)((float)target_speed + target_rad * WheelDistance / 2.0);
-	//const float left_Kd=0.001,right_Kd=0.001;
-	left_e	=	(float)(left_target  - (float)left_speed / (float)MmConvWheel);
-	right_e	=	(float)(right_target - (float)right_speed / (float)MmConvWheel);
-	//if(fabs(left_e_old - left_e) > 100) left_e = left_e_old;
-	//if(fabs(right_e_old - right_e) > 100) right_e = right_e_old;
+  */
+	float left_target  = (float)target_speed;
+	float right_target = (float)target_speed;
+	left_e	=	(float)(left_target  - (float)(left_speed + right_speed) / 2.0f / (float)MmConvWheel);
+	right_e	=	(float)(right_target - (float)(left_speed + right_speed) / 2.0f / (float)MmConvWheel);
 	left_e_sum  += left_e / 1000.0;
 	right_e_sum += right_e / 1000.0;
+
+  rad_e = target_rad - GYRO_rad;
+  rad_e_sum += rad_e / 1000.0;
+
 	left_input = left_e * left_Kp + left_e_sum * left_Ki + left_Kd * (left_e - left_e_old);
 	right_input = right_e * right_Kp + right_e_sum * right_Ki + right_Kd * (right_e - right_e_old);
+  
+	left_input -= rad_e * rotate_Kp + rad_e_sum * rotate_Ki + rotate_Kd * (rad_e - rad_e_old);
+	right_input += rad_e * rotate_Kp + rad_e_sum * rotate_Ki + rotate_Kd * (rad_e - rad_e_old);
 
   if(left_input >= TIM3_Period){
     left_speed_counter++;
-    if(left_speed_counter >= 50)left_input = 0;
+    if(left_speed_counter >= 500)left_input = 0;
     else  left_input = TIM3_Period - 2;
   }
   else  left_speed_counter = 0;
   if(right_input >= TIM3_Period){
     right_speed_counter++;
-    if(right_speed_counter >= 50)right_input = 0;
+    if(right_speed_counter >= 500)right_input = 0;
     else  right_input = TIM3_Period - 2;
   }
   else right_speed_counter = 0;
@@ -175,6 +189,7 @@ void speed_controller(int16_t target_speed,float target_rad){
 	set_speed(left_input,right_input);
 	left_e_old  = left_e;
 	right_e_old = right_e;
+  rad_e_old = rad_e;
   last_left_input = left_input;
   last_right_input = right_input;
 }
@@ -299,7 +314,7 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 void go_left(int16_t target_degree){
 	float start_degree = degree;
 	float last_rad = search_velocity / 50.0; //50 30 15
-	float rad_size = last_rad / 15.0;
+	float rad_size = last_rad / 20.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
@@ -323,7 +338,7 @@ void go_left(int16_t target_degree){
 void go_right(int16_t target_degree){
 	float start_degree = degree;
 	float last_rad = search_velocity / 50.0;
-	float rad_size = last_rad / 15.0;
+	float rad_size = last_rad / 20.0;
 	float target_rad = 0;
 	int8_t init_flag = 0;
 	float first_degree = 0.0;
@@ -384,6 +399,10 @@ void reset_e(){
 	right_e = 0;
 	left_e_sum  = 0;
 	right_e_sum = 0;
+
+  rad_e = 0.f;
+  rad_e_sum = 0.f;
+  rad_e_old = 0.f;
 }
 void start_withoutwall(int16_t po){
 	set_speed(0,0);
