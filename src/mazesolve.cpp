@@ -166,13 +166,14 @@ void Robot::startBack(Direction target_dir, bool reverse_flag){
 	setWallStatus();
 	len_counter = 0;
 	if(reverse_flag == 0)	goStraight(70);
-	int32_t back_length = -80;
+	int32_t back_length = -40;
 	int8_t wall_dir = 0; // 1 right -1 left
 	if(leftWall == true) wall_dir = -1;
 	else if(rightWall == true) wall_dir = 1;
 	////////////////////////////////////////write here!!!!!!!!!!!!!!!!!!!!!!!!
 	len_counter = 0;
 	set_speed(0,0);
+  reset_e();
 	Delay_ms(300);
 	if(wall_dir != 0){
 		turn_side(getRobotDegreeDir(),wall_dir);
@@ -191,6 +192,7 @@ void Robot::startBack(Direction target_dir, bool reverse_flag){
 			go_straight(target_theta);
 		}
 		set_speed(0,0);
+    reset_e();
 		Delay_ms(100);
 		turn_side(getRobotDegreeDir(),wall_dir);
 		addRobotDegreeDir(wall_dir);
@@ -215,6 +217,7 @@ void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
 	////////////////////////////////////////write here!!!!!!!!!!!!!!!!!!!!!!!!
 	len_counter = 0;
 	set_speed(0,0);
+  reset_e();
 	if(true == getSaveMazeFlag() || 0 == getSearchingSaveFlag()){
 		save_mazedata(maze);
 		pipi(2);
@@ -247,6 +250,7 @@ void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
 				go_straight(target_theta);
 			}
 			set_speed(0,0);
+      reset_e();
 			Delay_ms(100);
 			turn_side(getRobotDegreeDir(),wall_dir);
 			addRobotDegreeDir(wall_dir);
@@ -842,7 +846,7 @@ float target_Coordinate(IndexVec targetIndex, Matrix2i vecStatus){
 	if(vecStatus(0,0) != 0)  //x direction
 		distance = (targetIndex.x * 180.0) - vecStatus(0,0) * 90.0;
 	else //y direction
-		distance = (targetIndex.y * 180.0) - vecStatus(0,1) * 90.0 + 60.0;
+		distance = (targetIndex.y * 180.0) - vecStatus(0,1) * 90.0 + 50.0;
 
 	return distance;
 }
