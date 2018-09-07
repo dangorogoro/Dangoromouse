@@ -21,7 +21,7 @@ void ParamList::setting(){
 	Param param3(0,1800,600,600,5);
 	Param param4(0,2300,600,600,10);
 	Param param5(0,1800,800,600,10);
-	Param param6(0,2800,800,600,10);
+	Param param6(0,3000,800,600,10);
 	Param param7(0,1800,1000,600,5);
 	Param param8(0,2800,1000,600,10);
 
