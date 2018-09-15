@@ -165,7 +165,7 @@ void Robot::goLeft(){
 void Robot::startBack(Direction target_dir, bool reverse_flag){
 	setWallStatus();
 	len_counter = 0;
-	if(reverse_flag == 0)	goStraight(70);
+	if(reverse_flag == 0)	goStraight(60);
 	int32_t back_length = -40;
 	int8_t wall_dir = 0; // 1 right -1 left
 	if(leftWall == true) wall_dir = -1;
@@ -210,7 +210,7 @@ void Robot::startBack(Direction target_dir, bool reverse_flag){
 	setRobotDegreeDir(target_dir);
 }
 void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
-	goStraight(70);
+	goStraight(60);
 	int8_t wall_dir = 0; // 1 right -1 left
 	if(leftWall == true) wall_dir = -1;
 	else if(rightWall == true) wall_dir = 1;
@@ -245,7 +245,7 @@ void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
 		Delay_ms(100);
 		
 		if(false == goal_flag){
-			while(len_counter < len_measure(30)){
+			while(len_counter < len_measure(25)){
 				const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
 				go_straight(target_theta);
 			}
@@ -352,7 +352,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	else	now_speed = (left_speed + right_speed) / 2 / MmConvWheel;
 
 	len_counter = 0;
-	uint16_t curving_length = param.get_turn_param() / 40; // 30
+	uint16_t curving_length = param.get_turn_param() / 50; // 30
 	if(root[(*i)+1].op == Operation::TURN_LEFT90S || root[(*i)+1].op == Operation::TURN_RIGHT90S) curving_length = 0;
 
 	if(root[(*i)].op != Operation::STOP){
@@ -405,6 +405,17 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 				if(led_1 >= led_1_threshold && led_2 >= led_2_threshold ){
 					wall_value = (led_2 - led_1 - sensor_sub) / 25.0;
 					led_fullon();
+          /*
+          2283 2277
+            2341 2234
+            2433 2193
+            2533 2167
+
+            2216 2373
+            2194 2418
+            2166 2451
+          */
+
 				}
 				else led_fulloff();
 				reset_led();
@@ -440,7 +451,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 				timer_clock = OFF;
 				plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, left_input, right_input, now_speed, left_value, right_value, last_left_value, last_right_value);
         //if(prescaler % 2 == 0){
-        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(right_value - last_right_value) > 120) || (fabs(left_value - last_left_value) > 120)) && ((left_value < 2100 || last_left_value < 2100) || (right_value < 2100 || last_right_value < 2100))){
+        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(right_value - last_right_value) > 110) || (fabs(left_value - last_left_value) > 110)) && ((left_value < 2100 || last_left_value < 2100) || (right_value < 2100 || last_right_value < 2100))){
           //fixCoordinate();
           start_buzzer(7);
         }
@@ -872,7 +883,7 @@ void Robot::fixCoordinate(){
 	}
 	else{
 		if(y() > 50){
-			uint16_t yCoordinate = (uint8_t)((int16_t)(y() + 30.0) / 180) * 180 + 50;// + vecStatus(0,1) * 15.00;
+			uint16_t yCoordinate = (uint8_t)((int16_t)(y() + 50.0) / 180) * 180 + 50;// + vecStatus(0,1) * 15.00;
 			set_y(yCoordinate);
 		}
 	}
