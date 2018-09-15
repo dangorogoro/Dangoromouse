@@ -616,10 +616,10 @@ int main(){
 		else if(mode_select % 16 == 4){
 			Robot dango;
 			Robot last_dango = dango;
-			pipi(3);
-			pipi(4);
 			pipi(5);
+			pipi(4);
 			pipi(6);
+			pipi(3);
 			Delay_ms(1000);
 			OperationList runSequence; 
 			runSequence.push_back({Operation::FORWARD,8});
