@@ -218,13 +218,13 @@ void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
 	len_counter = 0;
 	set_speed(0,0);
   reset_e();
+	Delay_ms(300);
 	if(true == getSaveMazeFlag() || 0 == getSearchingSaveFlag()){
 		save_mazedata(maze);
 		pipi(2);
 		pipi(3);
 		pipi(5);
 	}
-	Delay_ms(300);
 	int8_t value;
 	if(Nextdir == NORTH)	value = 0;
 	if(Nextdir == WEST)	value = 1;
@@ -661,7 +661,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 				}
 				if(frontWall == true && runStatus % 2 == 0){
 					if(frontThreshold == true){
-						fixCoordinate(last_RobotRunVec, 31);
+						//fixCoordinate(last_RobotRunVec, 40);
 						frontWall = false; // 2320 2640 was
 						runStatus++;
 						len_counter = 0;
@@ -893,12 +893,12 @@ void Robot::fixCoordinate(){
 void Robot::fixCoordinate(Matrix2i runVec, float offset){
 	Matrix2i vecStatus = runVec;
 	if(vecStatus(0,0) != 0){	//x direction
-		uint16_t xCoordinate = (uint8_t)((int16_t)(x() + 90.0) / 180) * 180 - vecStatus(0,0) * (90 - offset);
+		uint16_t xCoordinate = (uint16_t)((int16_t)(x() + 90.0) / 180) * 180 - vecStatus(0,0) * (90 - offset);
 		set_x(xCoordinate);
 	}
 	else{
 		if(y() > 40){
-			uint16_t yCoordinate = (uint8_t)((int16_t)(y() + 50.0) / 180) * 180 + 40 - vecStatus(0,1) * (90 - offset);
+			uint16_t yCoordinate = (uint16_t)((int16_t)(y() + 50.0) / 180) * 180 + 40 - vecStatus(0,1) * (90 - offset);
 			set_y(yCoordinate);
 		}
 	}

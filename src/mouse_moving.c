@@ -230,9 +230,9 @@ void turn_back(int16_t target_direction){
 	float first_turn_degree,second_turn_degree;
 	set_speed(0,0);
 	Delay_ms(300);
-	float last_rad = 5.0;
+	float last_rad = 4.8f;
 	float target_rad = 0.0;
-	float rad_diff = 0.5f;
+	float rad_diff = 0.6f;
 	bool first_flag = false;
 	bool second_flag = false;
 	while(degree >= turn_direction * 90){
@@ -259,10 +259,10 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 	float current_degree = degree;
 	float first_turn_degree,second_turn_degree;
 	set_speed(0,0);
-	Delay_ms(100);
-	float last_rad = 5.0;
+	Delay_ms(300);
+	float last_rad = 4.8f;
 	float target_rad = 0.0;
-	float rad_diff = 0.5f;
+	float rad_diff = 0.6f;
 	bool first_flag = false;
 	bool second_flag = false;
 	if(wall_dir == 1){
@@ -375,7 +375,7 @@ void start_wall(int16_t po){
 	set_speed(0,0);
 	reset_e();
 	len_counter = 0;
-	while(len_counter > len_measure(-30)){
+	while(len_counter > len_measure(-40)){
 		go_back(0);
 	}
 	degree = po * 90.0;
@@ -408,7 +408,7 @@ void start_withoutwall(int16_t po){
 	set_speed(0,0);
 	reset_e();
 	len_counter = 0;
-	while(len_counter > len_measure(-60)){
+	while(len_counter > len_measure(-50)){
 		go_back(0);
 	}
 	reset_e();
