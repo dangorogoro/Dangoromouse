@@ -4,14 +4,14 @@ int16_t last_left_speed = 0,last_right_speed = 0;
 volatile uint8_t ENCODER_start = 0;
 int16_t search_velocity = 600;
 int16_t last_left_input = 0, last_right_input = 0;
-float MmConvWheel = (4096.0 * 40.0 / 13.0 / 1000.0 / 78.0);  //79.0
+float MmConvWheel = (4096.0 * 40.0 / 13.0 / 1000.0 / 77.0);  //79.0
 
 float left_Kp = 5.17, right_Kp = 5.17; // 4.0 4.0
 float left_Ki = 12.1, right_Ki = 12.1; //8.0 8.0
 float left_Kd = 0.54, right_Kd = 0.54; //8.0 8.0
-float rotate_Kp = 160.12;
-float rotate_Ki = 166.90;
-float rotate_Kd = 38.18;
+float rotate_Kp = 170.00;
+float rotate_Ki = 218.68;
+float rotate_Kd = 30.18;
 //Kp = 4.06, Ki = 9.76, Kd = 0.389, T
 //Kp = 0.561, Ki = 5.78, Kd = 0.00563
 void suction_motor_setting(){
@@ -229,10 +229,11 @@ void turn_back(int16_t target_direction){
 	float current_degree = degree;
 	float first_turn_degree,second_turn_degree;
 	set_speed(0,0);
-	Delay_ms(300);
-	float last_rad = 4.8f;
+	Delay_ms(100);
+  reset_e();
+	float last_rad = 8.f;
 	float target_rad = 0.0;
-	float rad_diff = 0.6f;
+	float rad_diff = 0.2f;
 	bool first_flag = false;
 	bool second_flag = false;
 	while(degree >= turn_direction * 90){
@@ -259,10 +260,11 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 	float current_degree = degree;
 	float first_turn_degree,second_turn_degree;
 	set_speed(0,0);
-	Delay_ms(300);
-	float last_rad = 4.8f;
+	Delay_ms(100);
+  reset_e();
+	float last_rad = 8.f;
 	float target_rad = 0.0;
-	float rad_diff = 0.6f;
+	float rad_diff = 0.2f;
 	bool first_flag = false;
 	bool second_flag = false;
 	if(wall_dir == 1){
