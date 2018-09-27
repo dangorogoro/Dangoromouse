@@ -812,7 +812,7 @@ int main(){
           else input = Duty;
           //plot.push_back(left_speed / MmConvWheel, right_speed / MmConvWheel, input);
           plot.push_back(rad, input);
-          set_speed(-input*1.5, input*1.5);
+          set_speed(input, input);
         }
       }
 		  //suction_stop();
