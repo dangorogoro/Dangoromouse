@@ -92,6 +92,10 @@ void Robot::setRobotVecFromRun(uint8_t dir, uint8_t n){
 	}
 }
 void Robot::goStraight(){
+  goStraight(ONE_BLOCK);
+}
+/*
+void Robot::goStraight(){
 	while(len_counter <= len_measure(ONE_BLOCK)){
 		float wall_value = 0.0f;
 		if(SENSOR_reset == ON){
@@ -104,9 +108,9 @@ void Robot::goStraight(){
 		}
 		if(SENSOR_start == ON)	led_get();
 		float target_theta =  (degree - getRobotDegreeDir() * 90) / 180.0 * PI - wall_value;
-		go_straight(target_theta); //*- 15
+		go_straight(target_theta); // *- 15
 	}
-}
+}*/
 void Robot::goStraight(uint16_t length){
 	while(len_counter <= len_measure(length)){
 		float wall_value = 0.0f;
@@ -165,7 +169,7 @@ void Robot::goLeft(){
 void Robot::startBack(Direction target_dir, bool reverse_flag){
 	setWallStatus();
 	len_counter = 0;
-	if(reverse_flag == 0)	goStraight(60);
+	if(reverse_flag == 0)	goStraight(40);
 	int32_t back_length = -40;
 	int8_t wall_dir = 0; // 1 right -1 left
 	if(leftWall == true) wall_dir = -1;
@@ -187,7 +191,7 @@ void Robot::startBack(Direction target_dir, bool reverse_flag){
 		len_counter = 0;
 		set_speed(0,0);
 		Delay_ms(100);
-		while(len_counter < len_measure(30)){
+		while(len_counter < len_measure(20)){
 			const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
 			go_straight(target_theta);
 		}
@@ -197,8 +201,13 @@ void Robot::startBack(Direction target_dir, bool reverse_flag){
 		turn_side(getRobotDegreeDir(),wall_dir);
 		addRobotDegreeDir(wall_dir);
 	}
-	else turn_back(getRobotDegreeDir());
-	len_counter = 0;
+	else{
+    turn_back(getRobotDegreeDir());
+		setRobotDegreeDir(0);
+		degree = getRobotDegreeDir() * 90.0;
+  }
+
+  len_counter = 0;
 	while(len_counter > len_measure(back_length)){
 		const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
 		go_back(-target_theta);
@@ -210,7 +219,7 @@ void Robot::startBack(Direction target_dir, bool reverse_flag){
 	setRobotDegreeDir(target_dir);
 }
 void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
-	goStraight(60);
+	goStraight(30);
 	int8_t wall_dir = 0; // 1 right -1 left
 	if(leftWall == true) wall_dir = -1;
 	else if(rightWall == true) wall_dir = 1;
@@ -219,7 +228,8 @@ void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
 	set_speed(0,0);
   reset_e();
 	Delay_ms(300);
-	if(true == getSaveMazeFlag() || 0 == getSearchingSaveFlag()){
+  uint8_t searching_save_flag = getSearchingSaveFlag();
+	if(true == getSaveMazeFlag() || 0 == searching_save_flag){
 		save_mazedata(maze);
 		pipi(2);
 		pipi(3);
@@ -405,17 +415,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 				if(led_1 >= led_1_threshold && led_2 >= led_2_threshold ){
 					wall_value = (led_2 - led_1 - sensor_sub) / 25.0;
 					led_fullon();
-          /*
-          2283 2277
-            2341 2234
-            2433 2193
-            2533 2167
-
-            2216 2373
-            2194 2418
-            2166 2451
-          */
-
+          if(abs(led_1 - led_2) < 150)  fixCoordinate(RobotRunVec, led_1, led_2);
 				}
 				else led_fulloff();
 				reset_led();
@@ -905,6 +905,23 @@ void Robot::fixCoordinate(Matrix2i runVec, float offset){
 	led_fullon();
 	start_buzzer(4);
 }
+void Robot::fixCoordinate(Matrix2i runVec, float wall_left, float wall_right){
+	Matrix2i vecStatus = runVec;
+  const float A = -11.2321;
+  const float b = 7.5714;
+  const float position = ((wall_left - wall_right) - b)  / A;
+	if(vecStatus(0,0) != 0){	//x direction fix y
+		float yCoordinate = (uint16_t)((int16_t)(y() + 50.0) / 180) * 180 + 50 - vecStatus(0,0) * position;
+		set_y(yCoordinate);
+	}
+	else{//y direction fix x
+	  float xCoordinate = (uint16_t)((int16_t)(x() + 90.0) / 180) * 180 + vecStatus(0,1) * position;
+		set_x(xCoordinate);
+	}
+	led_fullon();
+	start_buzzer(4);
+}
+
 
 float Robot::centerDistance(IndexVec firstVec,IndexVec lastVec,Matrix2i vecStatus, Operation::OperationType op){
 	float startX,startY;

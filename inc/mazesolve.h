@@ -60,6 +60,7 @@ class Robot{
 		inline void add_y(float coordinate){ position.y += coordinate;}
 		void fixCoordinate();
 		void fixCoordinate(Matrix2i runVec, float offset);
+		void fixCoordinate(Matrix2i runVec, float wall_left,float wall_right);
 		inline void set_left_sensor(uint16_t sensor){ left_sensor = sensor;}
 		inline void set_right_sensor(uint16_t sensor){ right_sensor = sensor;}
 		inline uint16_t get_left_sensor(){ return left_sensor;}
