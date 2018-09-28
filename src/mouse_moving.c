@@ -262,7 +262,7 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 	set_speed(0,0);
 	Delay_ms(100);
   reset_e();
-	float last_rad = 8.f;
+	float last_rad = 6.f;
 	float target_rad = 0.0;
 	float rad_diff = 0.2f;
 	bool first_flag = false;

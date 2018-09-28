@@ -362,7 +362,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 	else	now_speed = (left_speed + right_speed) / 2 / MmConvWheel;
 
 	len_counter = 0;
-	uint16_t curving_length = param.get_turn_param() / 50; // 30
+	uint16_t curving_length = param.get_turn_param() / 30; // 30
 	if(root[(*i)+1].op == Operation::TURN_LEFT90S || root[(*i)+1].op == Operation::TURN_RIGHT90S) curving_length = 0;
 
 	if(root[(*i)].op != Operation::STOP){
@@ -585,7 +585,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 			if(SENSOR_start == ON)	led_get();
 			if(ENCODER_start == ON){
 				float radius = 90.0;
-				float timing = 10.0;
+				float timing = turn_speed / radius / 0.7; // 0.7 is accel
 				read_encoder();
 				add_coordinate(degree);
 				if(checkZAccel()){
