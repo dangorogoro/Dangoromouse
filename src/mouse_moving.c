@@ -255,6 +255,9 @@ void turn_back(int16_t target_direction){
 			ENCODER_start = OFF;
 		}
 	}
+  len_counter = 0;
+  set_speed(0,0);
+  reset_e();
 }
 void turn_side(int16_t target_direction,int8_t wall_dir){
 	float current_degree = degree;
@@ -310,8 +313,10 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
 			}
 		}
 	}
-	set_speed(0,0);
-	Delay_ms(100);
+  set_speed(0,0);
+  len_counter = 0;
+  reset_e();
+  Delay_ms(100);
 }
 void go_left(int16_t target_degree){
 	float start_degree = degree;
@@ -377,7 +382,21 @@ void start_wall(int16_t po){
 	set_speed(0,0);
 	reset_e();
 	len_counter = 0;
-	while(len_counter > len_measure(-40)){
+  uint16_t counter = 0;
+  const threshold = 100;
+	while(len_counter > len_measure(-50)){
+    if(timer_clock == ON){
+      counter += 1;
+      timer_clock = OFF;
+    }
+    if(counter >= threshold){
+      counter = 0;
+      led_fulloff();
+      pipi(2);
+      pipi(3);
+      pipi(5);
+      break;
+    }
 		go_back(0);
 	}
 	degree = po * 90.0;
@@ -410,6 +429,8 @@ void start_withoutwall(int16_t po){
 	set_speed(0,0);
 	reset_e();
 	len_counter = 0;
+  uint16_t counter = 0;
+  const threshold = 300;
 	while(len_counter > len_measure(-50)){
 		go_back(0);
 	}
@@ -418,6 +439,14 @@ void start_withoutwall(int16_t po){
 	set_speed(0,0);
 	Delay_ms(300);
 	while(len_counter < len_measure(150)){
+    if(timer_clock == ON){
+      counter += 1;
+      timer_clock = OFF;
+    }
+    if(counter >= threshold){
+      counter = 0;
+      break;
+    }
 		const float target_theta =  (degree - po * 90.0) / 180.0 * PI;
 		go_straight(target_theta);
 	}

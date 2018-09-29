@@ -170,7 +170,7 @@ void Robot::startBack(Direction target_dir, bool reverse_flag){
 	setWallStatus();
 	len_counter = 0;
 	if(reverse_flag == 0)	goStraight(40);
-	int32_t back_length = -40;
+	int32_t back_length = -30;
 	int8_t wall_dir = 0; // 1 right -1 left
 	if(leftWall == true) wall_dir = -1;
 	else if(rightWall == true) wall_dir = 1;
@@ -179,10 +179,21 @@ void Robot::startBack(Direction target_dir, bool reverse_flag){
 	set_speed(0,0);
   reset_e();
 	Delay_ms(300);
+  uint16_t counter = 0;
+  const uint16_t threshold = 50;
+
 	if(wall_dir != 0){
 		turn_side(getRobotDegreeDir(),wall_dir);
 		addRobotDegreeDir(wall_dir);
 		while(len_counter > len_measure(back_length)){
+      if(timer_clock == ON){
+        counter += 1;
+        timer_clock = OFF;
+      }
+      if(counter >= threshold){
+        counter = 0;
+        break;
+      }
 			const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
 			go_back(-target_theta);
 		}
@@ -209,6 +220,14 @@ void Robot::startBack(Direction target_dir, bool reverse_flag){
 
   len_counter = 0;
 	while(len_counter > len_measure(back_length)){
+    if(timer_clock == ON){
+      counter += 1;
+      timer_clock = OFF;
+    }
+    if(counter >= threshold){
+      counter = 0;
+      break;
+    }
 		const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
 		go_back(-target_theta);
 	}
@@ -236,6 +255,9 @@ void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
 		pipi(5);
 	}
 	int8_t value;
+  uint16_t counter = 0;
+  const uint16_t threshold = 50;
+
 	if(Nextdir == NORTH)	value = 0;
 	if(Nextdir == WEST)	value = 1;
 	if(Nextdir == EAST)	value = -1;
@@ -243,8 +265,20 @@ void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
 	if(wall_dir != 0){
 		turn_side(getRobotDegreeDir(),wall_dir);
 		addRobotDegreeDir(wall_dir);
-		while(len_counter > len_measure(-20)){
-			const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
+		while(len_counter > len_measure(-30)){
+      if(timer_clock == ON){
+        counter += 1;
+        timer_clock = OFF;
+      }
+      if(counter >= threshold){
+        counter = 0;
+        led_fulloff();
+        pipi(2);
+        pipi(3);
+        pipi(5);
+        break;
+      }
+      const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
 			go_back(-target_theta);
 		}
 		if(frontWall == false)	setRobotDegreeDir(value - wall_dir);
@@ -252,10 +286,10 @@ void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
 		reset_e();
 		len_counter = 0;
 		set_speed(0,0);
-		Delay_ms(100);
+		Delay_ms(300);
 		
 		if(false == goal_flag){
-			while(len_counter < len_measure(25)){
+			while(len_counter < len_measure(20)){
 				const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
 				go_straight(target_theta);
 			}
