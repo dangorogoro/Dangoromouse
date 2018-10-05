@@ -170,7 +170,7 @@ void Robot::startBack(Direction target_dir, bool reverse_flag){
 	setWallStatus();
 	len_counter = 0;
 	if(reverse_flag == 0)	goStraight(40);
-	int32_t back_length = -30;
+	int32_t back_length = -40;
 	int8_t wall_dir = 0; // 1 right -1 left
 	if(leftWall == true) wall_dir = -1;
 	else if(rightWall == true) wall_dir = 1;
