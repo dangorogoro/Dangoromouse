@@ -719,19 +719,19 @@ int main(){
 			mode_select = 3;
 		}
     else if(mode_select % 16 == 9){
+      set_traject();
 			TIM_Cmd(TIM5,ENABLE);
       len_counter = 0;
       TIM2->CNT = 0;
       TIM8->CNT = 0;
-      int16_t reference_velocity = 200;
+      int16_t reference_velocity = 600;
       int16_t now_velocity = 0;
-      int16_t Kx = 0.0;
-      int16_t Ky = 0.0;
-      int16_t Ktheta = 0.0;
-      uint16_t target_index = 10;
-      uint16_t index_size = 981;
-      float last_r_x = 0.0, last_r_y = 0.0;
-      float last_c_x = 0.0, last_c_y = 0.0;
+      int16_t Kx = 0.05;
+      int16_t Ky = 0.05;
+      int16_t Ktheta = 0.5;
+      uint16_t target_index = 5;
+      uint16_t index_size = 524;
+      uint16_t last_index = 0;
       float e_x = 0.0, e_y = 0.0;
       float theta_e = 0.0;
       float w_r = 0.0;
@@ -740,29 +740,29 @@ int main(){
           read_encoder();
           dango.add_coordinate(degree);
 					now_velocity = now_velocity <= reference_velocity ? now_velocity + 5 : reference_velocity;
-          speed_controller(now_velocity /* cos(theta_e)*/ + Ky * e_y, w_r + now_velocity * (Kx * e_x + Ktheta * sin(theta_e)));
+          speed_controller(now_velocity * cos(theta_e) + Ky * e_y, w_r + now_velocity * (Kx * e_x + Ktheta * sin(theta_e)));
           ENCODER_start = OFF;
         }
         if(button_return == 1)  break;
-        if(timer_clock == ON){
-          timer_clock = OFF;
-          int16_t dst_len = now_velocity / 200;
-          target_index = (target_index % index_size) + 1;
-          e_x = dot.x[target_index] - dango.x();
-          e_y = dot.y[target_index] - dango.y();
-          float tmp_x = dot.x[target_index] -last_r_x;
-          float tmp_y = dot.y[target_index] -last_r_y;
-          //if(tmp_x == 0 && tmp_y == 0)  w_r = 0;
-          w_r = -atan2f(tmp_x, tmp_y) * 50.0;
-          plot.push_back(100 * tmp_x, 100 * tmp_y, 100 * w_r, 100 * dot.x[target_index], 100  * last_r_x, target_index);
-          theta_e = atan2(dot.x[target_index] - last_r_x, dot.y[target_index] - last_r_y) - atan2(dango.x() - last_c_x, dango.y() - last_c_y);
-          last_r_x = dot.x[target_index];
-          last_r_y = dot.y[target_index];
-          last_c_x = dango.x();
-          last_c_y = dango.y();
+        if(traject_clock == ON){
+          traject_clock = OFF;
+          uint16_t dst_len = now_velocity * 5 / 1000;
+          target_index = (target_index + dst_len) % index_size;
+
+          dotData ref = turn45.get_data(target_index);
+          ref.x = -ref.x;
+
+          e_x = ref.x - dango.x();
+          e_y = ref.y - dango.y();
+          w_r = ((turn45.get_data((target_index + dst_len) % index_size).rad) - ref.rad) * 200.0;
+          //plot.push_back(100 * tmp_x, 100 * tmp_y, 100 * w_r, 100 * dot.x[target_index], 100  * last_r_x, target_index);
+          theta_e = ref.rad - degree / 180.0 * PI;//atan2(dango.x() - last_c_x, dango.y() - last_c_y);
           //plot.push_back(100 * w_r, 100 * theta_e);
+          if(last_index > target_index && last_index > 520) break;
+          else last_index = target_index;
         }
       }
+      set_speed(0,0);
       Delay_ms(500);
       while(button_return == 0);
       pipi(3);

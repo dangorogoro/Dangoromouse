@@ -2,7 +2,8 @@
 #define MY_TIMER_H
 extern NVIC_InitTypeDef NVIC_InitStructure;
 extern TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-extern int8_t timer_clock;
+extern bool timer_clock;
+extern bool traject_clock;;
 extern uint32_t timer_counter;
 extern int32_t len_counter;
 extern bool stop_flag;

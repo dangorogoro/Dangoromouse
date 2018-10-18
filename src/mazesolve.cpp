@@ -22,7 +22,6 @@ void Robot::addRobotDirToVec(Direction dir){
 	else if(dir == EAST)
 		addRobotVec(IndexVec::vecEast);
 }
-
 IndexVec Robot::getRobotVec(){
 	return RobotVec;
 }
