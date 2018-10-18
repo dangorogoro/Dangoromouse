@@ -6,7 +6,7 @@ typedef struct{
   float rad;
 }dotData;
 class Traject{
-	private:
+  private:
     std::vector<dotData> data;
   public:
     Traject(): data(){}

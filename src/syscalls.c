@@ -7,14 +7,14 @@ int _write(int file, char *ptr, size_t len)
 {
   (void) file;
 
-	int DataIdx;
-	for (DataIdx = 0; DataIdx < len; DataIdx++){
-		USART_putc(USART3,ptr[DataIdx]);
-	}
+  int DataIdx;
+  for (DataIdx = 0; DataIdx < len; DataIdx++){
+    USART_putc(USART3,ptr[DataIdx]);
+  }
   return len;
 }
 
-caddr_t
+  caddr_t
 _sbrk(int incr)
 {
   extern char _Heap_Begin; /* Defined by the linker. */
@@ -33,21 +33,21 @@ _sbrk(int incr)
   // 4 to it.
   incr = (incr + 3) & (~3); // align value to 4
   if (current_heap_end + incr > &_Heap_Limit)
-    {
-      // Some of the libstdc++-v3 tests rely upon detecting
-      // out of memory errors, so do not abort here.
+  {
+    // Some of the libstdc++-v3 tests rely upon detecting
+    // out of memory errors, so do not abort here.
 #if 0
-      extern void abort (void);
+    extern void abort (void);
 
-      _write (1, "_sbrk: Heap and stack collision\n", 32);
+    _write (1, "_sbrk: Heap and stack collision\n", 32);
 
-      abort ();
+    abort ();
 #else
-      // Heap has overflowed
-      errno = ENOMEM;
-      return (caddr_t) - 1;
+    // Heap has overflowed
+    errno = ENOMEM;
+    return (caddr_t) - 1;
 #endif
-    }
+  }
 
   current_heap_end += incr;
 
