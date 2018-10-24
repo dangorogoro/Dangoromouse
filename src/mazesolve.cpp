@@ -80,11 +80,11 @@ void Robot::setRobotVecFromRun(uint8_t dir, uint8_t n){
   Matrix2i nextDir;
   if((dir != Operation::TURN_RIGHT45) && (dir != Operation::TURN_LEFT45)){
     if(dir == Operation::FORWARD)
-      nextDir = getFORWARD();
+      nextDir = eigenRotate();
     else if((dir == Operation::TURN_RIGHT90) || (dir == Operation::TURN_RIGHT90S))
-      nextDir = getRIGHT();
+      nextDir = right90Rotate();
     else if((dir == Operation::TURN_LEFT90) || (dir == Operation::TURN_LEFT90S))
-      nextDir = getLEFT();
+      nextDir = left90Rotate();
     RobotRunVec = RobotRunVec * nextDir;
     IndexVec NextState(n * RobotRunVec(0,0),n * RobotRunVec(0,1));
     RobotVec += NextState;
@@ -409,7 +409,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   else turn_speed = param.get_turn_param();
   const int16_t accel = param.get_accel_param();
   int16_t length = 0;
-  curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT45 || root[(*i)+1].op == Operation::TURN_LEFT45) ? curving_length + 45 : curving_length;
+  curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT45 || root[(*i)+1].op == Operation::TURN_LEFT45) ? 90 : curving_length;
   length = *i == 0 ? 130 + (root[*i].n - 1) * ONE_BLOCK - curving_length : root[*i].n * ONE_BLOCK - curving_length; //130 was
 
   float e_now = 0, e_sum = 0;
@@ -425,7 +425,6 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   Matrix2i last_RobotRunVec = RobotRunVec;
   setRobotVecFromRun(root[*i].op,root[*i].n);
   if(root[*i].op == Operation::FORWARD){
-
     sensor_works();
     set_left_sensor(led_1);
     set_right_sensor(led_2);
@@ -440,8 +439,6 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       float wall_value = 0.0f;
       x_p = 1.0 / 600.0 * now_speed;
       x_i = 1.0 / 600.0 * now_speed;
-
-
       if(SENSOR_reset == ON){
         left_value = led_1;
         right_value = led_2;
@@ -493,494 +490,659 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         set_left_sensor(led_1);
         set_right_sensor(led_2);
       }
-      }
     }
-    else if(root[*i].op == Operation::STOP){
-      set_speed(0,0);
-    }
-    else if((root[*i].op == Operation::TURN_RIGHT45) || (root[*i].op == Operation::TURN_LEFT45)){
-      Operation firstOP = root[*i].op;
-      Matrix2i firstRunVec = RobotRunVec;
-      IndexVec firstVec = getRobotVec();
-      setRobotVecFromRun((root[*i].op == Operation::TURN_RIGHT45) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
-      Matrix2i lastRunVec = RobotRunVec;
+  }
+  else if(root[*i].op == Operation::STOP){
+    set_speed(0,0);
+  }
+  else if(root[*i].op == Operation::TURN_RIGHT45  || root[*i].op == Operation::TURN_LEFT45){
+    Operation::OperationType turn_type = root[*i].op;
+    //Position centerPosition = estimatePosition(get_position());
+    Position centerPosition;
+    centerPosition.x = x();
+    centerPosition.y = y();
+    Operation firstOP = root[*i].op;
+    Matrix2i firstRunVec = RobotRunVec;
+    IndexVec firstVec = getRobotVec();
+    setRobotVecFromRun((root[*i].op == Operation::TURN_RIGHT45) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
+    Matrix2i nextRunVec = RobotRunVec;
 
-      float past_target_degree = target_degree;
-      float next_target_degree = target_degree;
-      int8_t first_diag_direction = (root[*i].op == Operation::TURN_RIGHT45) ? -1 : 1;
-      float first_degree_diff = first_diag_direction * 45.0f / 30.0;
-      float initial_length = 0.0;
-      uint16_t diag_length = 254;
+    uint16_t target_index = 10;
+    uint16_t last_index = 0;
+    float reference_speed = turn_speed;
+    float e_x = 0.0, e_y = 0.0, theta_e = 0.0;
+    float w_r;
+
+    bool initial_flag = false, second_flag = false;
+    float diagKx = 0.0003;//151520
+    float diagKy = 0.0003;
+    float diagKtheta = 0.0003;
+    Traject traject = trajectList.getTraject(turn_type, directionFromRunVec(firstRunVec));
+    Operation::OperationType nextOP = root[(*i)+1].op;
+    float diag_length = 0;
+    if(nextOP == Operation::FORWARD_DIAG){
+      diag_length = ONE_BLOCK / sqrt(2.0) * root[(*i)+1].n;
       (*i)++;
-      if(root[*i].op == Operation::FORWARD_DIAG){
-        diag_length += 127 * root[*i].n;
-        uint8_t now_count = root[*i].n / 2;
-        uint8_t last_count = root[*i].n - now_count;
-        IndexVec last_diag_vec(last_count * firstRunVec(0,0), last_count * firstRunVec(0,1));
-        IndexVec now_diag_vec(now_count * lastRunVec(0,0), now_count * lastRunVec(0,1));
-        addRobotVec(last_diag_vec + now_diag_vec);
-        (*i)++;
+    }
+    while(initial_flag == false){
+      if(ENCODER_start == ON){
+        read_encoder();
+        add_coordinate(degree);
+        now_speed = now_speed <= reference_speed ? now_speed + accel : reference_speed;
+        speed_controller(now_speed * cos(theta_e) + diagKy * e_y, w_r + now_speed * (-diagKx * e_x + diagKtheta * sin(theta_e)));
+        ENCODER_start = OFF;
+        start_buzzer(5);
       }
-      Operation lastOP = root[*i].op;
+      if(traject_clock == ON){
+        traject_clock = OFF;
+        uint16_t dst_len = now_speed * 5.0 / 1000.0 ;
+        uint16_t index_size = traject.real_size();
+        target_index = (target_index + dst_len) % index_size;
+        dotData dot;
+        RowVector2f dotVec;
+        if(initial_flag == false){
+          dot = traject.get_data(target_index, turn_type);
+        }
+        dotVec << dot.x, dot.y;
+        float target_x = dotVec(0) + centerPosition.x;
+        float target_y = dotVec(1) + centerPosition.y;
+        e_x = target_x - x();
+        e_y = target_y - y();
+        w_r = (dot.rad - (traject.get_data((target_index - dst_len) % index_size, turn_type).rad)) * 200.0;
+        theta_e = dot.rad - (degree - target_degree) / 180.0 * PI;//atan2(dango.x() - last_c_x, dango.y() - last_c_y);
+        if(last_index > target_index){
+          initial_flag = true;
+          len_counter = 0;
+        }
+        else last_index = target_index;
+      }
+    }
+    while(len_counter < len_measure(37.27)){
+      if(ENCODER_start == ON){
+        read_encoder();
+        add_coordinate(degree);
+        speed_controller(now_speed, 0);
+        ENCODER_start = OFF;
+      }
+    }
+    now_speed = (left_speed + right_speed) / 2 / MmConvWheel;
 
-      int8_t last_diag_direction = (root[*i].op == Operation::TURN_RIGHT45) ? -1 : 1;
-      float last_degree_diff = last_diag_direction * 45.0f / 30.0;
-      IndexVec lastVec = getRobotVec();
+    if(nextOP == Operation::TURN_LEFT45 || nextOP == Operation::TURN_RIGHT45){
+      (*i)++;
+      setRobotVecFromRun((nextOP == Operation::TURN_RIGHT45) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
+      Position startPosition;
+      startPosition.x = x();
+      startPosition.y = y();
+      Operation::OperationType reverseOP = (nextOP == Operation::TURN_RIGHT45) ? Operation::TURN_LEFT45 : Operation::TURN_RIGHT45;
+      Traject secondTraject = trajectList.getTraject(reverseOP, directionFromRunVec(RobotRunVec));
 
-      bool first_flag = false;
-      bool last_flag = false;
-      float initial_offset = 0;
+      target_index = 10;
+      last_index = 0;
+      e_x = 0.0f;
+      e_y = 0.0f;
+      theta_e = 0.0f;
+      w_r = 0;
 
-      //float clothoid_startX = x();
-      //float clothoid_startY = y();
-      //float sencond_clothoid_startX;
-      //float sencond_clothoid_startY;
-      //float endX = (firstVec.x + lastVec.x) * 180 - clothoid_startX;
-      //float endY = ((firstVec.Y + lastVec.Y) * 180 / 2.0 + 60.0) - clothoid_startY;
-      //float *coordinatePointer();
-      //if(firstRunVec(0,0) != 0) coordinatePointer = x;
-      //else	coordinatePointer = y;
+      dotData lastDot;
 
-      while(len_counter <= len_measure(diag_length) + initial_offset){
-        //while(judgeDiagCoordinate(firstVec,endX,endY,coordinatePointer){
-        float distance = 0.0f;
-        x_p = 30.0 * 600.0 / now_speed;
-        degree_p = 30.0 * 600.0 / now_speed;
+      while(second_flag == false){
         if(ENCODER_start == ON){
-          if(fabs(target_degree - past_target_degree) < 45.0 && first_flag == false) target_degree += first_degree_diff;
-          else if(first_flag == false){
-            first_flag = true;
-            initial_length = len_counter;
-            target_degree = past_target_degree + first_diag_direction * 45.0;
-            next_target_degree = target_degree;
-            initial_offset = initial_length;
-
-            //second_clothoid_startX = endX - (x() - clothoid_startX);
-            //second_clothoid_startY = endY - (y() - clothoid_starty);
-          }
-
-          if(len_counter >= len_measure(diag_length) - initial_length + initial_offset && first_flag == true && last_flag == false) last_flag = true;
-          if(last_flag == true)	target_degree += last_degree_diff;
-          if(first_flag == true && last_flag == false && len_counter >= len_measure(diag_length - 15.0 * (now_speed * now_speed - turn_speed * turn_speed) / 2.0 / (accel * 1000))) //conv to mm
-            now_speed = turn_speed >= now_speed ? turn_speed : now_speed - accel;
-          else if(first_flag == true && last_flag == false){
-            if(len_counter >= initial_length + 50) now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
-            else distance = centerDistance(firstVec,lastVec,firstRunVec, firstOP.op);
-          }
           read_encoder();
           add_coordinate(degree);
-          target_theta_now = (degree - target_degree) / 180.0 * PI;
-          speed_controller(now_speed,- (degree_p * target_theta_now) + distance * x_p);
-          target_theta_last = target_theta_now;
+          now_speed = now_speed <= reference_speed ? now_speed + accel : reference_speed;
+          speed_controller(now_speed * cos(theta_e) + diagKy * e_y, w_r + now_speed * (-diagKx * e_x + diagKtheta * sin(theta_e)));
           ENCODER_start = OFF;
+          start_buzzer(10);
+        }
+        if(traject_clock == ON){
+          traject_clock = OFF;
+          uint16_t dst_len = now_speed * 5.0 / 1000.0 ;
+          uint16_t index_size = secondTraject.real_size();
+          target_index = (target_index + dst_len) % index_size;
+          dotData dot;
+          if(second_flag == false){
+            dot = secondTraject.reverse_get_data(target_index, reverseOP);
+          }
+          float target_x = dot.x + startPosition.x;
+          float target_y = dot.y + startPosition.y;
+          e_x = target_x - x();
+          e_y = target_y - y();
+          w_r = (dot.rad - secondTraject.reverse_get_data((target_index - dst_len) % index_size, reverseOP).rad) * 200.0;
+          theta_e = dot.rad - (degree - target_degree) / 180.0 * PI;//atan2(dango.x() - last_c_x, dango.y() - last_c_y);
+          if(last_index > target_index){
+            second_flag = true;
+            len_counter = 0;
+            lastDot = dot;
+          }
+          else last_index = target_index;
+          /*
+          target_index = (target_index + dst_len) % index_size;
+          dotData dot;
+          RowVector2f dotVec;
+          if(second_flag == false){
+            dot = secondTraject.get_data(secondTraject.real_size() - target_index, reverseOP);
+          }
+          dotVec << dot.x, dot.y;
+          float target_x = secondTraject.end(reverseOP).x - dotVec(0)  + startPosition.x;
+          float target_y = secondTraject.end(reverseOP).y - dotVec(1)  + startPosition.y;
+          e_x = target_x - x();
+          e_y = target_y - y();
+          w_r = (dot.rad - (secondTraject.get_data(secondTraject.real_size() - (target_index - dst_len) % index_size, reverseOP).rad)) * 200.0;
+          theta_e = -dot.rad - (degree - target_degree) / 180.0 * PI;//atan2(dango.x() - last_c_x, dango.y() - last_c_y);
+          if(last_index > target_index){
+            second_flag = true;
+            len_counter = 0;
+          }
+          else last_index = target_index;
+          */
         }
       }
-      target_degree = next_target_degree + last_diag_direction * 45.0;
-
-      if(firstOP.op == lastOP.op)	RobotRunVec = firstRunVec;
-      setRobotVecFromRun((root[*i].op == Operation::TURN_RIGHT45) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
-      }
-
-      else if((root[*i].op == Operation::TURN_RIGHT90) || (root[*i].op  == Operation::TURN_LEFT90)){
-        int8_t operation_direction = (root[*i].op == Operation::TURN_RIGHT90) ? -1 : 1;
-        const float current_degree = degree;
-        float target_rad = 0;
-        float first_clothoid_degree = 0;
-        float second_clothoid_degree = 0;
-        bool clothoid_flag = false;
-
-        if(root[(*i)+1].op == root[*i].op){
-          target_degree += operation_direction * 180.0; 
-          (*i)++;
-          setRobotVecFromRun(root[*i].op,root[*i].n);
-        }
-        else	target_degree += operation_direction * 90.0; 
-        uint8_t prescaler = 0;
-        while(1){
-          if(timer_clock == ON){
-            prescaler = (prescaler + 1) % 100;
-            timer_clock = OFF;
-            plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed);
-            if(prescaler % 2 == 1){
-              //plot.push_back(x(),y(),degree,get_left_sensor(),get_right_sensor(),getRobotVec().x,getRobotVec().y);
-              set_left_sensor(led_1);
-              set_right_sensor(led_2);
-            }
-            if(prescaler % 10 == 0){
-              stop_buzzer();
-              led_fulloff();
-            }
-          }
-          if(SENSOR_reset == ON){
-            reset_led();
-            SENSOR_reset = OFF;
-          }
-          if(SENSOR_start == ON)	led_get();
-          if(ENCODER_start == ON){
-            float radius = 90.0;
-            float timing = turn_speed / radius / 0.7; // 0.7 is accel
-            read_encoder();
-            add_coordinate(degree);
-            if(checkZAccel()){
-              zStatus = true;
-              return;
-            }
-            if(target_rad <= turn_speed / 90.0 && clothoid_flag == false){
-              target_rad += turn_speed / radius / timing;
-              first_clothoid_degree = degree;
-              clothoid_flag = false;
-            }
-            else{
-              second_clothoid_degree = (clothoid_flag == false) ? target_degree +  5.0 * (current_degree - first_clothoid_degree) : second_clothoid_degree;
-              clothoid_flag = true;
-              if(operation_direction == -1 && degree <= second_clothoid_degree)	target_rad -= turn_speed / radius / timing;
-              if(operation_direction == 1 && degree >= second_clothoid_degree)	target_rad -= turn_speed / radius / timing;
-              if(target_rad <= 0)	break;
-            }
-            speed_controller(turn_speed,(float)operation_direction * target_rad);
-            ENCODER_start = OFF;
-          }
-        }
-        GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_RESET);
-      }
-      else if((root[*i].op == Operation::TURN_RIGHT90S) || (root[*i].op  == Operation::TURN_LEFT90S)){
-        len_counter = 0;
-        sensor_works();
-        setWallStatus();
-        uint8_t runStatus = 0;
-        int8_t operation_direction = (root[*i].op == Operation::TURN_RIGHT90S) ? -1 : 1;
-        const float current_degree = degree;
-        float target_rad = 0;
-        float first_clothoid_degree = 0;
-        float second_clothoid_degree = 0;
-        bool clothoid_flag = false;
-
-        float last_target_degree = target_degree;
-        float slalom_degree_p = 15.0;
-        target_degree += operation_direction * 90.0; 
-        uint8_t prescaler = 0;
-        bool frontThreshold = false;
-        sensor_works();
-        while(1){
-          if(timer_clock == ON){
-            prescaler = (prescaler + 1) % 100;
-            timer_clock = OFF;
-            plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel);
-            if(prescaler % 2 == 1){
-              //plot.push_back(x(),y(),degree,get_left_sensor(),get_right_sensor(),getRobotVec().x,getRobotVec().y);
-              set_left_sensor(led_1);
-              set_right_sensor(led_2);
-            }
-            if(prescaler % 10 == 0){
-              stop_buzzer();
-              led_fulloff();
-            }
-          }
-
-          if(SENSOR_reset == ON){
-            if(led_3 >= frontWallThreshold_3 && led_4 >= frontWallThreshold_4) frontThreshold = true; 
-            reset_led();
-            SENSOR_reset = OFF;
-          }
-          if(SENSOR_start == ON)	led_get();
-          if(ENCODER_start == ON){
-            float radius = 50.0;
-            float timing = 15.0;
-            read_encoder();
-            add_coordinate(degree);
-            if(checkZAccel()){
-              zStatus = true;
-              return;
-            }
-            if(frontWall == true && runStatus % 2 == 0){
-              if(frontThreshold == true){
-                //fixCoordinate(last_RobotRunVec, 40);
-                frontWall = false; // 2320 2640 was
-                runStatus++;
-                len_counter = 0;
-              }
-              target_theta_now = (degree - last_target_degree) / 180.0 * PI;
-              speed_controller(turn_speed,- (degree_p * target_theta_now));
-            }
-            else if(frontWall == false && runStatus == 0 && len_counter < len_measure(31)){
-              target_theta_now = (degree - last_target_degree) / 180.0 * PI;
-              speed_controller(turn_speed,- (slalom_degree_p * target_theta_now));
-            }
-            else if(frontWall == false && runStatus == 2 && len_counter < len_measure(31)){
-              target_theta_now = (degree - target_degree) / 180.0 * PI;
-              speed_controller(turn_speed,- (slalom_degree_p * target_theta_now));
-            }
-            else if(runStatus % 2 == 0){
-              len_counter = 0;
-              runStatus++;
-              led_fullon();
-            }
-            else if(runStatus == 1 && target_rad <= turn_speed / radius && clothoid_flag == false){
-              target_rad += turn_speed / radius / timing;
-              first_clothoid_degree = degree;
-              speed_controller(turn_speed,(float)operation_direction * target_rad);
-              clothoid_flag = false;
-            }
-            else if(runStatus == 1){
-              second_clothoid_degree = (clothoid_flag == false) ? target_degree + (current_degree - first_clothoid_degree) : second_clothoid_degree;
-              clothoid_flag = true;
-              speed_controller(turn_speed,(float)operation_direction * target_rad);
-              if(operation_direction == -1 && degree <= second_clothoid_degree)	target_rad -= turn_speed / radius / timing;
-              if(operation_direction == 1 && degree >= second_clothoid_degree)	target_rad -= turn_speed / radius / timing;
-              if(target_rad <= 0){
-                runStatus = 2;
-                len_counter = 0;
-              }
-            }
-            ENCODER_start = OFF;
-          }
-          if(runStatus == 3)break;
-        }
-        GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_RESET);
-      }
-      stop_buzzer();
     }
-    void Robot::action(uint8_t value,OperationList runSequence,ParamList parameters){
-      led_flash();
-      Delay_ms(1000);
-      sensor_works();
-      set_left_sensor(led_1);
-      set_right_sensor(led_2);
-      reset_led();
-      TIM2->CNT = 0;
-      TIM8->CNT = 0;
-      degree = 0;
-      set_speed(0,0);
-      len_counter = 0;
-      reset_e();
-      pipi(6);
-      pipi(5);
-      pipi(4);
-      pipi(3);
+  }
+  else if(root[*i].op == Operation::LEFT_V90 || root[*i].op == Operation::RIGHT_V90){}
+  /*
+  else if((root[*i].op == Operation::TURN_RIGHT45) || (root[*i].op == Operation::TURN_LEFT45)){
+    Operation firstOP = root[*i].op;
+    Matrix2i firstRunVec = RobotRunVec;
+    IndexVec firstVec = getRobotVec();
+    setRobotVecFromRun((root[*i].op == Operation::TURN_RIGHT45) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
+    Matrix2i lastRunVec = RobotRunVec;
 
-      OperationList reverseRunSequence = reverseOperation(runSequence,0);
-      for(size_t i = 0;i < runSequence.size();i++){
-        len_counter = 0;
-        if(zStatus == true) break;
-        robotShortMove(runSequence,parameters[value],&i);
-      }
-      /*
-         if(button_return != 1){
-         sensor_works();
-         setWallStatus();
-         len_counter = 0;
-         for(size_t i = 0;i < reverseRunSequence.size();i++){
-         len_counter = 0;
-         if(zStatus == true) break;
-         robotShortMove(reverseRunSequence,parameters[value],&i);
-         }
-         }
-         */
-      while(button_return == 1); 
-      led_stop();
-      zStatus = false;
-      set_speed(0,0);
-      Delay_ms(1000);
-      degree = 0;
-      reset_e();
-      len_counter = 0;
+    float past_target_degree = target_degree;
+    float next_target_degree = target_degree;
+    int8_t first_diag_direction = (root[*i].op == Operation::TURN_RIGHT45) ? -1 : 1;
+    float first_degree_diff = first_diag_direction * 45.0f / 30.0;
+    float initial_length = 0.0;
+    uint16_t diag_length = 254;
+    (*i)++;
+    if(root[*i].op == Operation::FORWARD_DIAG){
+      diag_length += 127 * root[*i].n;
+      uint8_t now_count = root[*i].n / 2;
+      uint8_t last_count = root[*i].n - now_count;
+      IndexVec last_diag_vec(last_count * firstRunVec(0,0), last_count * firstRunVec(0,1));
+      IndexVec now_diag_vec(now_count * lastRunVec(0,0), now_count * lastRunVec(0,1));
+      addRobotVec(last_diag_vec + now_diag_vec);
+      (*i)++;
     }
-    OperationList rebuildOperation(OperationList list){
-      OperationList newOPlist;
-      for(size_t i = 0;i < list.size();i++){
-        Operation::OperationType latestOP = list[i].op;
-        if(latestOP == (Operation::TURN_RIGHT90)  || latestOP == Operation::TURN_LEFT90){
-          if(latestOP == list[(i) + 1].op){
-            if(latestOP == Operation::TURN_RIGHT90)	newOPlist.push_back(Operation::TURN_RIGHT180);
-            else newOPlist.push_back(Operation::TURN_LEFT180);
-          }
-          else newOPlist.push_back(latestOP);
-        }
-        else newOPlist.push_back(latestOP);
-      }
-      return newOPlist;
-    }
-    OperationList rebuildOperation(OperationList list,bool diagFlag){
-      OperationList newOPlist;
-      for(size_t i = 0;i < list.size();i++){
-        Operation latestOP = list[i];
-        Operation pushOP = latestOP;
-        if(((latestOP.op == Operation::TURN_RIGHT90) || (latestOP.op == Operation::TURN_LEFT90))){ //For short shushuhu
-          Operation lastOP = newOPlist[i-1];
-          Operation nextOP = list[i+1];//No problem because lastOP is stop
+    Operation lastOP = root[*i].op;
 
-          if((lastOP.op == Operation::TURN_RIGHT90S) || (lastOP.op == Operation::TURN_LEFT90S))
-            pushOP.op = (latestOP.op == Operation::TURN_LEFT90) ? Operation::TURN_LEFT90S : Operation::TURN_RIGHT90S;
+    int8_t last_diag_direction = (root[*i].op == Operation::TURN_RIGHT45) ? -1 : 1;
+    float last_degree_diff = last_diag_direction * 45.0f / 30.0;
+    IndexVec lastVec = getRobotVec();
 
-          else if(((nextOP.op == Operation::TURN_RIGHT90) || (nextOP.op == Operation::TURN_LEFT90)) && (nextOP.op != latestOP.op))
-            pushOP.op = (latestOP.op == Operation::TURN_LEFT90) ? Operation::TURN_LEFT90S : Operation::TURN_RIGHT90S;
-          else if(((nextOP.op == Operation::TURN_RIGHT90) || (nextOP.op == Operation::TURN_LEFT90)) && (nextOP.op == latestOP.op)){
-            if(i <= list.size() - 3){
-              Operation futureOP = list[i+2];//No problem because lastOP is stop
-              if((futureOP.op == Operation::TURN_RIGHT90 || futureOP.op == Operation::TURN_LEFT90) && futureOP.op != latestOP.op)
-                pushOP.op = (latestOP.op == Operation::TURN_LEFT90) ? Operation::TURN_LEFT90S : Operation::TURN_RIGHT90S;
-            }
-          }
-        }
-        if(latestOP.op == Operation::FORWARD){
-          Operation nextOP = list[i + 1];
-          if(nextOP.op == Operation::FORWARD){
-            pushOP.n += nextOP.n;
-            i++;
-          }
-        }
-        newOPlist.push_back(pushOP);
-        if(((latestOP.op == Operation::TURN_RIGHT90) || (latestOP.op == Operation::TURN_LEFT90))){
-          Operation nextOP = list[i+1];//No problem because lastOP is stop
-          if(nextOP.op == Operation::STOP)	newOPlist.push_back({Operation::FORWARD,1});
-        }
-      }
-      return newOPlist;
-    }
-    Direction directionFromRunVec(Matrix2i runVec){
-      if(runVec(0,0) != 0){//about x
-        if(runVec(0,0) == 1) return EAST;
-        else return WEST;
-      }
-      else{
-        if(runVec(0,1) == 1) return NORTH;
-        else return SOUTH;
-      }
-    }
+    bool first_flag = false;
+    bool last_flag = false;
+    float initial_offset = 0;
 
-    OperationList reverseOperation(OperationList list){
-      return reverseOperation(list, 0);
-    }
-    OperationList reverseOperation(OperationList list, bool flag){
+    //float clothoid_startX = x();
+    //float clothoid_startY = y();
+    //float sencond_clothoid_startX;
+    //float sencond_clothoid_startY;
+    //float endX = (firstVec.x + lastVec.x) * 180 - clothoid_startX;
+    //float endY = ((firstVec.Y + lastVec.Y) * 180 / 2.0 + 60.0) - clothoid_startY;
+    //float *coordinatePointer();
+    //if(firstRunVec(0,0) != 0) coordinatePointer = x;
+    //else	coordinatePointer = y;
 
-      OperationList newOPlist;
-      for(auto itr = list.rbegin(); itr != list.rend();++itr){
-        Operation latestOP = *itr;
-        if(latestOP.op == Operation::STOP) continue;
-        else if(latestOP.op == Operation::TURN_RIGHT90) latestOP.op = Operation::TURN_LEFT90;
-        else if(latestOP.op == Operation::TURN_RIGHT90S) latestOP.op = Operation::TURN_LEFT90S;
-        else if(latestOP.op == Operation::TURN_RIGHT180) latestOP.op = Operation::TURN_LEFT180;
-        else if(latestOP.op == Operation::TURN_LEFT90) latestOP.op = Operation::TURN_RIGHT90;
-        else if(latestOP.op == Operation::TURN_LEFT90S) latestOP.op = Operation::TURN_RIGHT90S;
-        else if(latestOP.op == Operation::TURN_LEFT180) latestOP.op = Operation::TURN_RIGHT180;
-        newOPlist.push_back(latestOP);
-      }
-      newOPlist.push_back({Operation::STOP,1});
-      return newOPlist;
-    }
-    struct Position setStartPosition(Robot &dango){
-      IndexVec presentVec = dango.getRobotVec();
-      Direction presentDir = directionFromRunVec(dango.RobotRunVec);
-      struct Position presentPoint;
-      if(presentDir == NORTH && presentDir == SOUTH){
-        int8_t which = (presentDir == SOUTH) ? 1 : -1;
-        presentPoint.x = ONE_BLOCK * presentVec.x;
-        presentPoint.y = ONE_BLOCK * presentVec.y + which * (ONE_BLOCK - WheelFromWall);
-      }
-      if(presentDir == WEST && presentDir == EAST){
-        int8_t which = (presentDir == WEST) ? 1 : -1;
-        presentPoint.x = ONE_BLOCK * presentVec.x + which + which * (ONE_BLOCK / 2.f - WheelFromWall);
-        presentPoint.y = ONE_BLOCK * presentVec.y + ONE_BLOCK / 2.f - WheelFromWall;
-      }
-      return presentPoint;
-    }
-
-    float target_Coordinate(IndexVec targetIndex, Matrix2i vecStatus){
+    while(len_counter <= len_measure(diag_length) + initial_offset){
+      //while(judgeDiagCoordinate(firstVec,endX,endY,coordinatePointer){
       float distance = 0.0f;
-      if(vecStatus(0,0) != 0)  //x direction
-        distance = (targetIndex.x * 180.0) - vecStatus(0,0) * 90.0;
-      else //y direction
-        distance = (targetIndex.y * 180.0) - vecStatus(0,1) * 90.0 + 50.0;
+      x_p = 30.0 * 600.0 / now_speed;
+      degree_p = 30.0 * 600.0 / now_speed;
+      if(ENCODER_start == ON){
+        if(fabs(target_degree - past_target_degree) < 45.0 && first_flag == false) target_degree += first_degree_diff;
+        else if(first_flag == false){
+          first_flag = true;
+          initial_length = len_counter;
+          target_degree = past_target_degree + first_diag_direction * 45.0;
+          next_target_degree = target_degree;
+          initial_offset = initial_length;
 
-      return distance;
-    }
-    float Robot::targetLength(IndexVec targetIndex,Matrix2i vecStatus,uint16_t offset){
-      if(vecStatus(0,0) != 0){ //x direction
-        int8_t direction = vecStatus(0,0);
-        return direction * (target_Coordinate(targetIndex,vecStatus) - x() - direction * offset);
-      }
-      else{
-        int8_t direction = vecStatus(0,1);
-        return direction * (target_Coordinate(targetIndex,vecStatus) - y() - direction * offset);
-      }
-    }
+          //second_clothoid_startX = endX - (x() - clothoid_startX);
+          //second_clothoid_startY = endY - (y() - clothoid_starty);
+        }
 
-    bool Robot::judgeTargetCoordinate(IndexVec targetIndex, Matrix2i vecStatus,uint16_t offset){
-      return (0 < targetLength(targetIndex,vecStatus,offset)) ? true : false;
-    }
-    void Robot::fixCoordinate(){
-      Matrix2i vecStatus = RobotRunVec;
-      if(vecStatus(0,0) != 0){	//x direction
-        uint16_t xCoordinate = (uint8_t)((int16_t)(x() + 90.0) / 180) * 180 ;//+ vecStatus(0,0) * 15.0;
-        set_x(xCoordinate);
+        if(len_counter >= len_measure(diag_length) - initial_length + initial_offset && first_flag == true && last_flag == false) last_flag = true;
+        if(last_flag == true)	target_degree += last_degree_diff;
+        if(first_flag == true && last_flag == false && len_counter >= len_measure(diag_length - 15.0 * (now_speed * now_speed - turn_speed * turn_speed) / 2.0 / (accel * 1000))) //conv to mm
+          now_speed = turn_speed >= now_speed ? turn_speed : now_speed - accel;
+        else if(first_flag == true && last_flag == false){
+          if(len_counter >= initial_length + 50) now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
+          else distance = centerDistance(firstVec,lastVec,firstRunVec, firstOP.op);
+        }
+        read_encoder();
+        add_coordinate(degree);
+        target_theta_now = (degree - target_degree) / 180.0 * PI;
+        speed_controller(now_speed,- (degree_p * target_theta_now) + distance * x_p);
+        target_theta_last = target_theta_now;
+        ENCODER_start = OFF;
       }
-      else{
-        if(y() > 50){
-          uint16_t yCoordinate = (uint8_t)((int16_t)(y() + 50.0) / 180) * 180 + 50;// + vecStatus(0,1) * 15.00;
-          set_y(yCoordinate);
+    }
+    target_degree = next_target_degree + last_diag_direction * 45.0;
+
+    if(firstOP.op == lastOP.op)	RobotRunVec = firstRunVec;
+    setRobotVecFromRun((root[*i].op == Operation::TURN_RIGHT45) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
+  }
+  */
+  else if((root[*i].op == Operation::TURN_RIGHT90) || (root[*i].op  == Operation::TURN_LEFT90)){
+    int8_t operation_direction = (root[*i].op == Operation::TURN_RIGHT90) ? -1 : 1;
+    const float current_degree = degree;
+    float target_rad = 0;
+    float first_clothoid_degree = 0;
+    float second_clothoid_degree = 0;
+    bool clothoid_flag = false;
+
+    if(root[(*i)+1].op == root[*i].op){
+      target_degree += operation_direction * 180.0; 
+      (*i)++;
+      setRobotVecFromRun(root[*i].op,root[*i].n);
+    }
+    else	target_degree += operation_direction * 90.0; 
+    uint8_t prescaler = 0;
+    while(1){
+      if(timer_clock == ON){
+        prescaler = (prescaler + 1) % 100;
+        timer_clock = OFF;
+        plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed);
+        if(prescaler % 2 == 1){
+          //plot.push_back(x(),y(),degree,get_left_sensor(),get_right_sensor(),getRobotVec().x,getRobotVec().y);
+          set_left_sensor(led_1);
+          set_right_sensor(led_2);
+        }
+        if(prescaler % 10 == 0){
+          stop_buzzer();
+          led_fulloff();
         }
       }
-      led_fullon();
-      start_buzzer(2);
-    }
-    void Robot::fixCoordinate(Matrix2i runVec, float offset){
-      Matrix2i vecStatus = runVec;
-      if(vecStatus(0,0) != 0){	//x direction
-        uint16_t xCoordinate = (uint16_t)((int16_t)(x() + 90.0) / 180) * 180 - vecStatus(0,0) * (90 - offset);
-        set_x(xCoordinate);
+      if(SENSOR_reset == ON){
+        reset_led();
+        SENSOR_reset = OFF;
       }
-      else{
-        if(y() > 40){
-          uint16_t yCoordinate = (uint16_t)((int16_t)(y() + 50.0) / 180) * 180 + 40 - vecStatus(0,1) * (90 - offset);
-          set_y(yCoordinate);
+      if(SENSOR_start == ON)	led_get();
+      if(ENCODER_start == ON){
+        float radius = 90.0;
+        float timing = turn_speed / radius / 0.7; // 0.7 is accel
+        read_encoder();
+        add_coordinate(degree);
+        if(checkZAccel()){
+          zStatus = true;
+          return;
+        }
+        if(target_rad <= turn_speed / 90.0 && clothoid_flag == false){
+          target_rad += turn_speed / radius / timing;
+          first_clothoid_degree = degree;
+          clothoid_flag = false;
+        }
+        else{
+          second_clothoid_degree = (clothoid_flag == false) ? target_degree +  5.0 * (current_degree - first_clothoid_degree) : second_clothoid_degree;
+          clothoid_flag = true;
+          if(operation_direction == -1 && degree <= second_clothoid_degree)	target_rad -= turn_speed / radius / timing;
+          if(operation_direction == 1 && degree >= second_clothoid_degree)	target_rad -= turn_speed / radius / timing;
+          if(target_rad <= 0)	break;
+        }
+        speed_controller(turn_speed,(float)operation_direction * target_rad);
+        ENCODER_start = OFF;
+      }
+    }
+    GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_RESET);
+  }
+  else if((root[*i].op == Operation::TURN_RIGHT90S) || (root[*i].op  == Operation::TURN_LEFT90S)){
+    len_counter = 0;
+    sensor_works();
+    setWallStatus();
+    uint8_t runStatus = 0;
+    int8_t operation_direction = (root[*i].op == Operation::TURN_RIGHT90S) ? -1 : 1;
+    const float current_degree = degree;
+    float target_rad = 0;
+    float first_clothoid_degree = 0;
+    float second_clothoid_degree = 0;
+    bool clothoid_flag = false;
+
+    float last_target_degree = target_degree;
+    float slalom_degree_p = 15.0;
+    target_degree += operation_direction * 90.0; 
+    uint8_t prescaler = 0;
+    bool frontThreshold = false;
+    sensor_works();
+    while(1){
+      if(timer_clock == ON){
+        prescaler = (prescaler + 1) % 100;
+        timer_clock = OFF;
+        plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel);
+        if(prescaler % 2 == 1){
+          //plot.push_back(x(),y(),degree,get_left_sensor(),get_right_sensor(),getRobotVec().x,getRobotVec().y);
+          set_left_sensor(led_1);
+          set_right_sensor(led_2);
+        }
+        if(prescaler % 10 == 0){
+          stop_buzzer();
+          led_fulloff();
         }
       }
-      led_fullon();
-      start_buzzer(4);
-    }
-    void Robot::fixCoordinate(Matrix2i runVec, float wall_left, float wall_right){
-      Matrix2i vecStatus = runVec;
-      const float A = -11.2321;
-      const float b = 7.5714;
-      const float position = ((wall_left - wall_right) - b)  / A;
-      if(vecStatus(0,0) != 0){	//x direction fix y
-        float yCoordinate = (uint16_t)((int16_t)(y() + 50.0) / 180) * 180 + 50 - vecStatus(0,0) * position;
-        set_y(yCoordinate);
+
+      if(SENSOR_reset == ON){
+        if(led_3 >= frontWallThreshold_3 && led_4 >= frontWallThreshold_4) frontThreshold = true; 
+        reset_led();
+        SENSOR_reset = OFF;
       }
-      else{//y direction fix x
-        float xCoordinate = (uint16_t)((int16_t)(x() + 90.0) / 180) * 180 + vecStatus(0,1) * position;
-        set_x(xCoordinate);
+      if(SENSOR_start == ON)	led_get();
+      if(ENCODER_start == ON){
+        float radius = 50.0;
+        float timing = 15.0;
+        read_encoder();
+        add_coordinate(degree);
+        if(checkZAccel()){
+          zStatus = true;
+          return;
+        }
+        if(frontWall == true && runStatus % 2 == 0){
+          if(frontThreshold == true){
+            //fixCoordinate(last_RobotRunVec, 40);
+            frontWall = false; // 2320 2640 was
+            runStatus++;
+            len_counter = 0;
+          }
+          target_theta_now = (degree - last_target_degree) / 180.0 * PI;
+          speed_controller(turn_speed,- (degree_p * target_theta_now));
+        }
+        else if(frontWall == false && runStatus == 0 && len_counter < len_measure(31)){
+          target_theta_now = (degree - last_target_degree) / 180.0 * PI;
+          speed_controller(turn_speed,- (slalom_degree_p * target_theta_now));
+        }
+        else if(frontWall == false && runStatus == 2 && len_counter < len_measure(31)){
+          target_theta_now = (degree - target_degree) / 180.0 * PI;
+          speed_controller(turn_speed,- (slalom_degree_p * target_theta_now));
+        }
+        else if(runStatus % 2 == 0){
+          len_counter = 0;
+          runStatus++;
+          led_fullon();
+        }
+        else if(runStatus == 1 && target_rad <= turn_speed / radius && clothoid_flag == false){
+          target_rad += turn_speed / radius / timing;
+          first_clothoid_degree = degree;
+          speed_controller(turn_speed,(float)operation_direction * target_rad);
+          clothoid_flag = false;
+        }
+        else if(runStatus == 1){
+          second_clothoid_degree = (clothoid_flag == false) ? target_degree + (current_degree - first_clothoid_degree) : second_clothoid_degree;
+          clothoid_flag = true;
+          speed_controller(turn_speed,(float)operation_direction * target_rad);
+          if(operation_direction == -1 && degree <= second_clothoid_degree)	target_rad -= turn_speed / radius / timing;
+          if(operation_direction == 1 && degree >= second_clothoid_degree)	target_rad -= turn_speed / radius / timing;
+          if(target_rad <= 0){
+            runStatus = 2;
+            len_counter = 0;
+          }
+        }
+        ENCODER_start = OFF;
       }
-      led_fullon();
-      start_buzzer(4);
+      if(runStatus == 3)break;
     }
+    GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_RESET);
+  }
+  stop_buzzer();
+}
+void Robot::action(uint8_t value,OperationList runSequence,ParamList parameters){
+  led_flash();
+  Delay_ms(1000);
+  sensor_works();
+  set_left_sensor(led_1);
+  set_right_sensor(led_2);
+  reset_led();
+  TIM2->CNT = 0;
+  TIM8->CNT = 0;
+  degree = 0;
+  set_speed(0,0);
+  len_counter = 0;
+  reset_e();
+  pipi(6);
+  pipi(5);
+  pipi(4);
+  pipi(3);
+
+  OperationList reverseRunSequence = reverseOperation(runSequence,0);
+  for(size_t i = 0;i < runSequence.size();i++){
+    len_counter = 0;
+    if(zStatus == true) break;
+    robotShortMove(runSequence,parameters[value],&i);
+  }
+  /*
+     if(button_return != 1){
+     sensor_works();
+     setWallStatus();
+     len_counter = 0;
+     for(size_t i = 0;i < reverseRunSequence.size();i++){
+     len_counter = 0;
+     if(zStatus == true) break;
+     robotShortMove(reverseRunSequence,parameters[value],&i);
+     }
+     }
+     */
+  while(button_return == 1); 
+  led_stop();
+  zStatus = false;
+  set_speed(0,0);
+  Delay_ms(1000);
+  degree = 0;
+  reset_e();
+  len_counter = 0;
+}
+OperationList rebuildOperation(OperationList list){
+  OperationList newOPlist;
+  for(size_t i = 0;i < list.size();i++){
+    Operation::OperationType latestOP = list[i].op;
+    if(latestOP == (Operation::TURN_RIGHT90)  || latestOP == Operation::TURN_LEFT90){
+      if(latestOP == list[(i) + 1].op){
+        if(latestOP == Operation::TURN_RIGHT90)	newOPlist.push_back(Operation::TURN_RIGHT180);
+        else newOPlist.push_back(Operation::TURN_LEFT180);
+      }
+      else newOPlist.push_back(latestOP);
+    }
+    else newOPlist.push_back(latestOP);
+  }
+  return newOPlist;
+}
+OperationList rebuildOperation(OperationList list,bool diagFlag){
+  OperationList newOPlist;
+  if(diagFlag == false){
+    for(size_t i = 0;i < list.size();i++){
+      Operation latestOP = list[i];
+      Operation pushOP = latestOP;
+      if(((latestOP.op == Operation::TURN_RIGHT90) || (latestOP.op == Operation::TURN_LEFT90))){ //For short shushuhu
+        Operation lastOP = newOPlist[i-1];
+        Operation nextOP = list[i+1];//No problem because lastOP is stop
+
+        if((lastOP.op == Operation::TURN_RIGHT90S) || (lastOP.op == Operation::TURN_LEFT90S))
+          pushOP.op = (latestOP.op == Operation::TURN_LEFT90) ? Operation::TURN_LEFT90S : Operation::TURN_RIGHT90S;
+
+        else if(((nextOP.op == Operation::TURN_RIGHT90) || (nextOP.op == Operation::TURN_LEFT90)) && (nextOP.op != latestOP.op))
+          pushOP.op = (latestOP.op == Operation::TURN_LEFT90) ? Operation::TURN_LEFT90S : Operation::TURN_RIGHT90S;
+        else if(((nextOP.op == Operation::TURN_RIGHT90) || (nextOP.op == Operation::TURN_LEFT90)) && (nextOP.op == latestOP.op)){
+          if(i <= list.size() - 3){
+            Operation futureOP = list[i+2];//No problem because lastOP is stop
+            if((futureOP.op == Operation::TURN_RIGHT90 || futureOP.op == Operation::TURN_LEFT90) && futureOP.op != latestOP.op)
+              pushOP.op = (latestOP.op == Operation::TURN_LEFT90) ? Operation::TURN_LEFT90S : Operation::TURN_RIGHT90S;
+          }
+        }
+      }
+      if(latestOP.op == Operation::FORWARD){
+        Operation nextOP = list[i + 1];
+        if(nextOP.op == Operation::FORWARD){
+          pushOP.n += nextOP.n;
+          i++;
+        }
+      }
+      newOPlist.push_back(pushOP);
+      if(((latestOP.op == Operation::TURN_RIGHT90) || (latestOP.op == Operation::TURN_LEFT90))){
+        Operation nextOP = list[i+1];//No problem because lastOP is stop
+        if(nextOP.op == Operation::STOP)	newOPlist.push_back({Operation::FORWARD,1});
+      }
+    }
+  }
+  else{
+    for(size_t i = 0;i < list.size();i++){
+      Operation latestOP = list[i];
+      Operation pushOP = latestOP;
+    }
+  }
+  return newOPlist;
+}
+Direction directionFromRunVec(Matrix2i runVec){
+  if(runVec(0,0) != 0){//about x
+    if(runVec(0,0) == 1) return EAST;
+    else return WEST;
+  }
+  else{
+    if(runVec(0,1) == 1) return NORTH;
+    else return SOUTH;
+  }
+}
+
+OperationList reverseOperation(OperationList list){
+  return reverseOperation(list, 0);
+}
+OperationList reverseOperation(OperationList list, bool flag){
+
+  OperationList newOPlist;
+  for(auto itr = list.rbegin(); itr != list.rend();++itr){
+    Operation latestOP = *itr;
+    if(latestOP.op == Operation::STOP) continue;
+    else if(latestOP.op == Operation::TURN_RIGHT90) latestOP.op = Operation::TURN_LEFT90;
+    else if(latestOP.op == Operation::TURN_RIGHT90S) latestOP.op = Operation::TURN_LEFT90S;
+    else if(latestOP.op == Operation::TURN_RIGHT180) latestOP.op = Operation::TURN_LEFT180;
+    else if(latestOP.op == Operation::TURN_LEFT90) latestOP.op = Operation::TURN_RIGHT90;
+    else if(latestOP.op == Operation::TURN_LEFT90S) latestOP.op = Operation::TURN_RIGHT90S;
+    else if(latestOP.op == Operation::TURN_LEFT180) latestOP.op = Operation::TURN_RIGHT180;
+    newOPlist.push_back(latestOP);
+  }
+  newOPlist.push_back({Operation::STOP,1});
+  return newOPlist;
+}
+struct Position setStartPosition(Robot &dango){
+  IndexVec presentVec = dango.getRobotVec();
+  Direction presentDir = directionFromRunVec(dango.RobotRunVec);
+  struct Position presentPoint;
+  if(presentDir == NORTH && presentDir == SOUTH){
+    int8_t which = (presentDir == SOUTH) ? 1 : -1;
+    presentPoint.x = ONE_BLOCK * presentVec.x;
+    presentPoint.y = ONE_BLOCK * presentVec.y + which * (ONE_BLOCK - WheelFromWall);
+  }
+  if(presentDir == WEST && presentDir == EAST){
+    int8_t which = (presentDir == WEST) ? 1 : -1;
+    presentPoint.x = ONE_BLOCK * presentVec.x + which + which * (ONE_BLOCK / 2.f - WheelFromWall);
+    presentPoint.y = ONE_BLOCK * presentVec.y + ONE_BLOCK / 2.f - WheelFromWall;
+  }
+  return presentPoint;
+}
+
+float target_Coordinate(IndexVec targetIndex, Matrix2i vecStatus){
+  float distance = 0.0f;
+  if(vecStatus(0,0) != 0)  //x direction
+    distance = (targetIndex.x * 180.0) - vecStatus(0,0) * 90.0;
+  else //y direction
+    distance = (targetIndex.y * 180.0) - vecStatus(0,1) * 90.0 + 50.0;
+
+  return distance;
+}
+float Robot::targetLength(IndexVec targetIndex,Matrix2i vecStatus,uint16_t offset){
+  if(vecStatus(0,0) != 0){ //x direction
+    int8_t direction = vecStatus(0,0);
+    return direction * (target_Coordinate(targetIndex,vecStatus) - x() - direction * offset);
+  }
+  else{
+    int8_t direction = vecStatus(0,1);
+    return direction * (target_Coordinate(targetIndex,vecStatus) - y() - direction * offset);
+  }
+}
+Position estimatePosition(Position est){
+  Position target;
+  target.x = (est.x + 90.0f) / 180.0 * 180.0;
+  target.y = (est.y + 50.0f) / 180 + 40.0;
+  return target;
+}
+bool Robot::judgeTargetCoordinate(IndexVec targetIndex, Matrix2i vecStatus,uint16_t offset){
+  return (0 < targetLength(targetIndex,vecStatus,offset)) ? true : false;
+}
+void Robot::fixCoordinate(){
+  Matrix2i vecStatus = RobotRunVec;
+  if(vecStatus(0,0) != 0){	//x direction
+    uint16_t xCoordinate = (uint8_t)((int16_t)(x() + 90.0) / 180) * 180 ;//+ vecStatus(0,0) * 15.0;
+    set_x(xCoordinate);
+  }
+  else{
+    if(y() > 50){
+      uint16_t yCoordinate = (uint8_t)((int16_t)(y() + 50.0) / 180) * 180 + 50;// + vecStatus(0,1) * 15.00;
+      set_y(yCoordinate);
+    }
+  }
+  led_fullon();
+  start_buzzer(2);
+}
+void Robot::fixCoordinate(Matrix2i runVec, float offset){
+  Matrix2i vecStatus = runVec;
+  if(vecStatus(0,0) != 0){	//x direction
+    uint16_t xCoordinate = (uint16_t)((int16_t)(x() + 90.0) / 180) * 180 - vecStatus(0,0) * (90 - offset);
+    set_x(xCoordinate);
+  }
+  else{
+    if(y() > 40){
+      uint16_t yCoordinate = (uint16_t)((int16_t)(y() + 50.0) / 180) * 180 + 40 - vecStatus(0,1) * (90 - offset);
+      set_y(yCoordinate);
+    }
+  }
+  led_fullon();
+  start_buzzer(4);
+}
+void Robot::fixCoordinate(Matrix2i runVec, float wall_left, float wall_right){
+  Matrix2i vecStatus = runVec;
+  const float A = -11.2321;
+  const float b = 7.5714;
+  const float position = ((wall_left - wall_right) - b)  / A;
+  if(vecStatus(0,0) != 0){	//x direction fix y
+    float yCoordinate = (uint16_t)((int16_t)(y() + 50.0) / 180) * 180 + 50 - vecStatus(0,0) * position;
+    set_y(yCoordinate);
+  }
+  else{//y direction fix x
+    float xCoordinate = (uint16_t)((int16_t)(x() + 90.0) / 180) * 180 + vecStatus(0,1) * position;
+    set_x(xCoordinate);
+  }
+  led_fullon();
+  start_buzzer(4);
+}
 
 
-    float Robot::centerDistance(IndexVec firstVec,IndexVec lastVec,Matrix2i vecStatus, Operation::OperationType op){
-      float startX,startY;
-      Matrix2f targetPoint;
-      if(vecStatus(0,0) != 0){
-        startX = target_Coordinate(firstVec,vecStatus);
-        startY = firstVec.y * 180.0 + 60.0;
-        targetPoint << y() - startY,x() - startX,0,0;
-      }
-      else{
-        startY = target_Coordinate(firstVec,vecStatus);
-        startX = firstVec.x * 180.0 - 90.0;
-        targetPoint << x() - startX,y() - startY,0,0;
-      }
-      Matrix2f rotation;
-      int8_t turn_dir;
-      if(op == Operation::TURN_RIGHT45) turn_dir = 45;
-      else turn_dir = -45;
-      rotation << cos(turn_dir),-sin(turn_dir),sin(turn_dir),cos(turn_dir);
-      targetPoint = targetPoint * rotation;
+float Robot::centerDistance(IndexVec firstVec,IndexVec lastVec,Matrix2i vecStatus, Operation::OperationType op){
+  float startX,startY;
+  Matrix2f targetPoint;
+  if(vecStatus(0,0) != 0){
+    startX = target_Coordinate(firstVec,vecStatus);
+    startY = firstVec.y * 180.0 + 60.0;
+    targetPoint << y() - startY,x() - startX,0,0;
+  }
+  else{
+    startY = target_Coordinate(firstVec,vecStatus);
+    startX = firstVec.x * 180.0 - 90.0;
+    targetPoint << x() - startX,y() - startY,0,0;
+  }
+  Matrix2f rotation;
+  int8_t turn_dir;
+  if(op == Operation::TURN_RIGHT45) turn_dir = 45;
+  else turn_dir = -45;
+  rotation << cos(turn_dir),-sin(turn_dir),sin(turn_dir),cos(turn_dir);
+  targetPoint = targetPoint * rotation;
 
-      if(vecStatus(0,0) != 0)	return  -vecStatus(0,0) * targetPoint(0,1); //50.0
-      else	return vecStatus(0,1) * targetPoint(0,0);
-    }
+  if(vecStatus(0,0) != 0)	return  -vecStatus(0,0) * targetPoint(0,1); //50.0
+  else	return vecStatus(0,1) * targetPoint(0,0);
+}
 
-    bool judgeDiagCoordinate(Matrix2i firstVec,float targetX,float targetY,float coordinatePoint){
-      if(firstVec(0,0) != 0)	return  (0 < firstVec(0,0) *	(targetX - coordinatePoint)) ? true : false;
-      else	return  (0 < firstVec(0,1) *	(targetY - coordinatePoint)) ? true : false;
-    }
+bool judgeDiagCoordinate(Matrix2i firstVec,float targetX,float targetY,float coordinatePoint){
+  if(firstVec(0,0) != 0)	return  (0 < firstVec(0,0) *	(targetX - coordinatePoint)) ? true : false;
+  else	return  (0 < firstVec(0,1) *	(targetY - coordinatePoint)) ? true : false;
+}
+Matrix2i getRotate(Operation::OperationType type){
+  if(type == Operation::TURN_RIGHT90 || type == Operation::TURN_RIGHT45) return right90Rotate();
+  if(type == Operation::FORWARD) return eigenRotate();
+  if(type == Operation::TURN_LEFT90 || type == Operation::TURN_LEFT45) return left90Rotate();
+  else return eigenRotate();
+}

@@ -27,9 +27,6 @@ class Robot{
   public:
     //Direction RobotRunVec = NORTH;
     Matrix2i RobotRunVec;
-    Matrix2i getRIGHT(){Matrix2i po; po << 0, -1,1,0; return po;}
-    Matrix2i getFORWARD(){Matrix2i po; po << 1,0,0,1; return po;}
-    Matrix2i getLEFT(){Matrix2i po; po << 0, 1,-1,0; return po;}
     Matrix2i setRunVec(){Matrix2i po; po << 0, 1 ,0 ,0; return po;}
     Robot() : RobotDir{NORTH}, RobotDegreeDir{0}, position{0,0},zStatus{false}, RobotRunVec{setRunVec()}{}
     inline void saveMazeStart(){flag.setSaveMaze(true);}
@@ -58,6 +55,7 @@ class Robot{
     inline void set_y(float coordinate){ position.y = coordinate;}
     inline void add_x(float coordinate){ position.x += coordinate;}
     inline void add_y(float coordinate){ position.y += coordinate;}
+    inline Position get_position(){return position;}
     void fixCoordinate();
     void fixCoordinate(Matrix2i runVec, float offset);
     void fixCoordinate(Matrix2i runVec, float wall_left,float wall_right);
@@ -84,4 +82,11 @@ OperationList rebuildOperation(OperationList list,bool diagFlag);
 OperationList reverseOperation(OperationList list);
 OperationList reverseOperation(OperationList list,bool flag);
 struct Position setStartPosition(Robot &dango);
+Position estimatePosition(Position est);
+inline Matrix2i right90Rotate(){Matrix2i po; po << 0, -1, 1, 0; return po;}
+inline Matrix2i eigenRotate(){Matrix2i po; po << 1, 0, 0, 1; return po;}
+inline Matrix2i left90Rotate(){Matrix2i po; po << 0, 1, -1, 0; return po;}
+inline Matrix2i Rotate180(){Matrix2i po; po << -1, 0, 0, -1; return po;}
+Matrix2i getRotate(Operation::OperationType type);
+Direction directionFromRunVec(Matrix2i runVec);
 #endif
