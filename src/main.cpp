@@ -417,6 +417,7 @@ suction_motor_setting();
 
 mouse_start();
 GYRO_offset();
+set_traject();
 Delay_ms(100);
 pipi(3);
 pipi(4);
@@ -472,358 +473,364 @@ while(1){
     }
 
     /*
-       uint32_t *flash_data = (uint32_t*)Flash_load();
-       printf("flash_data:%lu\r\n", *flash_data);
-       (*flash_data)++;
-       if (!Flash_write_back()) {
-       printf("Failed to write flash\n");
-       }
-       while(1){
-       if(ENCODER_start == ON){
-       read_encoder();
-       speed_controller(param_value*100,0);
-       ENCODER_start = OFF;
-       }
-       }*/
+    uint32_t *flash_data = (uint32_t*)Flash_load();
+    printf("flash_data:%lu\r\n", *flash_data);
+    (*flash_data)++;
+    if (!Flash_write_back()) {
+      printf("Failed to write flash\n");
+    }
+    while(1){
+      if(ENCODER_start == ON){
+      read_encoder();
+      speed_controller(param_value*100,0);
+      ENCODER_start = OFF;
+      }
+    }
+    */
   }
-       else if(mode_select % 16 == 2){
-         float target_theta_last = 0;
-         float target_theta_sum = 0;
-         float degree_p = 20, degree_i = 0.1, degree_d = 1.0;
-         while(1){
-           if(GYRO_start == ON){
-             GYRO_sampling();
-             GYRO_start = OFF;
-           }
-           if(ENCODER_start == ON){
-             read_encoder();
-             float target_theta_now = degree / 180.0 * PI;
-             target_theta_sum += target_theta_now;
-             float target_theta_diff = target_theta_now - target_theta_last;
-             float value = -(target_theta_sum * degree_i + target_theta_now * degree_p + target_theta_diff * degree_d);
-             speed_controller(0, value);
-             ENCODER_start = OFF;
-             target_theta_last = target_theta_now;
-           }
+  else if(mode_select % 16 == 2){
+    float target_theta_last = 0;
+    float target_theta_sum = 0;
+    float degree_p = 20, degree_i = 0.1, degree_d = 1.0;
+    while(1){
+      if(GYRO_start == ON){
+        GYRO_sampling();
+        GYRO_start = OFF;
+      }
+      if(ENCODER_start == ON){
+        read_encoder();
+        float target_theta_now = degree / 180.0 * PI;
+        target_theta_sum += target_theta_now;
+        float target_theta_diff = target_theta_now - target_theta_last;
+        float value = -(target_theta_sum * degree_i + target_theta_now * degree_p + target_theta_diff * degree_d);
+        speed_controller(0, value);
+        ENCODER_start = OFF;
+        target_theta_last = target_theta_now;
+      }
 
-           if(degree >= 90.0)
-             GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
-           else
-             GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_RESET);
-         }
-       }
-       else if(mode_select % 16 == 3){
-         Flash_clear();
-         stop_flag = false;
-         led_flash();
-         Delay_ms(1000);
-         dango.startOffSet(&agent);
-         prev_State = agent.getState();
-         bool last_save_flag = false;
-         while(1){
-           prev_State = agent.getState();
-           Direction Lastdir = agent.getNextDirection();
-           reset_led();
-           sensor_works();
-           Direction WallData = read_wall(dango.getRobotDir());
-           if(stop_flag == true){
-             pipi(4);
-             set_speed(0,0);
-             break;
-           }
-           if((maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y) & Direction(0b11110000)) != (Direction)0xf0)
-             agent.update(dango.getRobotVec(),WallData);
-           else
-             agent.update(dango.getRobotVec(),maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y));
-           if(agent.getState() == Agent::FINISHED){
-             dango.startBack(NORTH, 0);
-             break;
-           }
-           if(prev_State == Agent::SEARCHING_NOT_GOAL && agent.getState() != prev_State){
-             maze_backup = maze;
-             start_buzzer(10);
-             dango.saveMazeStart();
-             led_fullon();
-           }
-           Direction Nextdir = agent.getNextDirection();
-           if(Lastdir == Nextdir && len_counter >= 170)	len_counter -= 180.0;
-           else len_counter = 0;
-           if(Nextdir.byte == 0){
-             set_speed(0,0);
-             Delay_ms(1000);
-             break;
-           }
-           if(last_save_flag != dango.getSaveMazeFlag()){
-             last_save_flag = dango.getSaveMazeFlag();
-             dango.robotMove(Nextdir,true);
-           }
-           else	dango.robotMove(Nextdir,false);
-           dango.setRobotDir(Nextdir);
-           dango.addRobotDirToVec(Nextdir);
-           stop_buzzer();
-         }
-         degree = 0;
-         set_speed(0,0);
-         len_counter = 0;
-         reset_e();
-         pipi(3);
-         pipi(4);
-         pipi(5);
-         pipi(6);
-         led_stop();
+      if(degree >= 90.0)
+        GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
+      else
+        GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_RESET);
+    }
+  }
+  else if(mode_select % 16 == 3){
+    Flash_clear();
+    stop_flag = false;
+    led_flash();
+    Delay_ms(1000);
+    dango.startOffSet(&agent);
+    prev_State = agent.getState();
+    bool last_save_flag = false;
+    while(1){
+      prev_State = agent.getState();
+      Direction Lastdir = agent.getNextDirection();
+      reset_led();
+      sensor_works();
+      Direction WallData = read_wall(dango.getRobotDir());
+      if(stop_flag == true){
+        pipi(4);
+        set_speed(0,0);
+        break;
+      }
+      if((maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y) & Direction(0b11110000)) != (Direction)0xf0)
+        agent.update(dango.getRobotVec(),WallData);
+      else
+        agent.update(dango.getRobotVec(),maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y));
+      if(agent.getState() == Agent::FINISHED){
+        dango.startBack(NORTH, 0);
+        break;
+      }
+      if(prev_State == Agent::SEARCHING_NOT_GOAL && agent.getState() != prev_State){
+        maze_backup = maze;
+        start_buzzer(10);
+        dango.saveMazeStart();
+        led_fullon();
+      }
+      Direction Nextdir = agent.getNextDirection();
+      if(Lastdir == Nextdir && len_counter >= 170)	len_counter -= 180.0;
+      else len_counter = 0;
+      if(Nextdir.byte == 0){
+        set_speed(0,0);
+        Delay_ms(1000);
+        break;
+      }
+      if(last_save_flag != dango.getSaveMazeFlag()){
+        last_save_flag = dango.getSaveMazeFlag();
+        dango.robotMove(Nextdir,true);
+      }
+      else	dango.robotMove(Nextdir,false);
+      dango.setRobotDir(Nextdir);
+      dango.addRobotDirToVec(Nextdir);
+      stop_buzzer();
+    }
+    degree = 0;
+    set_speed(0,0);
+    len_counter = 0;
+    reset_e();
+    pipi(3);
+    pipi(4);
+    pipi(5);
+    pipi(6);
+    led_stop();
 
-         Delay_ms(100);
-         dango.setRobotVec(IndexVec());
+    Delay_ms(100);
+    dango.setRobotVec(IndexVec());
 
-         //agent.caclRunSequence(true);
+    //agent.caclRunSequence(true);
 
-         if(stop_flag == true){
-           save_mazedata(maze_backup);
-           pipi(2);
-           pipi(5);
-           pipi(6);
-           pipi(12);
-           led_fullon();
-           agent.resumeAt(Agent::FINISHED,maze_backup);
-           while(button_return == 0){}
-           pipi(4);
-           mouse_start();
-           led_fulloff();
-         }
-         else	save_mazedata(maze);
-         agent.caclRunSequence(false);
-         Robot last_dango = dango;
-         OperationList runSequence = agent.getRunSequence();
-         runSequence.push_back({Operation::FORWARD,1});
-         runSequence.push_back({Operation::STOP,1});
-         runSequence = rebuildOperation(runSequence,0);
-         TIM_Cmd(TIM5,ENABLE);
-         while(1){
-           dango.action(param_value,runSequence,parameters);
-           param_value = encoder_paramset();
-           plot.all_print();
-           mouse_start();
-           TIM2->CNT = 0;
-           TIM8->CNT = 0;
-           pipi(3);
-           pipi(4);
-           pipi(5);
-           pipi(6);
-           dango = last_dango;
-           plot.clear();
-         }
+    if(stop_flag == true){
+      save_mazedata(maze_backup);
+      pipi(2);
+      pipi(5);
+      pipi(6);
+      pipi(12);
+      led_fullon();
+      agent.resumeAt(Agent::FINISHED,maze_backup);
+      while(button_return == 0){}
+      pipi(4);
+      mouse_start();
+      led_fulloff();
+    }
+    else	save_mazedata(maze);
+    agent.caclRunSequence(false);
+    Robot last_dango = dango;
+    OperationList runSequence = agent.getRunSequence();
+    runSequence.push_back({Operation::FORWARD,1});
+    runSequence.push_back({Operation::STOP,1});
+    runSequence = rebuildOperation(runSequence,0);
+    TIM_Cmd(TIM5,ENABLE);
+    while(1){
+      dango.action(param_value,runSequence,parameters);
+      param_value = encoder_paramset();
+      plot.all_print();
+      mouse_start();
+      TIM2->CNT = 0;
+      TIM8->CNT = 0;
+      pipi(3);
+      pipi(4);
+      pipi(5);
+      pipi(6);
+      dango = last_dango;
+      plot.clear();
+    }
+  }
+  else if(mode_select % 16 == 4){
+    Robot dango;
+    Robot last_dango = dango;
+    pipi(5);
+    pipi(4);
+    pipi(6);
+    pipi(3);
+    Delay_ms(1000);
+    OperationList runSequence; 
+    runSequence.push_back({Operation::FORWARD,3});
+    runSequence.push_back({Operation::TURN_RIGHT45});
+    runSequence.push_back({Operation::TURN_LEFT45});
+    runSequence.push_back({Operation::FORWARD,1});
+    runSequence.push_back({Operation::TURN_RIGHT90,1});
+    runSequence.push_back({Operation::TURN_RIGHT90,1});
+    runSequence.push_back({Operation::FORWARD,5});
+    /*
+       for(int i = 1;i <= 7;i++){
+       runSequence.push_back({Operation::TURN_RIGHT90,1});
        }
-       else if(mode_select % 16 == 4){
-         Robot dango;
-         Robot last_dango = dango;
-         pipi(5);
-         pipi(4);
-         pipi(6);
-         pipi(3);
-         Delay_ms(1000);
-         OperationList runSequence; 
-         runSequence.push_back({Operation::FORWARD,8});
-         /*
-            runSequence.push_back({Operation::TURN_RIGHT90,1});
-            for(int i = 1;i <= 7;i++){
-            runSequence.push_back({Operation::FORWARD,14});
-            runSequence.push_back({Operation::TURN_RIGHT90,1});
-            }
-            runSequence.push_back({Operation::FORWARD,3});
-            */
-         runSequence.push_back({Operation::STOP,1});
-         runSequence = rebuildOperation(runSequence,0);
-         while(1){
-           //suction_start(40);
-           dango.action(param_value,runSequence,parameters);
-           suction_stop();
-           param_value = encoder_paramset();
-           degree = 0;
-           plot.all_print();
-           TIM2->CNT = 0;
-           TIM8->CNT = 0;
-           //mouse_start();
-           pipi(3);
-           pipi(4);
-           pipi(5);
-           pipi(6);
-           dango = last_dango;
-           plot.clear();
-         }
-       }
-       else if(mode_select % 16 == 5){
-         led_flash();
-         while(1){
-           sensor_works();
-           if(ENCODER_start == ON){
-             float target_speed = 0.0,target_rad = 0.0;
-             int16_t target_left_value = 2340,target_right_value = 2230;
-             float speed_gain = 0.5,rad_gain = 0.02;
-             read_encoder();
-             if(led_3 >= 2200 || led_4 >= 2150){
-               target_rad = rad_gain * (led_3 - target_left_value - (led_4 - target_right_value));
-               target_speed = speed_gain * (led_3 - target_left_value + (led_4 - target_right_value));
-             }
-             speed_controller(-target_speed,target_rad);
-             ENCODER_start = OFF;
-             reset_led();
-           }
-         }
-       }
-       else if(mode_select % 16 == 6){
-         TIM_Cmd(TIM5,ENABLE);
-         float last_x, last_y;
-         len_counter = 0;
-         TIM2->CNT = 0;
-         TIM8->CNT = 0;
-         while(1){
-           if(ENCODER_start == ON){
-             if(GYRO_start == ON){
-               float GYRO_rad = (float)(ReadGYRO()-GYRO_offset_data)/16.4/180.0*3.14;
-               degree += GYRO_rad*180.0/3.14/1000.0;
-               GYRO_start = OFF;
-             }
-             read_encoder();
-             dango.add_coordinate(degree);
-             ENCODER_start = OFF;
-           }
-           if(timer_clock == ON){
-             timer_clock = OFF;
-             if(abs(last_x - dango.x()) >= 1 || abs(last_y - dango.y()) >= 1){
-               plot.push_back(dango.x() * 100.0, dango.y() * 100.0, degree);
-               last_x = dango.x();
-               last_y = dango.y();
-             }
-           }
-           if(button_return == 1)  break;
-         }
-         Delay_ms(500);
-         while(button_return == 0);
-         pipi(3);
-         pipi(4);
-         pipi(5);
-         pipi(6);
-         plot.all_print();
-       }
-       else if(mode_select % 16 == 7){
-         led_fullon();
-         suction_start(60);
-         Delay_ms(4000);
-         led_fulloff();
-         suction_stop();
-         while(1);
-       }
-       else if(mode_select % 16 == 8){
-         maze = upload_mazedata();
-         agent.resumeAt(Agent::SEARCHING_NOT_GOAL,maze);
-         mode_select = 3;
-       }
-       else if(mode_select % 16 == 9){
-         set_traject();
-         TIM_Cmd(TIM5,ENABLE);
-         len_counter = 0;
-         TIM2->CNT = 0;
-         TIM8->CNT = 0;
-         int16_t reference_velocity = 600;
-         int16_t now_velocity = 0;
-         int16_t Kx = 0.05;
-         int16_t Ky = 0.05;
-         int16_t Ktheta = 0.5;
-         uint16_t target_index = 5;
-         uint16_t index_size = 524;
-         uint16_t last_index = 0;
-         float e_x = 0.0, e_y = 0.0;
-         float theta_e = 0.0;
-         float w_r = 0.0;
-         while(1){
-           if(ENCODER_start == ON){
-             read_encoder();
-             dango.add_coordinate(degree);
-             now_velocity = now_velocity <= reference_velocity ? now_velocity + 5 : reference_velocity;
-             speed_controller(now_velocity * cos(theta_e) + Ky * e_y, w_r + now_velocity * (Kx * e_x + Ktheta * sin(theta_e)));
-             ENCODER_start = OFF;
-           }
-           if(button_return == 1)  break;
-           if(traject_clock == ON){
-             traject_clock = OFF;
-             uint16_t dst_len = now_velocity * 5 / 1000;
-             target_index = (target_index + dst_len) % index_size;
+       runSequence.push_back({Operation::FORWARD,3});
+       */
+    runSequence.push_back({Operation::STOP,1});
+    //runSequence = rebuildOperation(runSequence,0);
+    while(1){
+      //suction_start(40);
+      dango.action(param_value,runSequence,parameters);
+      suction_stop();
+      param_value = encoder_paramset();
+      degree = 0;
+      plot.all_print();
+      TIM2->CNT = 0;
+      TIM8->CNT = 0;
+      mouse_start();
+      pipi(3);
+      pipi(4);
+      pipi(5);
+      pipi(6);
+      dango = last_dango;
+      plot.clear();
+    }
+  }
+  else if(mode_select % 16 == 5){
+    led_flash();
+    while(1){
+      sensor_works();
+      if(ENCODER_start == ON){
+        float target_speed = 0.0,target_rad = 0.0;
+        int16_t target_left_value = 2340,target_right_value = 2230;
+        float speed_gain = 0.5,rad_gain = 0.02;
+        read_encoder();
+        if(led_3 >= 2200 || led_4 >= 2150){
+          target_rad = rad_gain * (led_3 - target_left_value - (led_4 - target_right_value));
+          target_speed = speed_gain * (led_3 - target_left_value + (led_4 - target_right_value));
+        }
+        speed_controller(-target_speed,target_rad);
+        ENCODER_start = OFF;
+        reset_led();
+      }
+    }
+  }
+  else if(mode_select % 16 == 6){
+    TIM_Cmd(TIM5,ENABLE);
+    float last_x, last_y;
+    len_counter = 0;
+    TIM2->CNT = 0;
+    TIM8->CNT = 0;
+    while(1){
+      if(ENCODER_start == ON){
+        if(GYRO_start == ON){
+          float GYRO_rad = (float)(ReadGYRO()-GYRO_offset_data)/16.4/180.0*3.14;
+          degree += GYRO_rad*180.0/3.14/1000.0;
+          GYRO_start = OFF;
+        }
+        read_encoder();
+        dango.add_coordinate(degree);
+        ENCODER_start = OFF;
+      }
+      if(timer_clock == ON){
+        timer_clock = OFF;
+        if(abs(last_x - dango.x()) >= 1 || abs(last_y - dango.y()) >= 1){
+          plot.push_back(dango.x() * 100.0, dango.y() * 100.0, degree);
+          last_x = dango.x();
+          last_y = dango.y();
+        }
+      }
+      if(button_return == 1)  break;
+    }
+    Delay_ms(500);
+    while(button_return == 0);
+    pipi(3);
+    pipi(4);
+    pipi(5);
+    pipi(6);
+    plot.all_print();
+  }
+  else if(mode_select % 16 == 7){
+    led_fullon();
+    suction_start(60);
+    Delay_ms(4000);
+    led_fulloff();
+    suction_stop();
+    while(1);
+  }
+  else if(mode_select % 16 == 8){
+    maze = upload_mazedata();
+    agent.resumeAt(Agent::SEARCHING_NOT_GOAL,maze);
+    mode_select = 3;
+  }
+  else if(mode_select % 16 == 9){
+    TIM_Cmd(TIM5,ENABLE);
+    len_counter = 0;
+    TIM2->CNT = 0;
+    TIM8->CNT = 0;
+    Traject traject = turn45;
+    int16_t reference_velocity = 600;
+    int16_t now_velocity = 0;
+    float Kx = 0.001;
+    float Ky = 0.001;
+    float Ktheta = 0.001;
+    uint16_t target_index = 5;
+    uint16_t index_size = traject.real_size();
+    uint16_t last_index = 0;
+    float e_x = 0.0, e_y = 0.0;
+    float theta_e = 0.0;
+    float w_r = 0.0;
+    bool flag = false;
+    //dango.set_y(20);
+    while(flag == false){
+      if(ENCODER_start == ON){
+        read_encoder();
+        dango.add_coordinate(degree);
+        now_velocity = now_velocity <= reference_velocity ? now_velocity + 5 : reference_velocity;
+        speed_controller(now_velocity * cos(theta_e) + Ky * e_y, w_r + now_velocity * (-Kx * e_x + Ktheta * sin(theta_e)));
+        ENCODER_start = OFF;
+      }
+      if(button_return == 1)  break;
+      if(traject_clock == ON){
+        traject_clock = OFF;
+        uint16_t dst_len = now_velocity * 5 / 1000;
+        target_index = (target_index + dst_len) % index_size;
 
-             dotData ref = turn45.get_data(target_index);
-             ref.x = -ref.x;
-
-             e_x = ref.x - dango.x();
-             e_y = ref.y - dango.y();
-             w_r = ((turn45.get_data((target_index + dst_len) % index_size).rad) - ref.rad) * 200.0;
-             //plot.push_back(100 * tmp_x, 100 * tmp_y, 100 * w_r, 100 * dot.x[target_index], 100  * last_r_x, target_index);
-             theta_e = ref.rad - degree / 180.0 * PI;//atan2(dango.x() - last_c_x, dango.y() - last_c_y);
-             //plot.push_back(100 * w_r, 100 * theta_e);
-             if(last_index > target_index && last_index > 520) break;
-             else last_index = target_index;
-           }
-         }
-         set_speed(0,0);
-         Delay_ms(500);
-         while(button_return == 0);
-         pipi(3);
-         pipi(4);
-         pipi(5);
-         pipi(6);
-         plot.all_print();
-       }
-       else if(mode_select % 16 == 10){
-         pipi(3);
-         pipi(4);
-         pipi(5);
-         pipi(6);
-         ADC_RegularChannelConfig(ADC1,ADC_Channel_14,1,ADC_SampleTime_56Cycles);//
-         ADC_SoftwareStartConv(ADC1);
-         while(ADC_GetFlagStatus(ADC1,ADC_FLAG_EOC)==RESET);
-         const uint16_t value = ADC_GetConversionValue(ADC1);
-         const int16_t voltage = (float)value / 3475.f * 8.4 ;
-         const int16_t Duty = (TIM3_Period) / voltage * 1.0;
-         //suction_start(40);
-         pipi(6);
-         pipi(5);
-         pipi(4);
-         pipi(3);
-         TIM_Cmd(TIM5,ENABLE);
-         len_counter = 0;
-         TIM2->CNT = 0;
-         TIM8->CNT = 0;
-         volatile uint16_t cnt = 0;;
-         volatile int16_t input = 0;
-         int16_t rad = 0;
-         while(1){
-           if(ENCODER_start == ON){
-             read_encoder();
-             ENCODER_start = OFF;
-           }
-           if(GYRO_start == ON){
-             rad = (float)(ReadGYRO()-GYRO_offset_data);///16.4/180.0*3.14;
-             GYRO_start = OFF;
-           }
-           if(button_return == 1)  break;
-           if(timer_clock == ON){
-             timer_clock = OFF;
-             cnt++;
-             if(cnt <= 100) input = 0;
-             else if(cnt >= 400) input = 0;
-             else input = Duty;
-             //plot.push_back(left_speed / MmConvWheel, right_speed / MmConvWheel, input);
-             plot.push_back(rad, input);
-             set_speed(input, input);
-           }
-         }
-         //suction_stop();
-         Delay_ms(500);
-         while(button_return == 0);
-         pipi(3);
-         pipi(4);
-         pipi(5);
-         pipi(6);
-         plot.all_print();
-       }
+        dotData ref = traject.get_data(target_index, Operation::TURN_RIGHT90);
+        //ref.x = -ref.x;
+        e_x = ref.x - dango.x();
+        e_y = ref.y - dango.y();
+        w_r = (ref.rad - (traject.get_data((target_index - dst_len) % index_size, Operation::TURN_RIGHT90).rad)) * 200.0;
+        //plot.push_back(100 * tmp_x, 100 * tmp_y, 100 * w_r, 100 * dot.x[target_index], 100  * last_r_x, target_index);
+        theta_e = ref.rad - degree / 180.0 * PI;//atan2(dango.x() - last_c_x, dango.y() - last_c_y);
+        //plot.push_back(100 * w_r, 100 * theta_e);
+        if(last_index > target_index) flag = true;
+        else last_index = target_index;
+      }
+    }
+    set_speed(0,0);
+    Delay_ms(500);
+    while(button_return == 0);
+    pipi(3);
+    pipi(4);
+    pipi(5);
+    pipi(6);
+    plot.all_print();
+  }
+  else if(mode_select % 16 == 10){
+    pipi(3);
+    pipi(4);
+    pipi(5);
+    pipi(6);
+    ADC_RegularChannelConfig(ADC1,ADC_Channel_14,1,ADC_SampleTime_56Cycles);//
+    ADC_SoftwareStartConv(ADC1);
+    while(ADC_GetFlagStatus(ADC1,ADC_FLAG_EOC)==RESET);
+    const uint16_t value = ADC_GetConversionValue(ADC1);
+    const int16_t voltage = (float)value / 3475.f * 8.4 ;
+    const int16_t Duty = (TIM3_Period) / voltage * 1.0;
+    //suction_start(40);
+    pipi(6);
+    pipi(5);
+    pipi(4);
+    pipi(3);
+    TIM_Cmd(TIM5,ENABLE);
+    len_counter = 0;
+    TIM2->CNT = 0;
+    TIM8->CNT = 0;
+    volatile uint16_t cnt = 0;;
+    volatile int16_t input = 0;
+    int16_t rad = 0;
+    while(1){
+      if(ENCODER_start == ON){
+        read_encoder();
+        ENCODER_start = OFF;
+      }
+      if(GYRO_start == ON){
+        rad = (float)(ReadGYRO()-GYRO_offset_data);///16.4/180.0*3.14;
+        GYRO_start = OFF;
+      }
+      if(button_return == 1)  break;
+      if(timer_clock == ON){
+        timer_clock = OFF;
+        cnt++;
+        if(cnt <= 100) input = 0;
+        else if(cnt >= 400) input = 0;
+        else input = Duty;
+        //plot.push_back(left_speed / MmConvWheel, right_speed / MmConvWheel, input);
+        plot.push_back(rad, input);
+        set_speed(input, input);
+      }
+    }
+    //suction_stop();
+    Delay_ms(500);
+    while(button_return == 0);
+    pipi(3);
+    pipi(4);
+    pipi(5);
+    pipi(6);
+    plot.all_print();
+  }
 }
 return 0;
 }
