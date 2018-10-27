@@ -12,15 +12,15 @@ class Traject{
     float offset_straight;
     uint32_t data_size;
   public:
-    Traject(): data(200), data_size(0){}
-    Traject(Operation::OperationType type): data(200), turn_type(type), data_size(0){}
+    Traject(): data(400), data_size(0){}
+    Traject(Operation::OperationType type): data(400), turn_type(type), data_size(0){}
     void static_push_back(float y, float x, float rad);
     void static_push_back(dotData dot);
     void set_dot();
-    inline dotData get_data(uint32_t index){return data[index];}
-    dotData get_data(uint32_t index, Operation::OperationType type);
-    dotData reverse_get_data(uint32_t index, Operation::OperationType type);
-    dotData end(Operation::OperationType typical){return get_data(data_size - 1, typical);}
+    //inline dotData get_data(uint32_t index){return data[index];}
+    dotData get_data(uint32_t index, Operation::OperationType type, Direction dir);
+    dotData reverse_get_data(uint32_t index, Operation::OperationType type, Direction dir);
+    dotData end(Operation::OperationType typical, Direction dir){return get_data(data_size - 1, typical, dir);}
     size_t virtual_size(){return data.size();}
     size_t real_size(){return data_size;}
     inline void set_offset(float offset){offset_straight = offset;}
