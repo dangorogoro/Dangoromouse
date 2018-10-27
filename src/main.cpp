@@ -624,13 +624,14 @@ while(1){
     pipi(3);
     Delay_ms(1000);
     OperationList runSequence; 
-    runSequence.push_back({Operation::FORWARD,3});
-    runSequence.push_back({Operation::TURN_RIGHT45});
-    runSequence.push_back({Operation::TURN_LEFT45});
     runSequence.push_back({Operation::FORWARD,1});
+    runSequence.push_back({Operation::TURN_RIGHT45,1});
+    runSequence.push_back({Operation::LEFT_V90,1});
+    runSequence.push_back({Operation::TURN_RIGHT135,1});
+    runSequence.push_back({Operation::FORWARD,2});
     runSequence.push_back({Operation::TURN_RIGHT90,1});
     runSequence.push_back({Operation::TURN_RIGHT90,1});
-    runSequence.push_back({Operation::FORWARD,5});
+    runSequence.push_back({Operation::FORWARD,2});
     /*
        for(int i = 1;i <= 7;i++){
        runSequence.push_back({Operation::TURN_RIGHT90,1});
@@ -757,11 +758,11 @@ while(1){
         uint16_t dst_len = now_velocity * 5 / 1000;
         target_index = (target_index + dst_len) % index_size;
 
-        dotData ref = traject.get_data(target_index, Operation::TURN_RIGHT90);
+        dotData ref = traject.get_data(target_index, Operation::TURN_RIGHT90, NORTH);
         //ref.x = -ref.x;
         e_x = ref.x - dango.x();
         e_y = ref.y - dango.y();
-        w_r = (ref.rad - (traject.get_data((target_index - dst_len) % index_size, Operation::TURN_RIGHT90).rad)) * 200.0;
+        w_r = (ref.rad - (traject.get_data((target_index - dst_len) % index_size, Operation::TURN_RIGHT90, NORTH).rad)) * 200.0;
         //plot.push_back(100 * tmp_x, 100 * tmp_y, 100 * w_r, 100 * dot.x[target_index], 100  * last_r_x, target_index);
         theta_e = ref.rad - degree / 180.0 * PI;//atan2(dango.x() - last_c_x, dango.y() - last_c_y);
         //plot.push_back(100 * w_r, 100 * theta_e);
