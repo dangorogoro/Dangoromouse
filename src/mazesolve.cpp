@@ -395,7 +395,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   else	now_speed = (left_speed + right_speed) / 2 / MmConvWheel;
 
   len_counter = 0;
-  uint16_t curving_length = param.get_turn_param() / 40; // 30
+  uint16_t curving_length = param.get_turn_param() / 30; // 30
   if(root[(*i)+1].op == Operation::TURN_LEFT90S || root[(*i)+1].op == Operation::TURN_RIGHT90S) curving_length = 0;
 
   if(root[(*i)].op != Operation::STOP){
@@ -443,11 +443,23 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       if(SENSOR_reset == ON){
         left_value = led_1;
         right_value = led_2;
+        if(led_1 >= led_1_threshold || led_2 >= led_2_threshold ){
+          if(led_1 >= led_1_threshold && led_2 >= led_2_threshold)
+            wall_value = (led_2 - led_1 - sensor_sub) / 25.0;
+          else if(led_1 >= led_1_threshold)
+            wall_value = (-led_1 + led_1_threshold) / 25.0;
+          else if(led_2 >= led_2_threshold)
+            wall_value = (led_2 - led_2_threshold) / 25.0;
+          led_fullon();
+          if(led_1 >= led_1_threshold && led_2 >= led_2_threshold && abs(led_1 - led_2) < 150)  fixCoordinate(RobotRunVec, led_1, led_2);
+        }
+        /*
         if(led_1 >= led_1_threshold && led_2 >= led_2_threshold ){
           wall_value = (led_2 - led_1 - sensor_sub) / 25.0;
           led_fullon();
           if(abs(led_1 - led_2) < 150)  fixCoordinate(RobotRunVec, led_1, led_2);
         }
+        */
         else led_fulloff();
         reset_led();
         SENSOR_reset = OFF;
@@ -480,7 +492,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       if(timer_clock == ON){
         prescaler = (prescaler + 1) % 100;
         timer_clock = OFF;
-        plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, left_input, right_input, now_speed, left_value, right_value, last_left_value, last_right_value);
+        //plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, left_input, right_input, now_speed, left_value, right_value, last_left_value, last_right_value);
         //if(prescaler % 2 == 0){
         if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(right_value - last_right_value) > 110) || (fabs(left_value - last_left_value) > 110)) && ((left_value < 2100 || last_left_value < 2100) || (right_value < 2100 || last_right_value < 2100))){
           //fixCoordinate();
@@ -773,7 +785,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       if(timer_clock == ON){
         prescaler = (prescaler + 1) % 100;
         timer_clock = OFF;
-        plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed);
+        //plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed);
         if(prescaler % 2 == 1){
           //plot.push_back(x(),y(),degree,get_left_sensor(),get_right_sensor(),getRobotVec().x,getRobotVec().y);
           set_left_sensor(led_1);
@@ -838,7 +850,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       if(timer_clock == ON){
         prescaler = (prescaler + 1) % 100;
         timer_clock = OFF;
-        plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel);
+        //plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel);
         if(prescaler % 2 == 1){
           //plot.push_back(x(),y(),degree,get_left_sensor(),get_right_sensor(),getRobotVec().x,getRobotVec().y);
           set_left_sensor(led_1);
@@ -1013,7 +1025,9 @@ OperationList rebuildOperation(OperationList list,bool diagFlag){
   else{
     for(size_t i = 0;i < list.size();i++){
       Operation latestOP = list[i];
-      Operation pushOP = latestOP;
+      Operation::pushOP = latestOP;
+      if(latestOP.op == Operation::TURN_LEFT45 || latestOP.op == Operation::TURN_RIGHT45){
+      }
     }
   }
   return newOPlist;
