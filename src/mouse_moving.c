@@ -383,7 +383,7 @@ void start_wall(int16_t po){
   reset_e();
   len_counter = 0;
   uint16_t counter = 0;
-  const threshold = 100;
+  const uint16_t threshold = 100;
   while(len_counter > len_measure(-50)){
     if(timer_clock == ON){
       counter += 1;
@@ -430,7 +430,7 @@ void start_withoutwall(int16_t po){
   reset_e();
   len_counter = 0;
   uint16_t counter = 0;
-  const threshold = 300;
+  const uint16_t threshold = 300;
   while(len_counter > len_measure(-50)){
     go_back(0);
   }
