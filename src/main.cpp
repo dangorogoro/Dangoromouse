@@ -384,7 +384,12 @@ while(1){
 
 //////
 GPIO_WriteBit(GPIOB,GPIO_Pin_10 | GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_15,Bit_SET);
-while(button_return == 0);
+bool select_diag = false;
+while(button_return == 0 && button_a == 0);
+if(button_a == 1){
+  pipi(9);
+  select_diag = true;
+}
 mouse_motor_setting();
 ADC_setting();
 USART_setting();
@@ -448,13 +453,36 @@ while(1){
     maze = upload_mazedata();
     maze.printWall();
     agent.resumeAt(Agent::FINISHED,maze);
-    agent.caclRunSequence(false);
+    //agent.caclRunSequence(false);
+    agent.caclRunSequence(select_diag);
     Robot last_dango = dango;
     OperationList runSequence = agent.getRunSequence();
     runSequence.push_back({Operation::FORWARD,1});
     runSequence.push_back({Operation::STOP,1});
-    runSequence = rebuildOperation(runSequence,0);
+    //runSequence = rebuildOperation(runSequence,second_flag);
+    runSequence = rebuildOperation(runSequence, select_diag);
     TIM_Cmd(TIM5,ENABLE);
+    for(size_t i = 0;i < runSequence.size();i++){
+      if(runSequence[i].op == Operation::FORWARD) printf("FORWARD\r\n");
+      else if(runSequence[i].op == Operation::FORWARD_DIAG)  printf("FORWARD_DIAG\r\n");
+      else if(runSequence[i].op == Operation::TURN_RIGHT90) printf("TURN_RIGHT90\r\n");
+      else if(runSequence[i].op == Operation::TURN_RIGHT45)  printf("TURN_RIGHT45\r\n");
+      else if(runSequence[i].op == Operation::TURN_LEFT90) printf("TURN_LEFT90\r\n");
+      else if(runSequence[i].op == Operation::TURN_LEFT45) printf("TURN_LEFT45\r\n");
+      else if(runSequence[i].op == Operation::STOP) printf("STOP\r\n");
+      else if(runSequence[i].op == Operation::TURN_RIGHT135) printf("TURN_RIGHT135\r\n");
+      else if(runSequence[i].op == Operation::TURN_RIGHT180) printf("TURN_RIGHT180\r\n");
+      else if(runSequence[i].op == Operation::TURN_LEFT135 ) printf("TURN_LEFT135\r\n");
+      else if(runSequence[i].op == Operation::TURN_LEFT180 ) printf("TURN_LEFT135\r\n");
+      else if(runSequence[i].op == Operation::TURN_RIGHT90S) printf("TURN_RIGHT90S\r\n");
+      else if(runSequence[i].op == Operation::TURN_LEFT90S ) printf("TURN_LEFT90S\r\n");
+      else if(runSequence[i].op == Operation::LEFT_V90     ) printf("LEFT_V90\r\n");
+      else if(runSequence[i].op == Operation::RIGHT_V90    ) printf("RIGHT_V90\r\n");
+      else if(runSequence[i].op == Operation::TURN_135     ) printf("TURN_135\r\n");
+      else if(runSequence[i].op == Operation::V90) printf("V90\r\n");
+      else if(runSequence[i].op == Operation::TURN_45) printf("TURN_45\r\n");
+      printf("n is %d\r\n", runSequence[i].n);
+    }
     while(1){
       //suction_start(40);
       dango.action(param_value,runSequence,parameters);
@@ -593,12 +621,14 @@ while(1){
       led_fulloff();
     }
     else	save_mazedata(maze);
-    agent.caclRunSequence(false);
+    //agent.caclRunSequence(false);
+    agent.caclRunSequence(select_diag);
     Robot last_dango = dango;
     OperationList runSequence = agent.getRunSequence();
     runSequence.push_back({Operation::FORWARD,1});
     runSequence.push_back({Operation::STOP,1});
-    runSequence = rebuildOperation(runSequence,0);
+    //runSequence = rebuildOperation(runSequence,0);
+    runSequence = rebuildOperation(runSequence,select_diag);
     TIM_Cmd(TIM5,ENABLE);
     while(1){
       dango.action(param_value,runSequence,parameters);
@@ -629,8 +659,9 @@ while(1){
     runSequence.push_back({Operation::LEFT_V90,1});
     runSequence.push_back({Operation::TURN_RIGHT135,1});
     runSequence.push_back({Operation::FORWARD,2});
-    runSequence.push_back({Operation::TURN_RIGHT90,1});
-    runSequence.push_back({Operation::TURN_RIGHT90,1});
+    runSequence.push_back({Operation::TURN_RIGHT135,1});
+    runSequence.push_back({Operation::FORWARD_DIAG,2});
+    runSequence.push_back({Operation::TURN_LEFT135,1});
     runSequence.push_back({Operation::FORWARD,2});
     /*
        for(int i = 1;i <= 7;i++){
