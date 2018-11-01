@@ -514,6 +514,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     Position centerPosition;
     centerPosition.x = x();
     centerPosition.y = y();
+    Matrix2i operateRunVec = RobotRunVec;
     Matrix2i firstRunVec = RobotRunVec;
     Matrix2i nextRunVec = RobotRunVec;
     if(turn_type == Operation::TURN_RIGHT45 || turn_type == Operation::TURN_LEFT45){
@@ -522,6 +523,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     }
     else if(turn_type == Operation::TURN_RIGHT135 || turn_type == Operation::TURN_LEFT135){
       setRobotVecFromRun((turn_type == Operation::TURN_RIGHT135) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
+      firstRunVec = RobotRunVec;
       setRobotVecFromRun((turn_type == Operation::TURN_RIGHT135) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
       nextRunVec = RobotRunVec;
     }
@@ -533,18 +535,20 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     float w_r;
 
     bool initial_flag = false, second_flag = false;
-    float diagKx = 0.00014;//151520
+    float diagKx = 0.00003;//151520
     float diagKy = 10.0;
-    float diagKtheta = 0.01;
+    float diagKtheta = 0.012;
 
-    Traject traject = trajectList.getTraject(turn_type, directionFromRunVec(firstRunVec));
-    Direction firstDir = directionFromRunVec(firstRunVec);
+    Direction firstDir = directionFromRunVec(operateRunVec);
+    Traject traject = trajectList.getTraject(turn_type, firstDir);
     Operation::OperationType nextOP = root[(*i)+1].op;
     float diag_length = 0;
+    /*
     if(nextOP == Operation::FORWARD_DIAG){
       diag_length = ONE_BLOCK / sqrt(2.0) * root[(*i)+1].n;
       (*i)++;
     }
+    */
     while(initial_flag == false){
       if(ENCODER_start == ON){
         read_encoder();
@@ -558,7 +562,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         traject_clock = OFF;
         uint16_t dst_len = now_speed * 5.0 / 1000.0 ;
         uint16_t index_size = traject.real_size();
-        target_index = (target_index + dst_len) % index_size;
+        target_index = (target_index + dst_len + 1) % index_size;
         dotData dot;
         if(initial_flag == false){
           dot = traject.get_data(target_index, turn_type, firstDir);
@@ -576,7 +580,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         else last_index = target_index;
       }
     }
-    if(turn_type == Operation::TURN_RIGHT45){
+    if(turn_type == Operation::TURN_RIGHT45 || turn_type == Operation::TURN_LEFT45){
       while(len_counter < len_measure(37.27)){
         if(ENCODER_start == ON){
           read_encoder();
@@ -601,6 +605,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       Operation::OperationType reverseOP;
       float rad_offset = 0;
       bool reverse_flag = false;
+      diag_length = 0;
       Operation::OperationType latestOP = root[*i].op;
       if(latestOP == Operation::TURN_RIGHT45 || latestOP == Operation::TURN_LEFT45){
         reverse_flag = true;
@@ -620,10 +625,29 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       else if (latestOP == Operation::LEFT_V90 || latestOP == Operation::Operation::RIGHT_V90){
         rad_offset = (latestOP == Operation::RIGHT_V90) ? -PI / 4.f : PI / 4.f;
         reverseOP = (latestOP == Operation::LEFT_V90) ? Operation::LEFT_V90 : Operation::RIGHT_V90;
+        //firstRunVec = RobotRunVec;
+        setRobotVecFromRun((latestOP == Operation::RIGHT_V90) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
         firstRunVec = RobotRunVec;
+        nextRunVec = RobotRunVec; // fix this at last time
         setRobotVecFromRun((latestOP == Operation::RIGHT_V90) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
-        nextRunVec = RobotRunVec;
-        setRobotVecFromRun((latestOP == Operation::RIGHT_V90) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
+      }
+      else if(latestOP == Operation::FORWARD_DIAG){
+        diag_length = sqrt(2.0) * 90.0 * root[*i].n;
+        uint8_t now_count = root[*i].n / 2;
+        uint8_t last_count = root[*i].n - now_count;
+        IndexVec last_diag_vec(last_count * firstRunVec(0,0), last_count * firstRunVec(0,1));
+        IndexVec now_diag_vec(now_count * nextRunVec(0,0), now_count * nextRunVec(0,1));
+        addRobotVec(last_diag_vec + now_diag_vec);
+        len_counter = 0;
+        while(len_counter < len_measure(diag_length)){
+          if(ENCODER_start == ON){
+            read_encoder();
+            add_coordinate(degree);
+            float target_theta_now = (degree - target_degree) / 180.0 * PI;
+            speed_controller(reference_speed, -degree_p * target_theta_now);
+            ENCODER_start = OFF;
+          }
+        }
       }
       Direction secondDir = directionFromRunVec(nextRunVec);
       Traject secondTraject = trajectList.getTraject(reverseOP, secondDir);
@@ -636,7 +660,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       dotData lastDot;
       uint16_t index_size = secondTraject.real_size();
 
-      while(second_flag == false){
+      while(second_flag == false && latestOP != Operation::FORWARD_DIAG){
         if(ENCODER_start == ON){
           read_encoder();
           add_coordinate(degree);
@@ -648,7 +672,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         if(traject_clock == ON){
           traject_clock = OFF;
           uint16_t dst_len = now_speed * 5.0 / 1000.0 ;
-          target_index = (target_index + dst_len) % index_size;
+          target_index = (target_index + dst_len + 1) % index_size;
           dotData dot;
           if(reverse_flag == true)
             dot = secondTraject.reverse_get_data(target_index, reverseOP, secondDir);
@@ -678,6 +702,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         target_degree += (latestOP == Operation::RIGHT_V90) ? -90.0 : 90.0;
       }
       if(judge_diag_turn(latestOP)) break;
+      nextRunVec = RobotRunVec;
       (*i)++;
     }
   }
@@ -1025,8 +1050,41 @@ OperationList rebuildOperation(OperationList list,bool diagFlag){
   else{
     for(size_t i = 0;i < list.size();i++){
       Operation latestOP = list[i];
-      Operation::pushOP = latestOP;
-      if(latestOP.op == Operation::TURN_LEFT45 || latestOP.op == Operation::TURN_RIGHT45){
+      Operation pushOP = latestOP;
+      if((latestOP.op == Operation::TURN_LEFT45 || latestOP.op == Operation::TURN_RIGHT45 || latestOP.op == Operation::TURN_LEFT90 || latestOP.op == Operation::TURN_RIGHT90) && (i+1 < list.size())){
+        Operation nextOP = list[i+1];
+        if(nextOP.op == latestOP.op && (latestOP.op == Operation::TURN_LEFT45 || latestOP.op == Operation::TURN_RIGHT45)){
+          pushOP.op = (latestOP.op == Operation::TURN_LEFT45) ? Operation::LEFT_V90 : Operation::RIGHT_V90;
+          i++;
+        }
+        else if(nextOP.op == Operation::TURN_LEFT90 && latestOP.op == Operation::TURN_LEFT45){
+          pushOP.op = Operation::TURN_LEFT135;
+          i++;
+        }
+        else if(nextOP.op == Operation::TURN_LEFT45 && latestOP.op == Operation::TURN_LEFT90){
+          pushOP.op = Operation::TURN_LEFT135;
+          i++;
+        }
+        else if(nextOP.op == Operation::TURN_RIGHT90 && latestOP.op == Operation::TURN_RIGHT45){
+          pushOP.op = Operation::TURN_RIGHT135;
+          i++;
+        }
+        else if(nextOP.op == Operation::TURN_RIGHT45 && latestOP.op == Operation::TURN_RIGHT90){
+          pushOP.op = Operation::TURN_RIGHT135;
+          i++;
+        }
+      }
+      if(latestOP.op == Operation::FORWARD){
+        Operation nextOP = list[i + 1];
+        if(nextOP.op == Operation::FORWARD){
+          pushOP.n += nextOP.n;
+          i++;
+        }
+      }
+      newOPlist.push_back(pushOP);
+      if(((latestOP.op == Operation::TURN_RIGHT90) || (latestOP.op == Operation::TURN_LEFT90))){
+        Operation nextOP = list[i+1];//No problem because lastOP is stop
+        if(nextOP.op == Operation::STOP)	newOPlist.push_back({Operation::FORWARD,1});
       }
     }
   }
