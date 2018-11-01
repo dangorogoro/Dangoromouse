@@ -411,7 +411,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   int16_t length = 0;
   curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT45 || root[(*i)+1].op == Operation::TURN_LEFT45) ? 90 : curving_length;
   curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT135 || root[(*i)+1].op == Operation::TURN_LEFT135) ? 70 : curving_length;
-  length = *i == 0 ? 130 + (root[*i].n - 1) * ONE_BLOCK - curving_length : root[*i].n * ONE_BLOCK - curving_length; //130 was
+  length = *i == 0 ? 138 + (root[*i].n - 1) * ONE_BLOCK - curving_length : root[*i].n * ONE_BLOCK - curving_length; //130 was
 
   float e_now = 0, e_sum = 0;
   float target_theta_now = 0,target_theta_last = 0;
@@ -527,8 +527,9 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       setRobotVecFromRun((turn_type == Operation::TURN_RIGHT135) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
       nextRunVec = RobotRunVec;
     }
+    uint16_t target_offset = 10;
 
-    uint16_t target_index = 10;
+    uint16_t target_index = target_offset;
     uint16_t last_index = 0;
     float reference_speed = turn_speed;
     float e_x = 0.0, e_y = 0.0, theta_e = 0.0;
@@ -536,13 +537,17 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 
     bool initial_flag = false, second_flag = false;
     float diagKx = 0.00003;//151520
-    float diagKy = 10.0;
-    float diagKtheta = 0.012;
+    float diagKy = 2.0;
+    float diagKtheta = 0.013;
+    //float diagKx = 0.0000;//151520
+    //float diagKy = 0.00;
+    //float diagKtheta = 0.0;
 
     Direction firstDir = directionFromRunVec(operateRunVec);
     Traject traject = trajectList.getTraject(turn_type, firstDir);
     Operation::OperationType nextOP = root[(*i)+1].op;
     float diag_length = 0;
+    float dst_len = 0;
     /*
     if(nextOP == Operation::FORWARD_DIAG){
       diag_length = ONE_BLOCK / sqrt(2.0) * root[(*i)+1].n;
@@ -560,9 +565,10 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       }
       if(traject_clock == ON){
         traject_clock = OFF;
-        uint16_t dst_len = now_speed * 5.0 / 1000.0 ;
+        float update_length = (left_speed + right_speed) / 2 / MmConvWheel * 5.0 / 1000.0;
+        dst_len += update_length;
         uint16_t index_size = traject.real_size();
-        target_index = (target_index + dst_len + 1) % index_size;
+        target_index = (target_offset + (uint16_t)dst_len) % index_size;
         dotData dot;
         if(initial_flag == false){
           dot = traject.get_data(target_index, turn_type, firstDir);
@@ -571,7 +577,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         float target_y = dot.y + centerPosition.y;
         e_x = target_x - x();
         e_y = target_y - y();
-        w_r = (dot.rad - (traject.get_data((target_index - dst_len) % index_size, turn_type, firstDir).rad)) * 200.0;
+        w_r = (dot.rad - (traject.get_data((target_index - (uint16_t)update_length) % index_size, turn_type, firstDir).rad)) * 200.0;
         theta_e = dot.rad - (degree - target_degree) / 180.0 * PI;//atan2(dango.x() - last_c_x, dango.y() - last_c_y);
         if(last_index > target_index){
           initial_flag = true;
@@ -648,15 +654,17 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
             ENCODER_start = OFF;
           }
         }
+        if(root[*i].n % 2 == 1) RobotRunVec = firstRunVec;
       }
       Direction secondDir = directionFromRunVec(nextRunVec);
       Traject secondTraject = trajectList.getTraject(reverseOP, secondDir);
-      target_index = 10;
+      target_index = target_offset;
       last_index = 0;
       e_x = 0.0f;
       e_y = 0.0f;
       theta_e = 0.0f;
       w_r = 0;
+      dst_len = 0.0;
       dotData lastDot;
       uint16_t index_size = secondTraject.real_size();
 
@@ -671,8 +679,9 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         }
         if(traject_clock == ON){
           traject_clock = OFF;
-          uint16_t dst_len = now_speed * 5.0 / 1000.0 ;
-          target_index = (target_index + dst_len + 1) % index_size;
+          uint16_t latest_velocity = (left_speed + right_speed) / 2 / MmConvWheel;
+          dst_len += latest_velocity * 5.0 / 1000.0;
+          target_index = (target_offset + (uint16_t)dst_len) % index_size;
           dotData dot;
           if(reverse_flag == true)
             dot = secondTraject.reverse_get_data(target_index, reverseOP, secondDir);
