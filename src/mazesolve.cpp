@@ -530,7 +530,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       setRobotVecFromRun((turn_type == Operation::TURN_RIGHT135) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
       nextRunVec = RobotRunVec;
     }
-    uint16_t target_offset = 10;
+    uint16_t target_offset = 15;
 
     uint16_t target_index = target_offset;
     uint16_t last_index = 0;
@@ -539,9 +539,9 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     float w_r;
 
     bool initial_flag = false, second_flag = false;
-    float diagKx = 0.00003;//151520
-    float diagKy = 2.0;
-    float diagKtheta = 0.014;
+    float diagKx = 0.00005;//151520
+    float diagKy = 4.0;
+    float diagKtheta = 0.03;
     //float diagKx = 0.0000;//151520
     //float diagKy = 0.00;
     //float diagKtheta = 0.0;
@@ -594,6 +594,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     else if(turn_type == Operation::TURN_RIGHT135 || turn_type == Operation::TURN_LEFT135) extra_offset = 4.55;
     len_counter = 0;
     while(len_counter < len_measure(extra_offset)){
+      led_fullon();
       if(ENCODER_start == ON){
         read_encoder();
         add_coordinate(degree);
@@ -601,6 +602,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         ENCODER_start = OFF;
       }
     }
+    led_fulloff();
     now_speed = (left_speed + right_speed) / 2 / MmConvWheel;
     if(turn_type == Operation::TURN_LEFT45) target_degree += 45.0f;
     else if(turn_type == Operation::TURN_RIGHT45) target_degree -= 45.0f;
@@ -611,6 +613,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     while(1){
       second_flag = false;
       Operation::OperationType reverseOP;
+      Position startPosition = getPositionFromVec(getRobotVec(), directionFromRunVec(RobotRunVec));
       float rad_offset = 0;
       float reverse_offset = 0.0;
       bool reverse_flag = false;
@@ -659,12 +662,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         }
         if(root[*i].n % 2 == 1) RobotRunVec = firstRunVec;
       }
-      Position startPosition;
       if(reverse_flag == true) startPosition = getPositionFromVec(getRobotVec());
-      else{
-        startPosition.x = x();
-        startPosition.y = y();
-      }
       //This causes bug?????????????????????
       Direction secondDir = directionFromRunVec(nextRunVec);
       Traject secondTraject = trajectList.getTraject(reverseOP, secondDir);
@@ -691,7 +689,6 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         }
       }
       while(second_flag == false && latestOP != Operation::FORWARD_DIAG){
-        led_fullon();
         if(ENCODER_start == ON){
           read_encoder();
           add_coordinate(degree);
@@ -1200,6 +1197,14 @@ Position getPositionFromVec(IndexVec vec){
   Position position;
   position.x = vec.x * 180.0;
   position.y = vec.y * 180.0 + 55.0;
+  return position;
+}
+Position getPositionFromVec(IndexVec vec, Direction dir){
+  Position position = getPositionFromVec(vec);
+  if(dir == NORTH)  position.y -= 90.0;
+  else if(dir == SOUTH) position.y += 90.0;
+  else if(dir == WEST) position.x += 90.0;
+  else if(dir == EAST) position.x -= 90.0;
   return position;
 }
 bool Robot::judgeTargetCoordinate(IndexVec targetIndex, Matrix2i vecStatus,uint16_t offset){

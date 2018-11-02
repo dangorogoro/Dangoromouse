@@ -90,5 +90,6 @@ inline Matrix2i Rotate180(){Matrix2i po; po << -1, 0, 0, -1; return po;}
 Matrix2i getRotate(Operation::OperationType type);
 Direction directionFromRunVec(Matrix2i runVec);
 bool judge_diag_turn(Operation::OperationType op);
+Position getPositionFromVec(IndexVec vec, Direction dir);
 Position getPositionFromVec(IndexVec vec);
 #endif
