@@ -55,7 +55,7 @@ class Robot{
     inline void set_y(float coordinate){ position.y = coordinate;}
     inline void add_x(float coordinate){ position.x += coordinate;}
     inline void add_y(float coordinate){ position.y += coordinate;}
-    inline Position get_position(){return position;}
+    inline Position getPosition(){return position;}
     void fixCoordinate();
     void fixCoordinate(Matrix2i runVec, float offset);
     void fixCoordinate(Matrix2i runVec, float wall_left,float wall_right);
@@ -90,4 +90,5 @@ inline Matrix2i Rotate180(){Matrix2i po; po << -1, 0, 0, -1; return po;}
 Matrix2i getRotate(Operation::OperationType type);
 Direction directionFromRunVec(Matrix2i runVec);
 bool judge_diag_turn(Operation::OperationType op);
+Position getPositionFromVec(IndexVec vec);
 #endif

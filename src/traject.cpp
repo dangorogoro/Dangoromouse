@@ -1250,9 +1250,10 @@ dotData Traject::reverse_get_data(uint32_t index, Operation::OperationType type,
   dotData tmp;
   dotData lastDot = end(type,dir);
   dotData targetDot = get_data(target_index, type, dir);
-  tmp.x = lastDot.x - targetDot.x;
-  tmp.y = lastDot.y - targetDot.y;
-  //tmp.rad = targetDot.rad;
+  //tmp.x = lastDot.x - targetDot.x;
+  //tmp.y = lastDot.y - targetDot.y;
+  tmp.x = -targetDot.x;
+  tmp.y = -targetDot.y;
   tmp.rad = targetDot.rad - lastDot.rad;
   /*
   tmp.x = end(type).x - get_data(target_index, type).x;

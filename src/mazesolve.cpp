@@ -412,6 +412,9 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT45 || root[(*i)+1].op == Operation::TURN_LEFT45) ? 90 : curving_length;
   curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT135 || root[(*i)+1].op == Operation::TURN_LEFT135) ? 70 : curving_length;
   length = *i == 0 ? 138 + (root[*i].n - 1) * ONE_BLOCK - curving_length : root[*i].n * ONE_BLOCK - curving_length; //130 was
+  if(*i > 0)
+    length = (root[(*i)-1].op == Operation::TURN_RIGHT135 || root[(*i)-1].op == Operation::TURN_LEFT135) ? length - 90 : length;
+
 
   float e_now = 0, e_sum = 0;
   float target_theta_now = 0,target_theta_last = 0;
@@ -538,7 +541,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     bool initial_flag = false, second_flag = false;
     float diagKx = 0.00003;//151520
     float diagKy = 2.0;
-    float diagKtheta = 0.013;
+    float diagKtheta = 0.014;
     //float diagKx = 0.0000;//151520
     //float diagKy = 0.00;
     //float diagKtheta = 0.0;
@@ -586,14 +589,16 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         else last_index = target_index;
       }
     }
-    if(turn_type == Operation::TURN_RIGHT45 || turn_type == Operation::TURN_LEFT45){
-      while(len_counter < len_measure(37.27)){
-        if(ENCODER_start == ON){
-          read_encoder();
-          add_coordinate(degree);
-          speed_controller(now_speed, 0);
-          ENCODER_start = OFF;
-        }
+    float extra_offset = 0.0;
+    if(turn_type == Operation::TURN_RIGHT45 || turn_type == Operation::TURN_LEFT45) extra_offset = 37.27;
+    else if(turn_type == Operation::TURN_RIGHT135 || turn_type == Operation::TURN_LEFT135) extra_offset = 4.55;
+    len_counter = 0;
+    while(len_counter < len_measure(extra_offset)){
+      if(ENCODER_start == ON){
+        read_encoder();
+        add_coordinate(degree);
+        speed_controller(now_speed, 0);
+        ENCODER_start = OFF;
       }
     }
     now_speed = (left_speed + right_speed) / 2 / MmConvWheel;
@@ -605,11 +610,9 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 
     while(1){
       second_flag = false;
-      Position startPosition;
-      startPosition.x = x();
-      startPosition.y = y();
       Operation::OperationType reverseOP;
       float rad_offset = 0;
+      float reverse_offset = 0.0;
       bool reverse_flag = false;
       diag_length = 0;
       Operation::OperationType latestOP = root[*i].op;
@@ -656,6 +659,13 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         }
         if(root[*i].n % 2 == 1) RobotRunVec = firstRunVec;
       }
+      Position startPosition;
+      if(reverse_flag == true) startPosition = getPositionFromVec(getRobotVec());
+      else{
+        startPosition.x = x();
+        startPosition.y = y();
+      }
+      //This causes bug?????????????????????
       Direction secondDir = directionFromRunVec(nextRunVec);
       Traject secondTraject = trajectList.getTraject(reverseOP, secondDir);
       target_index = target_offset;
@@ -667,8 +677,21 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       dst_len = 0.0;
       dotData lastDot;
       uint16_t index_size = secondTraject.real_size();
-
+      if(reverse_flag == true){
+        if(reverseOP == Operation::TURN_RIGHT45 || reverseOP == Operation::TURN_LEFT45) extra_offset = 37.27;
+        else if(reverseOP == Operation::TURN_RIGHT135 || reverseOP == Operation::TURN_LEFT135) extra_offset = 4.55;
+        len_counter = 0;
+        while(len_counter < len_measure(extra_offset)){
+          if(ENCODER_start == ON){
+            read_encoder();
+            add_coordinate(degree);
+            speed_controller(now_speed, 0);
+            ENCODER_start = OFF;
+          }
+        }
+      }
       while(second_flag == false && latestOP != Operation::FORWARD_DIAG){
+        led_fullon();
         if(ENCODER_start == ON){
           read_encoder();
           add_coordinate(degree);
@@ -683,8 +706,9 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
           dst_len += latest_velocity * 5.0 / 1000.0;
           target_index = (target_offset + (uint16_t)dst_len) % index_size;
           dotData dot;
-          if(reverse_flag == true)
+          if(reverse_flag == true){
             dot = secondTraject.reverse_get_data(target_index, reverseOP, secondDir);
+          }
           else
             dot = secondTraject.get_data(target_index, reverseOP, secondDir);
           float target_x = dot.x + startPosition.x;
@@ -1171,6 +1195,12 @@ Position estimatePosition(Position est){
   target.x = (est.x + 90.0f) / 180.0 * 180.0;
   target.y = (est.y + 50.0f) / 180 + 40.0;
   return target;
+}
+Position getPositionFromVec(IndexVec vec){
+  Position position;
+  position.x = vec.x * 180.0;
+  position.y = vec.y * 180.0 + 55.0;
+  return position;
 }
 bool Robot::judgeTargetCoordinate(IndexVec targetIndex, Matrix2i vecStatus,uint16_t offset){
   return (0 < targetLength(targetIndex,vecStatus,offset)) ? true : false;
