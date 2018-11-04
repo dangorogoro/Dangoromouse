@@ -1,7 +1,7 @@
 //ISDT
 #include "mine.h"
 Maze maze,maze_backup;
-uint16_t frontWallThreshold_3 = 2250, frontWallThreshold_4 = 2190; //3 was 2180
+uint16_t frontWallThreshold_3 = 2260, frontWallThreshold_4 = 2200; //3 was 2180
 void Robot::setSpeed(){
   LeftEncoder = left_speed;
   RightEncoder = right_speed;
@@ -237,7 +237,7 @@ void Robot::startBack(Direction target_dir, bool reverse_flag){
   setRobotDegreeDir(target_dir);
 }
 void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
-  goStraight(30);
+  goStraight(40);
   int8_t wall_dir = 0; // 1 right -1 left
   if(leftWall == true) wall_dir = -1;
   else if(rightWall == true) wall_dir = 1;
@@ -412,8 +412,10 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT45 || root[(*i)+1].op == Operation::TURN_LEFT45) ? 90 : curving_length;
   curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT135 || root[(*i)+1].op == Operation::TURN_LEFT135) ? 70 : curving_length;
   length = *i == 0 ? 138 + (root[*i].n - 1) * ONE_BLOCK - curving_length : root[*i].n * ONE_BLOCK - curving_length; //130 was
-  if(*i > 0)
+  if(*i > 0){
     length = (root[(*i)-1].op == Operation::TURN_RIGHT135 || root[(*i)-1].op == Operation::TURN_LEFT135) ? length - 90 : length;
+    length = (root[(*i)-1].op == Operation::TURN_RIGHT45 || root[(*i)-1].op == Operation::TURN_LEFT45) ? length - 90 : length;
+  }
 
 
   float e_now = 0, e_sum = 0;
@@ -530,7 +532,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       setRobotVecFromRun((turn_type == Operation::TURN_RIGHT135) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
       nextRunVec = RobotRunVec;
     }
-    uint16_t target_offset = 15;
+    uint16_t target_offset = 5;
 
     uint16_t target_index = target_offset;
     uint16_t last_index = 0;
@@ -539,9 +541,9 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     float w_r;
 
     bool initial_flag = false, second_flag = false;
-    float diagKx = 0.00005;//151520
-    float diagKy = 4.0;
-    float diagKtheta = 0.03;
+    float diagKx = 0.0008;//0.001 600 0.007
+    float diagKy = 2.0;
+    float diagKtheta = 0.0015;
     //float diagKx = 0.0000;//151520
     //float diagKy = 0.00;
     //float diagKtheta = 0.0;
@@ -580,6 +582,25 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         float target_y = dot.y + centerPosition.y;
         e_x = target_x - x();
         e_y = target_y - y();
+        float tmp = e_x;
+        e_x = tmp * cos(degree / 180.0 * PI) + e_y * sin(degree / 180.0 * PI);
+        e_y = -tmp * sin(degree / 180.0 * PI) + e_y * cos(degree / 180.0 * PI);
+        /*
+        if(firstDir == SOUTH){
+          e_x = -e_x;
+          e_y = -e_y;
+        }
+        else if(firstDir == EAST){
+          float tmp = e_x;
+          e_x = -e_y;
+          e_y = tmp;
+        }
+        else if(firstDir == WEST){
+          float tmp = e_x;
+          e_x = e_y;
+          e_y = -tmp;
+        }
+        */
         w_r = (dot.rad - (traject.get_data((target_index - (uint16_t)update_length) % index_size, turn_type, firstDir).rad)) * 200.0;
         theta_e = dot.rad - (degree - target_degree) / 180.0 * PI;//atan2(dango.x() - last_c_x, dango.y() - last_c_y);
         if(last_index > target_index){
@@ -712,6 +733,25 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
           float target_y = dot.y + startPosition.y;
           e_x = target_x - x();
           e_y = target_y - y();
+          float tmp = e_x;
+          e_x = tmp * cos(degree / 180.0 * PI) + e_y * sin(degree / 180.0 * PI);
+          e_y = -tmp * sin(degree / 180.0 * PI) + e_y * cos(degree / 180.0 * PI);
+          /*
+          if(secondDir == SOUTH){
+            e_x = -e_x;
+            e_y = -e_y;
+          }
+          else if(secondDir == EAST){
+            float tmp = e_x;
+            e_x = -e_y;
+            e_y = tmp;
+          }
+          else if(secondDir == WEST){
+            float tmp = e_x;
+            e_x = e_y;
+            e_y = -tmp;
+          }
+          */
           w_r = (dot.rad - lastDot.rad) * 200.0;
           theta_e = dot.rad + rad_offset - (degree - target_degree) / 180.0 * PI;//atan2(dango.x() - last_c_x, dango.y() - last_c_y);
           if(last_index > target_index){
