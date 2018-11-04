@@ -401,11 +401,21 @@ TIM_Cmd(TIM5,ENABLE);
 GYRO_offset();
 
 Delay_ms(100);
+bool suction_flag = false;
 mode_select = encoder_paramset();
-pipi(3);
-pipi(4);
-pipi(5);
-pipi(6);
+if(button_a == 1){
+  suction_flag = true;
+  pipi(6);
+  pipi(5);
+  pipi(4);
+  pipi(3);
+}
+else{
+  pipi(3);
+  pipi(4);
+  pipi(5);
+  pipi(6);
+}
 Delay_ms(100);
 
 led_flash_setting();
@@ -484,7 +494,7 @@ while(1){
       printf("n is %d\r\n", runSequence[i].n);
     }
     while(1){
-      //suction_start(40);
+      if(suction_flag == true) suction_start(40);
       dango.action(param_value,runSequence,parameters);
       suction_stop();
       param_value = encoder_paramset();
@@ -496,6 +506,7 @@ while(1){
       pipi(4);
       pipi(5);
       pipi(6);
+      suction_stop();
       dango = last_dango;
       plot.clear();
     }
