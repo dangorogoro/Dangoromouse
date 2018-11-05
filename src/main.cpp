@@ -837,7 +837,7 @@ while(1){
     const uint16_t value = ADC_GetConversionValue(ADC1);
     const int16_t voltage = (float)value / 3475.f * 8.4 ;
     const int16_t Duty = (TIM3_Period) / voltage * 1.0;
-    //suction_start(40);
+    if(suction_flag == true)  suction_start(40);
     pipi(6);
     pipi(5);
     pipi(4);
@@ -849,7 +849,8 @@ while(1){
     volatile uint16_t cnt = 0;;
     volatile int16_t input = 0;
     int16_t rad = 0;
-    while(1){
+    bool finish_flag = false;
+    while(!finish_flag){
       if(ENCODER_start == ON){
         read_encoder();
         ENCODER_start = OFF;
@@ -865,12 +866,18 @@ while(1){
         if(cnt <= 100) input = 0;
         else if(cnt >= 400) input = 0;
         else input = Duty;
-        //plot.push_back(left_speed / MmConvWheel, right_speed / MmConvWheel, input);
-        plot.push_back(rad, input);
-        set_speed(input, input);
+        if(cnt >= 500) finish_flag = true;
+        if(select_diag == false){
+          plot.push_back(rad, input);
+          set_speed(-input*2.5, input*2.5);
+        }
+        else{
+          plot.push_back(left_speed / MmConvWheel, right_speed / MmConvWheel, input);
+          set_speed(input, input);
+        }
       }
     }
-    //suction_stop();
+    suction_stop();
     Delay_ms(500);
     while(button_return == 0);
     pipi(3);
@@ -878,6 +885,7 @@ while(1){
     pipi(5);
     pipi(6);
     plot.all_print();
+    plot.clear();
   }
 }
 return 0;
