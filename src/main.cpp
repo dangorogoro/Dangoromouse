@@ -586,6 +586,11 @@ while(1){
         dango.saveMazeStart();
         led_fullon();
       }
+      if(comeback_clock >= 100 * 150 && agent.getState() == Agent::SEARCHING_REACHED_GOAL){
+        start_buzzer(5);
+        led_fullon();
+        agent.forceGotoStart();
+      }
       Direction Nextdir = agent.getNextDirection();
       if(Lastdir == Nextdir && len_counter >= 170)	len_counter -= 180.0;
       else len_counter = 0;

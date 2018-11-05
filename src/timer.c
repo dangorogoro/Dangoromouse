@@ -7,6 +7,7 @@ uint32_t timer_counter = 0;
 static uint16_t buzzer_counter = 0;
 int32_t len_counter = 0;
 bool stop_flag = false;
+uint32_t comeback_clock = 0;
 void TIMER_setting(){
   NVIC_InitStructure.NVIC_IRQChannel=TIM7_IRQn;
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0;
@@ -102,7 +103,10 @@ void TIM5_IRQHandler(){ //100khz -> 160khz
     SENSOR_start = ON;
     if(timer_counter % 64 == 0)	SENSOR_reset = ON;
     if(timer_counter % 800 == 0) traject_clock = ON;
-    if(timer_counter % 1600 == 0)	timer_clock = ON; // 0.01sec
+    if(timer_counter % 1600 == 0){
+      timer_clock = ON; // 0.01sec
+      comeback_clock++;
+    }
   }
 }
 /*

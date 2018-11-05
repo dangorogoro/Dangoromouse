@@ -7,6 +7,7 @@ extern bool traject_clock;;
 extern uint32_t timer_counter;
 extern int32_t len_counter;
 extern bool stop_flag;
+extern uint32_t comeback_clock;
 #define TIM1_Period 100 - 1
 #define TIM2_Period 65535-1
 #define TIM3_Period 1680-1
