@@ -541,9 +541,9 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     float w_r;
 
     bool initial_flag = false, second_flag = false;
-    float diagKx = 0.0005;//0.001 600 0.007
+    float diagKx = 0.0003;//0.001 600 0.007
     float diagKy = 2.0;
-    float diagKtheta = 0.015;
+    float diagKtheta = 0.01;
     //float diagKx = 0.0000;//151520
     //float diagKy = 0.00;
     //float diagKtheta = 0.0;
@@ -677,11 +677,11 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
           if(SENSOR_reset == ON){
             if(led_3 >= led_3_threshold || led_4 >= led_4_threshold ){
               if(led_3 >= led_3_threshold && led_4 >= led_4_threshold)
-                wall_value = ((led_4 - led_4_threshold) - ((led_3 - led_3_threshold) / 7.5;
+                wall_value = ((led_4 - led_4_threshold) - (led_3 - led_3_threshold)) / 4.0;
               else if(led_3 >= led_3_threshold)
-                wall_value = (-led_3 + led_3_threshold) / 7.5;
+                wall_value = (-led_3 + led_3_threshold) / 4.0;
               else if(led_4 >= led_4_threshold)
-                wall_value = (led_4 - led_4_threshold) / 7.5;
+                wall_value = (led_4 - led_4_threshold) / 4.0;
               led_fullon();
               //if(led_1 >= led_1_threshold && led_2 >= led_2_threshold && abs(led_1 - led_2) < 150)  fixCoordinate(RobotRunVec, led_1, led_2);
             }
@@ -751,7 +751,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
           if(reverse_flag == true){
             dot = secondTraject.reverse_get_data(target_index, reverseOP, secondDir);
           }
-          else
+          else // V90
             dot = secondTraject.get_data(target_index, reverseOP, secondDir);
           float target_x = dot.x + startPosition.x;
           float target_y = dot.y + startPosition.y;
@@ -760,22 +760,6 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
           float tmp = e_x;
           e_x = tmp * cos(degree / 180.0 * PI) + e_y * sin(degree / 180.0 * PI);
           e_y = -tmp * sin(degree / 180.0 * PI) + e_y * cos(degree / 180.0 * PI);
-          /*
-          if(secondDir == SOUTH){
-            e_x = -e_x;
-            e_y = -e_y;
-          }
-          else if(secondDir == EAST){
-            float tmp = e_x;
-            e_x = -e_y;
-            e_y = tmp;
-          }
-          else if(secondDir == WEST){
-            float tmp = e_x;
-            e_x = e_y;
-            e_y = -tmp;
-          }
-          */
           w_r = (dot.rad - lastDot.rad) * 200.0;
           theta_e = dot.rad + rad_offset - (degree - target_degree) / 180.0 * PI;//atan2(dango.x() - last_c_x, dango.y() - last_c_y);
           if(last_index > target_index){
