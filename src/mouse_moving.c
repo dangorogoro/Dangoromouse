@@ -6,12 +6,25 @@ int16_t search_velocity = 600;
 int16_t last_left_input = 0, last_right_input = 0;
 float MmConvWheel = (4096.0 * 40.0 / 13.0 / 1000.0 / 77.0);  //79.0
 
-float left_Kp = 5.17, right_Kp = 5.17; // 4.0 4.0
-float left_Ki = 12.1, right_Ki = 12.1; //8.0 8.0
-float left_Kd = 0.54, right_Kd = 0.54; //8.0 8.0
-float rotate_Kp = 170.00;
-float rotate_Ki = 218.68;
-float rotate_Kd = 30.18;
+//1.896 16.1089 0.010979
+//1.7752 15.23 0.010
+
+// 63.00 661.96 -0.055
+// 60.75 458,76 1.197
+float left_Kp = 1.896, right_Kp = 1.896;
+float left_Ki = 16.1, right_Ki = 16.1; //8.0 8.0
+float left_Kd = 0.01, right_Kd = 0.01; //8.0 8.0
+float rotate_Kp = 63.00;
+float rotate_Ki = 661.96;
+float rotate_Kd = -0.055;;
+
+//float left_Kp = 5.17, right_Kp = 5.17; // 4.0 4.0
+//float left_Ki = 12.1, right_Ki = 12.1; //8.0 8.0
+//float left_Kd = 0.54, right_Kd = 0.54; //8.0 8.0
+//float rotate_Kp = 170.00;
+//float rotate_Ki = 218.68;
+//float rotate_Kd = 30.18;
+
 //Kp = 4.06, Ki = 9.76, Kd = 0.389, T
 //Kp = 0.561, Ki = 5.78, Kd = 0.00563
 void suction_motor_setting(){
@@ -174,13 +187,19 @@ void speed_controller(int16_t target_speed,float target_rad){
 
   if(left_input >= TIM3_Period){
     left_speed_counter++;
-    if(left_speed_counter >= 500)left_input = 0;
+    if(left_speed_counter >= 500){
+      left_input = 0;
+      suction_stop();
+    }
     else  left_input = TIM3_Period - 2;
   }
   else  left_speed_counter = 0;
   if(right_input >= TIM3_Period){
     right_speed_counter++;
-    if(right_speed_counter >= 500)right_input = 0;
+    if(right_speed_counter >= 500){
+      right_input = 0;
+      suction_stop();
+    }
     else  right_input = TIM3_Period - 2;
   }
   else right_speed_counter = 0;
