@@ -4,19 +4,19 @@ int16_t last_left_speed = 0,last_right_speed = 0;
 volatile uint8_t ENCODER_start = 0;
 int16_t search_velocity = 600;
 int16_t last_left_input = 0, last_right_input = 0;
-float MmConvWheel = (4096.0 * 40.0 / 13.0 / 1000.0 / 77.0);  //79.0
+float MmConvWheel = (4096.0 * 40.0 / 13.0 / 1000.0 / 78.0);  //79.0
 
 //1.896 16.1089 0.010979
 //1.7752 15.23 0.010
 
 // 63.00 661.96 -0.055
 // 60.75 458,76 1.197
-float left_Kp = 1.896, right_Kp = 1.896;
+float left_Kp = 4.896, right_Kp = 4.896;
 float left_Ki = 16.1, right_Ki = 16.1; //8.0 8.0
 float left_Kd = 0.01, right_Kd = 0.01; //8.0 8.0
-float rotate_Kp = 63.00;
-float rotate_Ki = 661.96;
-float rotate_Kd = -0.055;;
+float rotate_Kp = 170.8919; //94
+float rotate_Ki = 501.72;
+float rotate_Kd = 4.11;
 
 //float left_Kp = 5.17, right_Kp = 5.17; // 4.0 4.0
 //float left_Ki = 12.1, right_Ki = 12.1; //8.0 8.0
@@ -159,6 +159,7 @@ float rad_e_sum = 0.f;
 float rad_e_old = 0.f;
 uint16_t left_speed_counter = 0, right_speed_counter = 0;
 void speed_controller(int16_t target_speed,float target_rad){
+
   float GYRO_rad = 0;
   if(GYRO_start == ON){
     GYRO_rad = (float)(ReadGYRO()-GYRO_offset_data)/16.4/180.0*3.14;
@@ -185,9 +186,17 @@ void speed_controller(int16_t target_speed,float target_rad){
   left_input -= rad_e * rotate_Kp + rad_e_sum * rotate_Ki + rotate_Kd * (rad_e - rad_e_old);
   right_input += rad_e * rotate_Kp + rad_e_sum * rotate_Ki + rotate_Kd * (rad_e - rad_e_old);
 
+  if(left_e >= 700){
+    left_input = 0;
+    suction_stop();
+  }
+  if(right_e >= 700){
+    right_input = 0;
+    suction_stop();
+  }
   if(left_input >= TIM3_Period){
     left_speed_counter++;
-    if(left_speed_counter >= 500){
+    if(left_speed_counter >= 300){
       left_input = 0;
       suction_stop();
     }
@@ -196,7 +205,7 @@ void speed_controller(int16_t target_speed,float target_rad){
   else  left_speed_counter = 0;
   if(right_input >= TIM3_Period){
     right_speed_counter++;
-    if(right_speed_counter >= 500){
+    if(right_speed_counter >= 300){
       right_input = 0;
       suction_stop();
     }
@@ -250,9 +259,9 @@ void turn_back(int16_t target_direction){
   set_speed(0,0);
   Delay_ms(100);
   reset_e();
-  float last_rad = 8.f;
+  float last_rad = 6.f;
   float target_rad = 0.0;
-  float rad_diff = 0.2f;
+  float rad_diff = 0.5f;
   bool first_flag = false;
   bool second_flag = false;
   while(degree >= turn_direction * 90){
@@ -286,7 +295,7 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
   reset_e();
   float last_rad = 6.f;
   float target_rad = 0.0;
-  float rad_diff = 0.2f;
+  float rad_diff = 0.5f;
   bool first_flag = false;
   bool second_flag = false;
   if(wall_dir == 1){
