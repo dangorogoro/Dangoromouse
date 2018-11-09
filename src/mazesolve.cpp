@@ -1,7 +1,7 @@
 //ISDT
 #include "mine.h"
 Maze maze,maze_backup;
-uint16_t frontWallThreshold_3 = 2260, frontWallThreshold_4 = 2200; //3 was 2180
+uint16_t frontWallThreshold_3 = 2230, frontWallThreshold_4 = 2190; //3 was 2180
 void Robot::setSpeed(){
   LeftEncoder = left_speed;
   RightEncoder = right_speed;
@@ -145,7 +145,7 @@ void Robot::slalomStraight(uint16_t length){
 void Robot::goRight(){
 
   reset_led();
-  uint16_t offset = 39;
+  uint16_t offset = 35;
   len_counter = 0;
   slalomStraight(offset);
   len_counter = 0;
@@ -156,7 +156,7 @@ void Robot::goRight(){
 }
 void Robot::goLeft(){
   reset_led();
-  uint16_t offset = 39;
+  uint16_t offset = 35;
   len_counter = 0;
   slalomStraight(offset);
   len_counter = 0;
@@ -305,6 +305,7 @@ void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
     degree = getRobotDegreeDir() * 90.0;
   }
   if(wall_dir != 0 && frontWall == true)	setRobotDegreeDir(value);
+  reset_e();
 
   if(false == goal_flag && frontWall == false)	start_withoutwall(getRobotDegreeDir());
   else start_wall(getRobotDegreeDir());
@@ -413,7 +414,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT135 || root[(*i)+1].op == Operation::TURN_LEFT135) ? 70 : curving_length;
   length = *i == 0 ? 138 + (root[*i].n - 1) * ONE_BLOCK - curving_length : root[*i].n * ONE_BLOCK - curving_length; //130 was
   if(*i > 0){
-    length = (root[(*i)-1].op == Operation::TURN_RIGHT135 || root[(*i)-1].op == Operation::TURN_LEFT135) ? length - 90 : length;
+    length = (root[(*i)-1].op == Operation::TURN_RIGHT135 || root[(*i)-1].op == Operation::TURN_LEFT135) ? length - 70 : length;
     length = (root[(*i)-1].op == Operation::TURN_RIGHT45 || root[(*i)-1].op == Operation::TURN_LEFT45) ? length - 90 : length;
   }
 
@@ -441,6 +442,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     stop_buzzer();
     float left_value, right_value;
     float last_left_value, last_right_value;
+    float last_len = 0;
     while(judgeTargetCoordinate(getRobotVec(),RobotRunVec,curving_length)){
       float wall_value = 0.0f;
       x_p = 1.0 / 600.0 * now_speed;
@@ -450,11 +452,11 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         right_value = led_2;
         if(led_1 >= led_1_threshold || led_2 >= led_2_threshold ){
           if(led_1 >= led_1_threshold && led_2 >= led_2_threshold)
-            wall_value = (led_2 - led_1 - sensor_sub) / 25.0;
+            wall_value = (led_2 - led_1 - sensor_sub) / 30.0;
           else if(led_1 >= led_1_threshold)
-            wall_value = (-led_1 + led_1_threshold) / 25.0;
+            wall_value = (-led_1 + led_1_threshold) / 30.0;
           else if(led_2 >= led_2_threshold)
-            wall_value = (led_2 - led_2_threshold) / 25.0;
+            wall_value = (led_2 - led_2_threshold) / 30.0;
           led_fullon();
           if(led_1 >= led_1_threshold && led_2 >= led_2_threshold && abs(led_1 - led_2) < 150)  fixCoordinate(RobotRunVec, led_1, led_2);
         }
@@ -499,14 +501,18 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         timer_clock = OFF;
         //plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, left_input, right_input, now_speed, left_value, right_value, last_left_value, last_right_value);
         //if(prescaler % 2 == 0){
-        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(right_value - last_right_value) > 110) || (fabs(left_value - last_left_value) > 110)) && ((left_value < 2100 || last_left_value < 2100) || (right_value < 2100 || last_right_value < 2100))){
-          //fixCoordinate();
+      }
+      if(wall_detect == ON){
+        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(right_value - last_right_value) > 60) || (fabs(left_value - last_left_value) > 60)) && ((left_value < 2100 || last_left_value < 2100) || (right_value < 2100 || last_right_value < 2100)) && (len_counter - last_len) > len_measure(90) && len_counter + 90 > len_measure(length)){
+          last_len = len_counter;
+          fixCoordinate(RobotRunVec, -30);
           start_buzzer(7);
         }
         last_left_value = left_value;
         last_right_value = right_value;
         set_left_sensor(led_1);
         set_right_sensor(led_2);
+        wall_detect = OFF;
       }
     }
   }
@@ -541,12 +547,12 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     float w_r;
 
     bool initial_flag = false, second_flag = false;
-    float diagKx = 0.0003;//0.001 600 0.007
-    float diagKy = 2.0;
-    float diagKtheta = 0.01;
-    //float diagKx = 0.0000;//151520
-    //float diagKy = 0.00;
-    //float diagKtheta = 0.0;
+    //float diagKx = 0.0003;//151520
+    //float diagKy = 4.00;
+    //float diagKtheta = 0.0015;
+    float diagKx = 0.00024;//151520
+    float diagKy = 4.00;
+    float diagKtheta = 0.0012;
 
     Direction firstDir = directionFromRunVec(operateRunVec);
     Traject traject = trajectList.getTraject(turn_type, firstDir);
@@ -585,22 +591,6 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         float tmp = e_x;
         e_x = tmp * cos(degree / 180.0 * PI) + e_y * sin(degree / 180.0 * PI);
         e_y = -tmp * sin(degree / 180.0 * PI) + e_y * cos(degree / 180.0 * PI);
-        /*
-        if(firstDir == SOUTH){
-          e_x = -e_x;
-          e_y = -e_y;
-        }
-        else if(firstDir == EAST){
-          float tmp = e_x;
-          e_x = -e_y;
-          e_y = tmp;
-        }
-        else if(firstDir == WEST){
-          float tmp = e_x;
-          e_x = e_y;
-          e_y = -tmp;
-        }
-        */
         w_r = (dot.rad - (traject.get_data((target_index - (uint16_t)update_length) % index_size, turn_type, firstDir).rad)) * 200.0;
         theta_e = dot.rad - (degree - target_degree) / 180.0 * PI;//atan2(dango.x() - last_c_x, dango.y() - last_c_y);
         if(last_index > target_index){
@@ -610,25 +600,50 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         else last_index = target_index;
       }
     }
+    if(turn_type == Operation::TURN_LEFT45) target_degree += 45.0f;
+    else if(turn_type == Operation::TURN_RIGHT45) target_degree -= 45.0f;
+    else if(turn_type == Operation::TURN_LEFT135) target_degree += 135.0f;
+    else if(turn_type == Operation::TURN_RIGHT135) target_degree -= 135.0f;
+
     float extra_offset = 0.0;
     if(turn_type == Operation::TURN_RIGHT45 || turn_type == Operation::TURN_LEFT45) extra_offset = 37.27;
     else if(turn_type == Operation::TURN_RIGHT135 || turn_type == Operation::TURN_LEFT135) extra_offset = 4.55;
     len_counter = 0;
     while(len_counter < len_measure(extra_offset)){
-      led_fullon();
+      float wall_value = 0.0f;
+      if(SENSOR_reset == ON){
+        if(led_3 >= led_3_threshold || led_4 >= led_4_threshold ){
+          if(led_3 >= led_3_threshold && led_4 >= led_4_threshold)
+            wall_value = ((led_4 - led_4_threshold) - (led_3 - led_3_threshold)) / 6.0;
+          else if(led_3 >= led_3_threshold)
+            wall_value = (-led_3 + led_3_threshold) / 6.0;
+          else if(led_4 >= led_4_threshold)
+            wall_value = (led_4 - led_4_threshold) / 6.0;
+          led_fullon();
+          //if(led_1 >= led_1_threshold && led_2 >= led_2_threshold && abs(led_1 - led_2) < 150)  fixCoordinate(RobotRunVec, led_1, led_2);
+        }
+        else led_fulloff();
+        reset_led();
+        SENSOR_reset = OFF;
+      }
+      float value = 0;
+      if(SENSOR_start == ON)	led_get();
       if(ENCODER_start == ON){
+        if(len_counter >= len_measure(diag_length - 1.5 * ((int32_t)now_speed * (int32_t)now_speed - (int32_t)reference_speed * (int32_t)reference_speed) / 2.0 / (accel * 1000))) //conv to mm
+          now_speed = reference_speed >= now_speed ? reference_speed : now_speed - accel;
+        else
+          now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
         read_encoder();
         add_coordinate(degree);
-        speed_controller(now_speed, 0);
+        float target_theta_now = (degree - target_degree) / 180.0 * PI;
+        value = - (degree_p * target_theta_now - sensor_p * wall_value);
+        //speed_controller(now_speed, -degree_p * target_theta_now);
+        speed_controller(reference_speed, value);
         ENCODER_start = OFF;
       }
     }
     led_fulloff();
     now_speed = (left_speed + right_speed) / 2 / MmConvWheel;
-    if(turn_type == Operation::TURN_LEFT45) target_degree += 45.0f;
-    else if(turn_type == Operation::TURN_RIGHT45) target_degree -= 45.0f;
-    else if(turn_type == Operation::TURN_LEFT135) target_degree += 135.0f;
-    else if(turn_type == Operation::TURN_RIGHT135) target_degree -= 135.0f;
     (*i)++;
 
     while(1){
@@ -677,11 +692,11 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
           if(SENSOR_reset == ON){
             if(led_3 >= led_3_threshold || led_4 >= led_4_threshold ){
               if(led_3 >= led_3_threshold && led_4 >= led_4_threshold)
-                wall_value = ((led_4 - led_4_threshold) - (led_3 - led_3_threshold)) / 4.0;
+                wall_value = ((led_4 - led_4_threshold) - (led_3 - led_3_threshold)) / 6.0;
               else if(led_3 >= led_3_threshold)
-                wall_value = (-led_3 + led_3_threshold) / 4.0;
+                wall_value = (-led_3 + led_3_threshold) / 6.0;
               else if(led_4 >= led_4_threshold)
-                wall_value = (led_4 - led_4_threshold) / 4.0;
+                wall_value = (led_4 - led_4_threshold) / 6.0;
               led_fullon();
               //if(led_1 >= led_1_threshold && led_2 >= led_2_threshold && abs(led_1 - led_2) < 150)  fixCoordinate(RobotRunVec, led_1, led_2);
             }
@@ -718,11 +733,16 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       theta_e = 0.0f;
       w_r = 0;
       dst_len = 0.0;
-      dotData lastDot;
       uint16_t index_size = secondTraject.real_size();
+      dotData lastDot;
+      if(reverse_flag == true)
+        lastDot = secondTraject.reverse_get_data(0, reverseOP, secondDir);
+      else // V90
+        lastDot = secondTraject.get_data(0, reverseOP, secondDir);
+      
       if(reverse_flag == true){
         if(reverseOP == Operation::TURN_RIGHT45 || reverseOP == Operation::TURN_LEFT45) extra_offset = 37.27;
-        else if(reverseOP == Operation::TURN_RIGHT135 || reverseOP == Operation::TURN_LEFT135) extra_offset = 4.55;
+        else if(reverseOP == Operation::TURN_RIGHT135 || reverseOP == Operation::TURN_LEFT135) extra_offset = 4.55;//4.55
         len_counter = 0;
         while(len_counter < len_measure(extra_offset)){
           if(ENCODER_start == ON){
@@ -733,12 +753,68 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
           }
         }
       }
+      ////////////////////
+      if(latestOP == Operation::RIGHT_V90 || latestOP == Operation::LEFT_V90){
+        len_counter = 0;
+        while(len_counter < len_measure(30.0)){
+          float wall_value = 0.0f;
+          if(SENSOR_reset == ON){
+            if(led_3 >= led_3_threshold || led_4 >= led_4_threshold ){
+              if(led_3 >= led_3_threshold && led_4 >= led_4_threshold)
+                wall_value = ((led_4 - led_4_threshold) - (led_3 - led_3_threshold)) / 4.0;
+              else if(led_3 >= led_3_threshold)
+                wall_value = (-led_3 + led_3_threshold) / 4.0;
+              else if(led_4 >= led_4_threshold)
+                wall_value = (led_4 - led_4_threshold) / 4.0;
+              led_fullon();
+              //if(led_1 >= led_1_threshold && led_2 >= led_2_threshold && abs(led_1 - led_2) < 150)  fixCoordinate(RobotRunVec, led_1, led_2);
+            }
+            else led_fulloff();
+            reset_led();
+            SENSOR_reset = OFF;
+          }
+          float value = 0;
+          if(SENSOR_start == ON)	led_get();
+          if(ENCODER_start == ON){
+            if(len_counter >= len_measure(diag_length - 1.5 * ((int32_t)now_speed * (int32_t)now_speed - (int32_t)reference_speed * (int32_t)reference_speed) / 2.0 / (accel * 1000))) //conv to mm
+              now_speed = reference_speed >= now_speed ? reference_speed : now_speed - accel;
+            else
+              now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
+            read_encoder();
+            add_coordinate(degree);
+            float target_theta_now = (degree - target_degree) / 180.0 * PI;
+            value = - (degree_p * target_theta_now - sensor_p * wall_value);
+            //speed_controller(now_speed, -degree_p * target_theta_now);
+            speed_controller(reference_speed, value);
+            ENCODER_start = OFF;
+          }
+        }
+      }
+      ////////////////////
       while(second_flag == false && latestOP != Operation::FORWARD_DIAG){
+        float wall_value = 0.0f;
+        if(SENSOR_reset == ON){
+          if(led_3 >= led_3_threshold || led_4 >= led_4_threshold ){
+            if(led_3 >= led_3_threshold && led_4 >= led_4_threshold)
+              wall_value = ((led_4 - led_4_threshold) - (led_3 - led_3_threshold)) / 2.0;
+            else if(led_3 >= led_3_threshold)
+              wall_value = (-led_3 + led_3_threshold) / 2.0;
+            else if(led_4 >= led_4_threshold)
+              wall_value = (led_4 - led_4_threshold) / 2.0;
+            led_fullon();
+          }
+          else led_fulloff();
+          reset_led();
+          SENSOR_reset = OFF;
+        }
+        float value = 0;
+        if(SENSOR_start == ON)	led_get();
         if(ENCODER_start == ON){
           read_encoder();
           add_coordinate(degree);
           now_speed = now_speed <= reference_speed ? now_speed + accel : reference_speed;
-          speed_controller(now_speed * cos(theta_e) + diagKy * e_y, w_r + now_speed * (-diagKx * e_x + diagKtheta * sin(theta_e)));
+          value = sensor_p * wall_value;
+          speed_controller(now_speed * cos(theta_e) + diagKy * e_y, w_r + now_speed * (-diagKx * e_x + diagKtheta * sin(theta_e)) + value);
           ENCODER_start = OFF;
           start_buzzer(10);
         }
@@ -779,6 +855,44 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       else if (latestOP == Operation::LEFT_V90 || latestOP == Operation::Operation::RIGHT_V90){
         target_degree += (latestOP == Operation::RIGHT_V90) ? -90.0 : 90.0;
       }
+      //////////////
+      if(latestOP == Operation::RIGHT_V90 || latestOP == Operation::LEFT_V90){
+        len_counter = 0;
+        while(len_counter < len_measure(30.0)){
+          float wall_value = 0.0f;
+          if(SENSOR_reset == ON){
+            if(led_3 >= led_3_threshold || led_4 >= led_4_threshold ){
+              if(led_3 >= led_3_threshold && led_4 >= led_4_threshold)
+                wall_value = ((led_4 - led_4_threshold) - (led_3 - led_3_threshold)) / 4.0;
+              else if(led_3 >= led_3_threshold)
+                wall_value = (-led_3 + led_3_threshold) / 4.0;
+              else if(led_4 >= led_4_threshold)
+                wall_value = (led_4 - led_4_threshold) / 4.0;
+              led_fullon();
+              //if(led_1 >= led_1_threshold && led_2 >= led_2_threshold && abs(led_1 - led_2) < 150)  fixCoordinate(RobotRunVec, led_1, led_2);
+            }
+            else led_fulloff();
+            reset_led();
+            SENSOR_reset = OFF;
+          }
+          float value = 0;
+          if(SENSOR_start == ON)	led_get();
+          if(ENCODER_start == ON){
+            if(len_counter >= len_measure(diag_length - 1.5 * ((int32_t)now_speed * (int32_t)now_speed - (int32_t)reference_speed * (int32_t)reference_speed) / 2.0 / (accel * 1000))) //conv to mm
+              now_speed = reference_speed >= now_speed ? reference_speed : now_speed - accel;
+            else
+              now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
+            read_encoder();
+            add_coordinate(degree);
+            float target_theta_now = (degree - target_degree) / 180.0 * PI;
+            value = - (degree_p * target_theta_now - sensor_p * wall_value);
+            //speed_controller(now_speed, -degree_p * target_theta_now);
+            speed_controller(reference_speed, value);
+            ENCODER_start = OFF;
+          }
+        }
+      }
+      //////////////
       if(judge_diag_turn(latestOP)) break;
       nextRunVec = RobotRunVec;
       (*i)++;
@@ -1276,12 +1390,14 @@ void Robot::fixCoordinate(){
 void Robot::fixCoordinate(Matrix2i runVec, float offset){
   Matrix2i vecStatus = runVec;
   if(vecStatus(0,0) != 0){	//x direction
-    uint16_t xCoordinate = (uint16_t)((int16_t)(x() + 90.0) / 180) * 180 - vecStatus(0,0) * (90 - offset);
+    //uint16_t xCoordinate = (uint16_t)((int16_t)(x() + 90.0) / 180) * 180 - vecStatus(0,0) * (90 - offset);
+    uint16_t xCoordinate = (uint16_t)((int16_t)(x() + 90.0) / 180) * 180 - vecStatus(0,0) * offset;;
     set_x(xCoordinate);
   }
   else{
     if(y() > 40){
-      uint16_t yCoordinate = (uint16_t)((int16_t)(y() + 50.0) / 180) * 180 + 40 - vecStatus(0,1) * (90 - offset);
+      //uint16_t yCoordinate = (uint16_t)((int16_t)(y() + 50.0) / 180) * 180 + 40 - vecStatus(0,1) * (90 - offset);
+      uint16_t yCoordinate = (uint16_t)((int16_t)(y() + 45.0) / 180) * 180 + 40 - vecStatus(0,1) * offset;
       set_y(yCoordinate);
     }
   }

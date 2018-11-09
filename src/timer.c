@@ -3,6 +3,7 @@ NVIC_InitTypeDef NVIC_InitStructure;
 TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 bool timer_clock = OFF;
 bool traject_clock = OFF;
+bool wall_detect = OFF;
 uint32_t timer_counter = 0;
 static uint16_t buzzer_counter = 0;
 int32_t len_counter = 0;
@@ -102,7 +103,10 @@ void TIM5_IRQHandler(){ //100khz -> 160khz
     }
     SENSOR_start = ON;
     if(timer_counter % 64 == 0)	SENSOR_reset = ON;
-    if(timer_counter % 800 == 0) traject_clock = ON;
+    if(timer_counter % 800 == 0){
+      traject_clock = ON;
+      wall_detect = ON;
+    }
     if(timer_counter % 1600 == 0){
       timer_clock = ON; // 0.01sec
       comeback_clock++;
