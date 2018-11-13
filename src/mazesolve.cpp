@@ -410,12 +410,12 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   else turn_speed = param.get_turn_param();
   const int16_t accel = param.get_accel_param();
   int16_t length = 0;
-  curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT45 || root[(*i)+1].op == Operation::TURN_LEFT45) ? 90 : curving_length;
+  curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT45 || root[(*i)+1].op == Operation::TURN_LEFT45) ? 90 - 40 : curving_length;
   curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT135 || root[(*i)+1].op == Operation::TURN_LEFT135) ? 70 : curving_length;
   length = *i == 0 ? 138 + (root[*i].n - 1) * ONE_BLOCK - curving_length : root[*i].n * ONE_BLOCK - curving_length; //130 was
   if(*i > 0){
     length = (root[(*i)-1].op == Operation::TURN_RIGHT135 || root[(*i)-1].op == Operation::TURN_LEFT135) ? length - 70 : length;
-    length = (root[(*i)-1].op == Operation::TURN_RIGHT45 || root[(*i)-1].op == Operation::TURN_LEFT45) ? length - 90 : length;
+    length = (root[(*i)-1].op == Operation::TURN_RIGHT45 || root[(*i)-1].op == Operation::TURN_LEFT45) ? length - (90 - 40) : length;
   }
 
 
@@ -503,9 +503,14 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         //if(prescaler % 2 == 0){
       }
       if(wall_detect == ON){
-        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(right_value - last_right_value) > 60) || (fabs(left_value - last_left_value) > 60)) && ((left_value < 2100 || last_left_value < 2100) || (right_value < 2100 || last_right_value < 2100)) && (len_counter - last_len) > len_measure(90) && len_counter + 90 > len_measure(length)){
+        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(right_value - last_right_value) > 60) || (fabs(left_value - last_left_value) > 60)) && ((left_value < 2100 || last_left_value < 2100) || (right_value < 2100 || last_right_value < 2100)) && (len_counter - last_len) > len_measure(90)){
           last_len = len_counter;
-          fixCoordinate(RobotRunVec, -30);
+          led_fulloff();
+          float fix_length = 25.0;
+          float offset_length = 3.0;
+          if(right_value - last_right_value > 60 || left_value - last_left_value > 60) fix_length += offset_length;
+          else if(last_right_value - right_value > 60 || last_left_value - left_value > 60) fix_length -= offset_length;;
+          fixCoordinate(RobotRunVec, -fix_length);
           start_buzzer(7);
         }
         last_left_value = left_value;
@@ -521,13 +526,20 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   }
   else if(judge_diag_turn(root[*i].op)){
     Operation::OperationType turn_type = root[*i].op;
-    //Position centerPosition = estimatePosition(get_position());
-    Position centerPosition;
+    Position centerPosition = getPositionFromVec(getRobotVec(), directionFromRunVec(RobotRunVec));
+    /*
+    Position centerPosition;// = estimatePosition(get_position());
     centerPosition.x = x();
     centerPosition.y = y();
+    */
     Matrix2i operateRunVec = RobotRunVec;
     Matrix2i firstRunVec = RobotRunVec;
     Matrix2i nextRunVec = RobotRunVec;
+    Direction check_dir = directionFromRunVec(RobotRunVec);
+    if(check_dir== NORTH)  centerPosition.y -= 90;
+    else if(check_dir== SOUTH)  centerPosition.y += 90;
+    else if(check_dir== EAST)  centerPosition.x -= 90;
+    else if(check_dir== WEST)  centerPosition.x += 90;
     if(turn_type == Operation::TURN_RIGHT45 || turn_type == Operation::TURN_LEFT45){
       setRobotVecFromRun((turn_type == Operation::TURN_RIGHT45) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
       nextRunVec = RobotRunVec;
@@ -550,8 +562,8 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     //float diagKx = 0.0003;//151520
     //float diagKy = 4.00;
     //float diagKtheta = 0.0015;
-    float diagKx = 0.00024;//151520
-    float diagKy = 4.00;
+    float diagKx = 0.0003;//151520
+    float diagKy = 4.50;
     float diagKtheta = 0.0012;
 
     Direction firstDir = directionFromRunVec(operateRunVec);
@@ -606,7 +618,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     else if(turn_type == Operation::TURN_RIGHT135) target_degree -= 135.0f;
 
     float extra_offset = 0.0;
-    if(turn_type == Operation::TURN_RIGHT45 || turn_type == Operation::TURN_LEFT45) extra_offset = 37.27;
+    if(turn_type == Operation::TURN_RIGHT45 || turn_type == Operation::TURN_LEFT45) extra_offset = 77.27922074784167;
     else if(turn_type == Operation::TURN_RIGHT135 || turn_type == Operation::TURN_LEFT135) extra_offset = 4.55;
     len_counter = 0;
     while(len_counter < len_measure(extra_offset)){
@@ -741,7 +753,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         lastDot = secondTraject.get_data(0, reverseOP, secondDir);
       
       if(reverse_flag == true){
-        if(reverseOP == Operation::TURN_RIGHT45 || reverseOP == Operation::TURN_LEFT45) extra_offset = 37.27;
+        if(reverseOP == Operation::TURN_RIGHT45 || reverseOP == Operation::TURN_LEFT45) extra_offset = 77.27922074784167;
         else if(reverseOP == Operation::TURN_RIGHT135 || reverseOP == Operation::TURN_LEFT135) extra_offset = 4.55;//4.55
         len_counter = 0;
         while(len_counter < len_measure(extra_offset)){
