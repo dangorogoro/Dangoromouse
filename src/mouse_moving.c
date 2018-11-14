@@ -186,17 +186,19 @@ void speed_controller(int16_t target_speed,float target_rad){
   left_input -= rad_e * rotate_Kp + rad_e_sum * rotate_Ki + rotate_Kd * (rad_e - rad_e_old);
   right_input += rad_e * rotate_Kp + rad_e_sum * rotate_Ki + rotate_Kd * (rad_e - rad_e_old);
 
-  if(left_e >= 700){
+  /*
+  if(left_e >= 1000){
     left_input = 0;
     suction_stop();
   }
-  if(right_e >= 700){
+  if(right_e >= 1000){
     right_input = 0;
     suction_stop();
   }
+  */
   if(left_input >= TIM3_Period){
     left_speed_counter++;
-    if(left_speed_counter >= 300){
+    if(left_speed_counter >= 100){
       left_input = 0;
       suction_stop();
     }
@@ -205,7 +207,7 @@ void speed_controller(int16_t target_speed,float target_rad){
   else  left_speed_counter = 0;
   if(right_input >= TIM3_Period){
     right_speed_counter++;
-    if(right_speed_counter >= 300){
+    if(right_speed_counter >= 100){
       right_input = 0;
       suction_stop();
     }

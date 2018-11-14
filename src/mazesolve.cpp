@@ -452,11 +452,11 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         right_value = led_2;
         if(led_1 >= led_1_threshold || led_2 >= led_2_threshold ){
           if(led_1 >= led_1_threshold && led_2 >= led_2_threshold)
-            wall_value = (led_2 - led_1 - sensor_sub) / 30.0;
+            wall_value = (led_2 - led_1 - sensor_sub) / 25.0;
           else if(led_1 >= led_1_threshold)
-            wall_value = (-led_1 + led_1_threshold) / 30.0;
+            wall_value = (-led_1 + led_1_threshold) / 25.0;
           else if(led_2 >= led_2_threshold)
-            wall_value = (led_2 - led_2_threshold) / 30.0;
+            wall_value = (led_2 - led_2_threshold) / 25.0;
           led_fullon();
           if(led_1 >= led_1_threshold && led_2 >= led_2_threshold && abs(led_1 - led_2) < 150)  fixCoordinate(RobotRunVec, led_1, led_2);
         }
@@ -503,13 +503,13 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         //if(prescaler % 2 == 0){
       }
       if(wall_detect == ON){
-        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(right_value - last_right_value) > 60) || (fabs(left_value - last_left_value) > 60)) && ((left_value < 2100 || last_left_value < 2100) || (right_value < 2100 || last_right_value < 2100)) && (len_counter - last_len) > len_measure(90)){
+        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(last_right_value - right_value) > 50) || (fabs(last_left_value - left_value) > 50)) && ((left_value < 2100 || last_left_value < 2100) || (right_value < 2100 || last_right_value < 2100))/* && (len_counter - last_len) > len_measure(90)*/){
           last_len = len_counter;
           led_fulloff();
-          float fix_length = 25.0;
-          float offset_length = 3.0;
-          if(right_value - last_right_value > 60 || left_value - last_left_value > 60) fix_length += offset_length;
-          else if(last_right_value - right_value > 60 || last_left_value - left_value > 60) fix_length -= offset_length;;
+          float fix_length = 30.0;
+          float offset_length = 0.0;
+          //if(right_value - last_right_value > 60 || left_value - last_left_value > 60) fix_length += offset_length;
+          if(last_right_value - right_value > 50 || last_left_value - left_value > 50) fix_length -= offset_length;;
           fixCoordinate(RobotRunVec, -fix_length);
           start_buzzer(7);
         }
@@ -562,9 +562,9 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     //float diagKx = 0.0003;//151520
     //float diagKy = 4.00;
     //float diagKtheta = 0.0015;
-    float diagKx = 0.0003;//151520
+    float diagKx = 0.0002;//151520
     float diagKy = 4.50;
-    float diagKtheta = 0.0012;
+    float diagKtheta = 0.001;
 
     Direction firstDir = directionFromRunVec(operateRunVec);
     Traject traject = trajectList.getTraject(turn_type, firstDir);
