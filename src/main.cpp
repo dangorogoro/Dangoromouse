@@ -668,7 +668,7 @@ while(1){
     pipi(4);
     pipi(6);
     pipi(3);
-    Delay_ms(1000);
+    Delay_ms(300);
     OperationList runSequence; 
     runSequence.push_back({Operation::FORWARD,1});
     runSequence.push_back({Operation::TURN_RIGHT45,1});
