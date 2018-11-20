@@ -272,9 +272,6 @@ void Robot::goBack(int8_t Nextdir, bool goal_flag = false){
       if(counter >= threshold){
         counter = 0;
         led_fulloff();
-        pipi(2);
-        pipi(3);
-        pipi(5);
         break;
       }
       const float target_theta =  (degree - getRobotDegreeDir() * 90.0) / 180.0 * PI;
@@ -423,10 +420,10 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   float target_theta_now = 0,target_theta_last = 0;
   float x_p = 1.0 / 600.0 * last_speed;
   float x_i = 1.0 / 600.0 * last_speed;
-  float degree_p = 10.0;
+  float degree_p = 8.0;
   float degree_i = 0.5;
   float degree_d = 0.1;
-  float sensor_p = 0.4;
+  float sensor_p = 0.7;
 
 
   Matrix2i last_RobotRunVec = RobotRunVec;
@@ -452,11 +449,11 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         right_value = led_2;
         if(led_1 >= led_1_threshold || led_2 >= led_2_threshold ){
           if(led_1 >= led_1_threshold && led_2 >= led_2_threshold)
-            wall_value = (led_2 - led_1 - sensor_sub) / 25.0;
+            wall_value = (led_2 - led_1 - sensor_sub) / 15.0;
           else if(led_1 >= led_1_threshold)
-            wall_value = (-led_1 + led_1_threshold) / 25.0;
+            wall_value = (-led_1 + led_1_threshold) / 15.0;
           else if(led_2 >= led_2_threshold)
-            wall_value = (led_2 - led_2_threshold) / 25.0;
+            wall_value = (led_2 - led_2_threshold) / 15.0;
           led_fullon();
           if(led_1 >= led_1_threshold && led_2 >= led_2_threshold && abs(led_1 - led_2) < 150)  fixCoordinate(RobotRunVec, led_1, led_2);
         }
@@ -562,9 +559,9 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     //float diagKx = 0.0003;//151520
     //float diagKy = 4.00;
     //float diagKtheta = 0.0015;
-    float diagKx = 0.0002;//151520
+    float diagKx = 0.00012;//151520
     float diagKy = 4.50;
-    float diagKtheta = 0.001;
+    float diagKtheta = 0.003;
 
     Direction firstDir = directionFromRunVec(operateRunVec);
     Traject traject = trajectList.getTraject(turn_type, firstDir);
@@ -704,13 +701,13 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
           if(SENSOR_reset == ON){
             if(led_3 >= led_3_threshold || led_4 >= led_4_threshold ){
               if(led_3 >= led_3_threshold && led_4 >= led_4_threshold)
-                wall_value = ((led_4 - led_4_threshold) - (led_3 - led_3_threshold)) / 6.0;
+                wall_value = ((led_4 - led_4_threshold) - (led_3 - led_3_threshold)) / 3.0;
               else if(led_3 >= led_3_threshold)
-                wall_value = (-led_3 + led_3_threshold) / 6.0;
+                wall_value = (-led_3 + led_3_threshold) / 3.0;
               else if(led_4 >= led_4_threshold)
-                wall_value = (led_4 - led_4_threshold) / 6.0;
+                wall_value = (led_4 - led_4_threshold) / 3.0;
               led_fullon();
-              //if(led_1 >= led_1_threshold && led_2 >= led_2_threshold && abs(led_1 - led_2) < 150)  fixCoordinate(RobotRunVec, led_1, led_2);
+              start_buzzer(7);
             }
             else led_fulloff();
             reset_led();
