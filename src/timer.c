@@ -158,6 +158,6 @@ void stop_buzzer(){
 }
 void pipi(uint16_t value){
   start_buzzer(value * 2);
-  Delay_ms(200);
+  Delay_ms(100);
   stop_buzzer();
 }

@@ -443,17 +443,22 @@ void start_wall(int16_t po){
 int32_t len_measure(int32_t length){
   return length * MmConvWheel * 1000;
 }
-void reset_e(){
+void reset_trans_e(){
   left_e_old  = 0;
   right_e_old = 0;
   left_e  = 0;
   right_e = 0;
   left_e_sum  = 0;
   right_e_sum = 0;
-
+}
+void reset_rotate_e(){
   rad_e = 0.f;
   rad_e_sum = 0.f;
   rad_e_old = 0.f;
+}
+void reset_e(){
+  reset_trans_e();
+  reset_rotate_e();
 }
 void start_withoutwall(int16_t po){
   set_speed(0,0);
