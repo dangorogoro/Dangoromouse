@@ -25,11 +25,11 @@ void ParamList::setting(){
   Param param7(0,2500,1000,600,10);
   Param param8(0,3500,1000,600,10);
   Param param9(0,3800,1100,600,10);
-  Param param10(0,1800,800,600,15);
-  Param param11(0,3000,800,600,15);
-  Param param12(0,2500,1000,600,15);
-  Param param13(0,3500,1000,600,15);
-  Param param14(0,3800,1100,600,15);
+  Param param10(0,1800,1200,600,15);
+  Param param11(0,3000,1200,600,15);
+  Param param12(0,2500,1300,600,15);
+  Param param13(0,3500,1300,600,15);
+  Param param14(0,3800,1400,600,15);
 
   param_list.push_back(param0);
   param_list.push_back(param1);
