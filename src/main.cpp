@@ -494,7 +494,7 @@ while(1){
       printf("n is %d\r\n", runSequence[i].n);
     }
     while(1){
-      if(suction_flag == true) suction_start(40);
+      if(suction_flag == true) suction_start(50);
       dango.action(param_value,runSequence,parameters);
       suction_stop();
       param_value = encoder_paramset();
@@ -512,156 +512,156 @@ while(1){
     }
 
     /*
-    uint32_t *flash_data = (uint32_t*)Flash_load();
-    printf("flash_data:%lu\r\n", *flash_data);
-    (*flash_data)++;
-    if (!Flash_write_back()) {
-      printf("Failed to write flash\n");
-    }
-    while(1){
-      if(ENCODER_start == ON){
-      read_encoder();
-      speed_controller(param_value*100,0);
-      ENCODER_start = OFF;
-      }
-    }
-    */
+       uint32_t *flash_data = (uint32_t*)Flash_load();
+       printf("flash_data:%lu\r\n", *flash_data);
+       (*flash_data)++;
+       if (!Flash_write_back()) {
+       printf("Failed to write flash\n");
+       }
+       while(1){
+       if(ENCODER_start == ON){
+       read_encoder();
+       speed_controller(param_value*100,0);
+       ENCODER_start = OFF;
+       }
+       }
+       */
   }
-  else if(mode_select % 16 == 2){
-    float target_theta_last = 0;
-    float target_theta_sum = 0;
-    float degree_p = 20, degree_i = 0.1, degree_d = 1.0;
-    while(1){
-      if(GYRO_start == ON){
-        GYRO_sampling();
-        GYRO_start = OFF;
-      }
-      if(ENCODER_start == ON){
-        read_encoder();
-        float target_theta_now = degree / 180.0 * PI;
-        target_theta_sum += target_theta_now;
-        float target_theta_diff = target_theta_now - target_theta_last;
-        float value = -(target_theta_sum * degree_i + target_theta_now * degree_p + target_theta_diff * degree_d);
-        speed_controller(0, value);
-        ENCODER_start = OFF;
-        target_theta_last = target_theta_now;
-      }
+       else if(mode_select % 16 == 2){
+         float target_theta_last = 0;
+         float target_theta_sum = 0;
+         float degree_p = 20, degree_i = 0.1, degree_d = 1.0;
+         while(1){
+           if(GYRO_start == ON){
+             GYRO_sampling();
+             GYRO_start = OFF;
+           }
+           if(ENCODER_start == ON){
+             read_encoder();
+             float target_theta_now = degree / 180.0 * PI;
+             target_theta_sum += target_theta_now;
+             float target_theta_diff = target_theta_now - target_theta_last;
+             float value = -(target_theta_sum * degree_i + target_theta_now * degree_p + target_theta_diff * degree_d);
+             speed_controller(0, value);
+             ENCODER_start = OFF;
+             target_theta_last = target_theta_now;
+           }
 
-      if(degree >= 90.0)
-        GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
-      else
-        GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_RESET);
-    }
-  }
-  else if(mode_select % 16 == 3){
-    Flash_clear();
-    stop_flag = false;
-    led_flash();
-    Delay_ms(1000);
-    dango.startOffSet(&agent);
-    prev_State = agent.getState();
-    bool last_save_flag = false;
-    while(1){
-      prev_State = agent.getState();
-      Direction Lastdir = agent.getNextDirection();
-      reset_led();
-      sensor_works();
-      Direction WallData = read_wall(dango.getRobotDir());
-      if(stop_flag == true){
-        pipi(4);
-        set_speed(0,0);
-        break;
-      }
-      if((maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y) & Direction(0b11110000)) != (Direction)0xf0)
-        agent.update(dango.getRobotVec(),WallData);
-      else
-        agent.update(dango.getRobotVec(),maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y));
-      if(agent.getState() == Agent::FINISHED){
-        dango.startBack(NORTH, 0);
-        break;
-      }
-      if(prev_State == Agent::SEARCHING_NOT_GOAL && agent.getState() != prev_State){
-        maze_backup = maze;
-        start_buzzer(10);
-        dango.saveMazeStart();
-        led_fullon();
-      }
-      if(comeback_clock >= 100 * 150 && agent.getState() == Agent::SEARCHING_REACHED_GOAL){
-        start_buzzer(5);
-        led_fullon();
-        agent.forceGotoStart();
-      }
-      Direction Nextdir = agent.getNextDirection();
-      if(Lastdir == Nextdir && len_counter >= 170)	len_counter -= 180.0;
-      else len_counter = 0;
-      if(Nextdir.byte == 0){
-        set_speed(0,0);
-        Delay_ms(1000);
-        break;
-      }
-      if(last_save_flag != dango.getSaveMazeFlag()){
-        last_save_flag = dango.getSaveMazeFlag();
-        dango.robotMove(Nextdir,true);
-      }
-      else	dango.robotMove(Nextdir,false);
-      dango.setRobotDir(Nextdir);
-      dango.addRobotDirToVec(Nextdir);
-      stop_buzzer();
-    }
-    degree = 0;
-    set_speed(0,0);
-    len_counter = 0;
-    reset_e();
-    pipi(3);
-    pipi(4);
-    pipi(5);
-    pipi(6);
-    led_stop();
+           if(degree >= 90.0)
+             GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_SET);
+           else
+             GPIO_WriteBit(GPIOB,GPIO_Pin_12,Bit_RESET);
+         }
+       }
+       else if(mode_select % 16 == 3){
+         Flash_clear();
+         stop_flag = false;
+         led_flash();
+         Delay_ms(1000);
+         dango.startOffSet(&agent);
+         prev_State = agent.getState();
+         bool last_save_flag = false;
+         while(1){
+           prev_State = agent.getState();
+           Direction Lastdir = agent.getNextDirection();
+           reset_led();
+           sensor_works();
+           Direction WallData = read_wall(dango.getRobotDir());
+           if(stop_flag == true){
+             pipi(4);
+             set_speed(0,0);
+             break;
+           }
+           if((maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y) & Direction(0b11110000)) != (Direction)0xf0)
+             agent.update(dango.getRobotVec(),WallData);
+           else
+             agent.update(dango.getRobotVec(),maze.getWall(dango.getRobotVec().x,dango.getRobotVec().y));
+           if(agent.getState() == Agent::FINISHED){
+             dango.startBack(NORTH, 0);
+             break;
+           }
+           if(prev_State == Agent::SEARCHING_NOT_GOAL && agent.getState() != prev_State){
+             maze_backup = maze;
+             start_buzzer(10);
+             dango.saveMazeStart();
+             led_fullon();
+           }
+           if(comeback_clock >= 100 * 150 && agent.getState() == Agent::SEARCHING_REACHED_GOAL){
+             start_buzzer(5);
+             led_fullon();
+             agent.forceGotoStart();
+           }
+           Direction Nextdir = agent.getNextDirection();
+           if(Lastdir == Nextdir && len_counter >= 170)	len_counter -= 180.0;
+           else len_counter = 0;
+           if(Nextdir.byte == 0){
+             set_speed(0,0);
+             Delay_ms(1000);
+             break;
+           }
+           if(last_save_flag != dango.getSaveMazeFlag()){
+             last_save_flag = dango.getSaveMazeFlag();
+             dango.robotMove(Nextdir,true);
+           }
+           else	dango.robotMove(Nextdir,false);
+           dango.setRobotDir(Nextdir);
+           dango.addRobotDirToVec(Nextdir);
+           stop_buzzer();
+         }
+         degree = 0;
+         set_speed(0,0);
+         len_counter = 0;
+         reset_e();
+         pipi(3);
+         pipi(4);
+         pipi(5);
+         pipi(6);
+         led_stop();
 
-    Delay_ms(100);
-    dango.setRobotVec(IndexVec());
+         Delay_ms(100);
+         dango.setRobotVec(IndexVec());
 
-    //agent.caclRunSequence(true);
+         //agent.caclRunSequence(true);
 
-    if(stop_flag == true){
-      save_mazedata(maze_backup);
-      pipi(2);
-      pipi(5);
-      pipi(6);
-      pipi(12);
-      led_fullon();
-      agent.resumeAt(Agent::FINISHED,maze_backup);
-      while(button_return == 0){}
-      pipi(4);
-      mouse_start();
-      led_fulloff();
-    }
-    else	save_mazedata(maze);
-    //agent.caclRunSequence(false);
-    agent.caclRunSequence(select_diag);
-    Robot last_dango = dango;
-    OperationList runSequence = agent.getRunSequence();
-    runSequence.push_back({Operation::FORWARD,1});
-    runSequence.push_back({Operation::STOP,1});
-    //runSequence = rebuildOperation(runSequence,0);
-    runSequence = rebuildOperation(runSequence,select_diag);
-    TIM_Cmd(TIM5,ENABLE);
-    while(1){
-      dango.action(param_value,runSequence,parameters);
-      param_value = encoder_paramset();
-      plot.all_print();
-      mouse_start();
-      TIM2->CNT = 0;
-      TIM8->CNT = 0;
-      pipi(3);
-      pipi(4);
-      pipi(5);
-      pipi(6);
-      dango = last_dango;
-      plot.clear();
-    }
-  }
-  else if(mode_select % 16 == 4){
+         if(stop_flag == true){
+           save_mazedata(maze_backup);
+           pipi(2);
+           pipi(5);
+           pipi(6);
+           pipi(12);
+           led_fullon();
+           agent.resumeAt(Agent::FINISHED,maze_backup);
+           while(button_return == 0){}
+           pipi(4);
+           mouse_start();
+           led_fulloff();
+         }
+         else	save_mazedata(maze);
+         //agent.caclRunSequence(false);
+         agent.caclRunSequence(select_diag);
+         Robot last_dango = dango;
+         OperationList runSequence = agent.getRunSequence();
+         runSequence.push_back({Operation::FORWARD,1});
+         runSequence.push_back({Operation::STOP,1});
+         //runSequence = rebuildOperation(runSequence,0);
+         runSequence = rebuildOperation(runSequence,select_diag);
+         TIM_Cmd(TIM5,ENABLE);
+         while(1){
+           dango.action(param_value,runSequence,parameters);
+           param_value = encoder_paramset();
+           plot.all_print();
+           mouse_start();
+           TIM2->CNT = 0;
+           TIM8->CNT = 0;
+           pipi(3);
+           pipi(4);
+           pipi(5);
+           pipi(6);
+           dango = last_dango;
+           plot.clear();
+         }
+       }
+       else if(mode_select % 16 == 4){
     Robot dango;
     Robot last_dango = dango;
     pipi(5);
@@ -688,7 +688,7 @@ while(1){
     runSequence.push_back({Operation::STOP,1});
     //runSequence = rebuildOperation(runSequence,0);
     while(1){
-      //suction_start(40);
+      if(suction_flag == true) suction_start(40);
       dango.action(param_value,runSequence,parameters);
       suction_stop();
       param_value = encoder_paramset();
