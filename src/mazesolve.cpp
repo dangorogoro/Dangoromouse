@@ -426,9 +426,10 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   //float diagKx = 0.0003;//151520
   //float diagKy = 4.00;
   //float diagKtheta = 0.0015;
-  float diagKx = 0.0003;//151520
+  float diagKx = 0.00025;//151520
+  float diagStraightKx = 0.00005;//151520
   float diagKy = 4.50;
-  float diagKtheta = 0.0026;
+  float diagKtheta = 0.0027;
 
 
   Matrix2i last_RobotRunVec = RobotRunVec;
@@ -501,7 +502,6 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         float e_x = targetPos.x - x();
         float e_y = targetPos.y - y();
         float tmp = e_x;
-        float diagStraightKx = 0.00005;//151520
         float threshold = 15.0;
         e_x = tmp * cos(degree / 180.0 * PI) + e_y * sin(degree / 180.0 * PI);
         e_y = -tmp * sin(degree / 180.0 * PI) + e_y * cos(degree / 180.0 * PI);
@@ -527,13 +527,13 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         //if(prescaler % 2 == 0){
       }
       if(wall_detect == ON){
-        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(last_right_value - right_value) > 60) || (fabs(last_left_value - left_value) > 60)) && ((left_value < 2100 || last_left_value < 2100) || (right_value < 2100 || last_right_value < 2100)) && (len_counter - last_len) > len_measure(30)){
+        if(last_left_value > 2048 && last_right_value > 2048 && left_value > 2048 && right_value > 2048 && ((fabs(last_right_value - right_value) > 50) || (fabs(last_left_value - left_value) > 50)) && ((left_value < 2100 || last_left_value < 2100) || (right_value < 2100 || last_right_value < 2100)) && (len_counter - last_len) > len_measure(30)){
           last_len = len_counter;
           led_fulloff();
           float fix_length = 30.0;
           float offset_length = 0.0;
           //if(right_value - last_right_value > 60 || left_value - last_left_value > 60) fix_length += offset_length;
-          if(last_right_value - right_value > 60 || last_left_value - left_value > 60) fix_length -= offset_length;;
+          if(last_right_value - right_value > 50 || last_left_value - left_value > 50) fix_length -= offset_length;;
           fixCoordinate(RobotRunVec, -fix_length);
           start_buzzer(7);
         }
@@ -608,7 +608,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         traject_clock = OFF;
         float update_length = (left_speed + right_speed) / 2 / MmConvWheel * 5.0 / 1000.0;
         dst_len += update_length;
-        uint16_t index_size = traject.real_size();
+        uint16_t index_size = traject.get_used_size();
         target_index = (target_offset + (uint16_t)dst_len) % index_size;
         dotData dot;
         if(initial_flag == false){
@@ -774,7 +774,8 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
             float tmp = e_x;
             e_x = tmp * cos(degree / 180.0 * PI) + e_y * sin(degree / 180.0 * PI);
             e_y = -tmp * sin(degree / 180.0 * PI) + e_y * cos(degree / 180.0 * PI);
-            speed_controller(reference_speed * cos(-target_theta_now) + diagKy * e_y, reference_speed * (-diagKx * e_x + diagKtheta * sin(-target_theta_now)));
+            //speed_controller(reference_speed * cos(-target_theta_now) + diagKy * e_y, reference_speed * (-diagKx * e_x + diagKtheta * sin(-target_theta_now)));
+            speed_controller(reference_speed * cos(-target_theta_now) + diagKy * e_y, -degree_p * target_theta_now + reference_speed * (-diagStraightKx * e_x));
             ENCODER_start = OFF;
           }
         }
@@ -791,7 +792,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       theta_e = 0.0f;
       w_r = 0;
       dst_len = 0.0;
-      uint16_t index_size = secondTraject.real_size();
+      uint16_t index_size = secondTraject.get_used_size();
       dotData lastDot;
       if(reverse_flag == true)
         lastDot = secondTraject.reverse_get_data(0, reverseOP, secondDir);
@@ -1416,7 +1417,7 @@ Position estimatePosition(Position est){
 Position getPositionFromVec(IndexVec vec){
   Position position;
   position.x = vec.x * 180.0;
-  position.y = vec.y * 180.0 + 55.0;
+  position.y = vec.y * 180.0 + 50.0;
   return position;
 }
 Position getPositionFromVec(IndexVec vec, Direction dir){
