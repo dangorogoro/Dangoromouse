@@ -784,7 +784,7 @@ while(1){
     float Ky = 0.001;
     float Ktheta = 0.001;
     uint16_t target_index = 5;
-    uint16_t index_size = traject.real_size();
+    uint16_t index_size = traject.get_used_size();
     uint16_t last_index = 0;
     float e_x = 0.0, e_y = 0.0;
     float theta_e = 0.0;
@@ -866,9 +866,9 @@ while(1){
         if(cnt <= 100) input = 0;
         else if(cnt >= 400) input = 0;
         else input = Duty;
-        if(cnt >= 500) finish_flag = true;
+        if(cnt >= 1000) finish_flag = true;
         if(select_diag == false){
-          plot.push_back(rad, input);
+          plot.push_back(rad, input, rad, input, rad, input, rad, input);
           set_speed(-input*2.5, input*2.5);
         }
         else{
