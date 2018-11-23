@@ -1,10 +1,7 @@
 #include "mine.h"
 void Traject::static_push_back(dotData dot){
-  if(data_size < virtual_size()){
-    data[data_size] = dot;
-  }
-  else data.push_back(dot);
-  data_size++;
+  data[used_size] = dot;
+  used_size++;
 }
 void Traject::static_push_back(float y, float x, float rad){
   dotData tmp = {
@@ -2080,7 +2077,7 @@ dotData Traject::get_data(uint32_t index, Operation::OperationType type, Directi
   return tmp;
 }
 dotData Traject::reverse_get_data(uint32_t index, Operation::OperationType type, Direction dir){
-  uint32_t target_index = (data_size >= index + 1) ? data_size - 1 - index : 0;
+  uint32_t target_index = (used_size >= index + 1) ? used_size - 1 - index : 0;
   dotData tmp;
   dotData lastDot = end(type,dir);
   dotData targetDot = get_data(target_index, type, dir);
@@ -2114,7 +2111,7 @@ void TrajectList::setTraject(Traject traject){
   else if(traject.get_type() == Operation::V90) list_pointer = &v90List;
   Matrix2f matrix = eigenRotate().cast<float>();
   for(size_t n = 0; n <= 3; n++){
-    for(size_t i = 0; i < traject.real_size(); i++){
+    for(size_t i = 0; i < traject.get_used_size(); i++){
       dotData dot = traject.get_data(i, Operation::TURN_LEFT45, NORTH); //dont care
       RowVector2f dotVec; dotVec << dot.x, dot.y;
       float target_x = (dotVec * matrix)(0);

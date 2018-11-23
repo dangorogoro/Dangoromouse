@@ -7,22 +7,22 @@ typedef struct{
 }dotData;
 class Traject{
   private:
-    std::vector<dotData> data;
+    dotData data[300];
     Operation::OperationType turn_type;
     float offset_straight;
-    uint32_t data_size;
+    uint32_t used_size;
   public:
-    Traject(): data(400), data_size(0){}
-    Traject(Operation::OperationType type): data(400), turn_type(type), data_size(0){}
+    Traject(): used_size(0){}
+    Traject(Operation::OperationType type): turn_type(type), used_size(0){}
     void static_push_back(float y, float x, float rad);
     void static_push_back(dotData dot);
     void set_dot();
     //inline dotData get_data(uint32_t index){return data[index];}
     dotData get_data(uint32_t index, Operation::OperationType type, Direction dir);
     dotData reverse_get_data(uint32_t index, Operation::OperationType type, Direction dir);
-    dotData end(Operation::OperationType typical, Direction dir){return get_data(data_size - 1, typical, dir);}
-    size_t virtual_size(){return data.size();}
-    size_t real_size(){return data_size;}
+    dotData end(Operation::OperationType typical, Direction dir){return get_data(used_size - 1, typical, dir);}
+    //size_t virtual_size(){return data.size();}
+    size_t get_used_size(){return used_size;}
     inline void set_offset(float offset){offset_straight = offset;}
     float get_offset(){return offset_straight;}
     inline Operation::OperationType get_type(){return turn_type;}
@@ -41,6 +41,8 @@ class TrajectList{
 extern Traject turn45;
 extern Traject turn135;
 extern Traject v90;
+extern Traject turn180;
+extern Traject turn90;
 extern TrajectList trajectList;
 void set_traject();
 #endif
