@@ -14,8 +14,8 @@ float MmConvWheel = (4096.0 * 40.0 / 13.0 / 1000.0 / 78.0);  //79.0
 float left_Kp = 4.896, right_Kp = 4.896;
 float left_Ki = 16.1, right_Ki = 16.1; //8.0 8.0
 float left_Kd = 0.01, right_Kd = 0.01; //8.0 8.0
-float rotate_Kp = 170.8919; //94
-float rotate_Ki = 501.72;
+float rotate_Kp = 190.8919; //94
+float rotate_Ki = 801.72;
 float rotate_Kd = 4.11;
 
 //float left_Kp = 5.17, right_Kp = 5.17; // 4.0 4.0
@@ -261,9 +261,9 @@ void turn_back(int16_t target_direction){
   set_speed(0,0);
   Delay_ms(100);
   reset_e();
-  float last_rad = 2.f * PI;
+  float last_rad = 2.0f * PI;
   float target_rad = 0.0;
-  float rad_diff = 0.15f;
+  float rad_diff = 0.15f * PI;
   bool first_flag = false;
   bool second_flag = false;
   while(degree >= turn_direction * 90){
@@ -295,9 +295,9 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
   set_speed(0,0);
   Delay_ms(100);
   reset_e();
-  float last_rad = 2.f * PI;
+  float last_rad = 2.0f * PI;
   float target_rad = 0.0;
-  float rad_diff = 0.15f;
+  float rad_diff = 0.15f * PI;
   bool first_flag = false;
   bool second_flag = false;
   if(wall_dir == 1){

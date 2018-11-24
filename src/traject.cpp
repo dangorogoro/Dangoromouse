@@ -26,6 +26,7 @@ void set_traject(){
 
 void Traject::set_dot(){
   if(get_type() == Operation::TURN_45){
+//77.27
 static_push_back(40.0000000000,0.0000000000,0.0000000000   );
 static_push_back(40.9999999999,0.0000014278,0.0000057107   );
 static_push_back(41.9999999992,0.0000227389,0.0000456261   );
@@ -1783,6 +1784,7 @@ static_push_back(179.9999999821,-0.0000000179,0.7853981634 );
 
   }
   else if(get_type() == Operation::TURN_135){
+    //extra 4.55
     static_push_back(20.0000000000,0.0000000000,0.0000000000   );
     static_push_back(21.0000000000,0.0000004565,0.0000018258   );
     static_push_back(21.9999999999,0.0000072882,0.0000146025   );
