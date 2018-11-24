@@ -533,6 +533,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         prescaler = (prescaler + 1) % 100;
         timer_clock = OFF;
         //plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, left_input, right_input, now_speed, left_value, right_value, last_left_value, last_right_value);
+        plot.push_back(x(), y());
         //if(prescaler % 2 == 0){
       }
       if(wall_detect == ON){
@@ -598,6 +599,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     float theta_e_diff = 0.0;
     float last_theta_e = 0.0;
     float theta_e_sum = 0.0;
+    float latest_target_x = x(), latest_target_y = y();
     float w_r;
 
     bool initial_flag = false, second_flag = false;
@@ -626,6 +628,10 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         ENCODER_start = OFF;
         start_buzzer(5);
       }
+      if(timer_clock == ON){
+        timer_clock = OFF;
+        plot.push_back(x(),y(),latest_target_x, latest_target_y);
+      }
       if(traject_clock == ON){
         traject_clock = OFF;
         float update_length = (left_speed + right_speed) / 2 / MmConvWheel * 5.0 / 1000.0;
@@ -651,6 +657,8 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
           len_counter = 0;
         }
         else last_index = target_index;
+        latest_target_x = target_x;
+        latest_target_y = target_y;
       }
     }
     if(turn_type == Operation::TURN_LEFT45) target_degree += 45.0f;
@@ -664,6 +672,10 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     len_counter = 0;
     while(len_counter < len_measure(extra_offset)){
       float wall_value = 0.0f;
+      if(timer_clock == ON){
+        timer_clock = OFF;
+        plot.push_back(x(),y());
+      }
       if(SENSOR_reset == ON){
         if(led_3 >= led_3_threshold || led_4 >= led_4_threshold ){
           if(led_3 >= led_3_threshold && led_4 >= led_4_threshold)
@@ -688,11 +700,23 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
           now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
         read_encoder();
         add_coordinate(degree);
-        float target_theta_now = (degree - target_degree) / 180.0 * PI;
-        float theta_input =  -(degree_p * target_theta_now);
-        value = - (degree_p * target_theta_now - sensor_p * wall_value);
-        //speed_controller(now_speed, -degree_p * target_theta_now);
-        speed_controller(reference_speed, value);
+
+        Position targetPos = estimatePosition(getPosition());
+        float target_offset = 5.0;
+        if(latestDirection == NORTH) targetPos.y = y() + target_offset;
+        else if(latestDirection == SOUTH) targetPos.y = y() - target_offset;
+        else if(latestDirection == EAST) targetPos.x = x() + target_offset;
+        else if(latestDirection == WEST) targetPos.x = x() - target_offset;
+        float e_x = targetPos.x - x();
+        float e_y = targetPos.y - y();
+        float theta_e = (target_degree - degree) / 180.0 * PI;
+        float tmp = e_x;
+        float threshold = 15.0;
+        e_x = tmp * cos(degree / 180.0 * PI) + e_y * sin(degree / 180.0 * PI);
+        e_y = -tmp * sin(degree / 180.0 * PI) + e_y * cos(degree / 180.0 * PI);
+        if(e_x > threshold) e_x = threshold;
+        else if(e_x < -threshold) e_x = -threshold;
+        speed_controller(reference_speed * cos(-target_theta_now) + diagKy * e_y, reference_speed * (-diagStraightKx * e_x + diagKtheta * sin(theta_e)));
         ENCODER_start = OFF;
       }
     }
@@ -764,6 +788,10 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         }
         while(len_counter < len_measure(diag_length)){
           float wall_value = 0.0f;
+          if(timer_clock == ON){
+            timer_clock = OFF;
+            plot.push_back(x(),y());
+          }
           if(SENSOR_reset == ON){
             if(led_3 >= led_3_threshold || led_4 >= led_4_threshold ){
               if(led_3 >= led_3_threshold && led_4 >= led_4_threshold)
@@ -841,6 +869,10 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         len_counter = 0;
         while(len_counter < len_measure(20.0)){
           float wall_value = 0.0f;
+          if(timer_clock == ON){
+            timer_clock = OFF;
+            plot.push_back(x(),y());
+          }
           if(SENSOR_reset == ON){
             if(led_3 >= led_3_threshold || led_4 >= led_4_threshold ){
               if(led_3 >= led_3_threshold && led_4 >= led_4_threshold)
@@ -891,12 +923,17 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
           SENSOR_reset = OFF;
         }
         float value = 0;
+        if(timer_clock == ON){
+          timer_clock = OFF;
+          plot.push_back(x(),y(),latest_target_x,latest_target_y);
+        }
         if(SENSOR_start == ON)	led_get();
         if(ENCODER_start == ON){
           read_encoder();
           add_coordinate(degree);
           now_speed = now_speed <= reference_speed ? now_speed + accel : reference_speed;
           value = sensor_p * wall_value;
+          //speed_controller(now_speed * cos(theta_e) + diagKy * e_y, w_r + now_speed * (-diagKx * e_x + diagKtheta * sin(theta_e)) + value);
           speed_controller(now_speed * cos(theta_e) + diagKy * e_y, w_r + now_speed * (-diagKx * e_x + diagKtheta * sin(theta_e)) + value);
           theta_e_diff = theta_e - last_theta_e;
           theta_e_sum += theta_e / 1000.0;
@@ -931,6 +968,8 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
             len_counter = 0;
           }
           else last_index = target_index;
+          latest_target_x = target_x;
+          latest_target_y = target_y;
           lastDot = dot;
         }
       }
@@ -948,6 +987,10 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         len_counter = 0;
         while(len_counter < len_measure(20.0)){
           float wall_value = 0.0f;
+          if(timer_clock == ON){
+            timer_clock = OFF;
+            plot.push_back(x(),y());
+          }
           if(SENSOR_reset == ON){
             if(led_3 >= led_3_threshold || led_4 >= led_4_threshold ){
               if(led_3 >= led_3_threshold && led_4 >= led_4_threshold)
@@ -1091,6 +1134,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         prescaler = (prescaler + 1) % 100;
         timer_clock = OFF;
         //plot.push_back(x(), y(), left_speed / MmConvWheel, right_speed / MmConvWheel, now_speed);
+        plot.push_back(x(), y());
         if(prescaler % 2 == 1){
           //plot.push_back(x(),y(),degree,get_left_sensor(),get_right_sensor(),getRobotVec().x,getRobotVec().y);
           set_left_sensor(led_1);
