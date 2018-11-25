@@ -777,7 +777,7 @@ while(1){
     len_counter = 0;
     TIM2->CNT = 0;
     TIM8->CNT = 0;
-    Traject traject = turn45;
+    Traject traject = trajectList.getTraject(Operation::TURN_LEFT45, NORTH);
     int16_t reference_velocity = 600;
     int16_t now_velocity = 0;
     float Kx = 0.001;
