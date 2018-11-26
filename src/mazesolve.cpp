@@ -408,13 +408,13 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   const int16_t accel = param.get_accel_param();
   int16_t length = 0;
   curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT45 || root[(*i)+1].op == Operation::TURN_LEFT45) ? 90 - 40 : curving_length;
-  curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT135 || root[(*i)+1].op == Operation::TURN_LEFT135) ? 90 - 20 : curving_length;
+  curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT135 || root[(*i)+1].op == Operation::TURN_LEFT135) ? 90 - 40 : curving_length;
   curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT180 || root[(*i)+1].op == Operation::TURN_LEFT180) ? 90 - 50 : curving_length;
   curving_length = (root[(*i)+1].op == Operation::TURN_RIGHT90 || root[(*i)+1].op == Operation::TURN_LEFT90) ? 90 - 50 : curving_length;
   length = *i == 0 ? 138 + (root[*i].n - 1) * ONE_BLOCK - curving_length : root[*i].n * ONE_BLOCK - curving_length; //130 was
   if(*i > 0){
-    length = (root[(*i)-1].op == Operation::TURN_RIGHT45 || root[(*i)-1].op == Operation::TURN_LEFT45) ? length - 90 : length;
-    length = (root[(*i)-1].op == Operation::TURN_RIGHT135 || root[(*i)-1].op == Operation::TURN_LEFT135) ? length - 90 : length;
+    length = (root[(*i)-1].op == Operation::TURN_RIGHT45 || root[(*i)-1].op == Operation::TURN_LEFT45) ? length - (90 - 40) : length;
+    length = (root[(*i)-1].op == Operation::TURN_RIGHT135 || root[(*i)-1].op == Operation::TURN_LEFT135) ? length - (90 - 40) : length;
     length = (root[(*i)-1].op == Operation::TURN_RIGHT90 || root[(*i)-1].op == Operation::TURN_LEFT90) ? length - (90 - 50) : length;
     length = (root[(*i)-1].op == Operation::TURN_RIGHT180 || root[(*i)-1].op == Operation::TURN_LEFT180) ? length - (90 - 50) : length;
   }
@@ -432,9 +432,9 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   //float diagKy = 4.00;
   //float diagKtheta = 0.0015;
   float diagKx = 0.0005;//151520
-  float diagStraightKx = 0.0001;//151520
+  float diagStraightKx = 0.00005;//151520
   float diagKy = 2.50;
-  float diagKtheta = 0.01;
+  float diagKtheta = 0.005;
 
 
   //setRobotVecFromRun(root[*i].op,root[*i].n);
@@ -471,7 +471,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
           led_fullon();
           if(traject_clock == ON){
             traject_clock = OFF;
-            //if(fabs(degree - target_degree) < 1.0 && len_counter > len_measure(30))  fixCoordinate(RobotRunVec, led_1, led_2);
+            if(fabs(degree - target_degree) < 2.0 && len_counter > len_measure(30))  fixCoordinate(RobotRunVec, led_1, led_2);
             /*
             if(led_1 >= led_1_threshold && led_2 >= led_2_threshold && abs(led_1 - led_2) < 250)  fixCoordinate(RobotRunVec, led_1, led_2);
             else if(led_1 >= (led_1_threshold + 150) && led_2 < led_2_threshold) fixCoordinate(RobotRunVec, 2 * (led_1 - led_1_reference), 0);
@@ -530,8 +530,9 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         float theta_input = -(degree_d * target_theta_diff + degree_i * target_theta_sum + degree_p * target_theta_now);
         //value = - (degree_d * target_theta_diff + degree_i * target_theta_sum + degree_p * target_theta_now - sensor_p * wall_value)/*+ (-target_theta_now + target_theta_last) * degree_d) + e_now * x_p + e_sum * x_i*/;
         value = theta_input + (sensor_p * wall_value);
-        //speed_controller(now_speed, value);
-        speed_controller(now_speed * cos(target_theta_now) /*+ diagKy * e_y*/, value);
+        speed_controller(now_speed, value);
+        //speed_controller(now_speed * cos(target_theta_now) /*+ diagKy * e_y*/,);
+        //speed_controller(now_speed* cos(-target_theta_now) + diagKy * e_y, now_speed * (-diagStraightKx * e_x + diagKtheta * sin(-target_theta_now)));
         ENCODER_start = OFF;
       }
       if(timer_clock == ON){
@@ -555,7 +556,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
           float offset_length = 0.0;
           //if(right_value - last_right_value > 60 || left_value - last_left_value > 60) fix_length += offset_length;
           if(last_right_value - right_value > 50 || last_left_value - left_value > 50) fix_length -= offset_length;;
-          //fixCoordinate(RobotRunVec, -fix_length);
+          fixCoordinate(RobotRunVec, -fix_length);
           start_buzzer(7);
         }
         last_left_value = left_value;
@@ -673,7 +674,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
 
     float extra_offset = 0.0;
     if(turn_type == Operation::TURN_RIGHT45 || turn_type == Operation::TURN_LEFT45) extra_offset = 77.27922074784167;
-    else if(turn_type == Operation::TURN_RIGHT135 || turn_type == Operation::TURN_LEFT135) extra_offset = 4.55;
+    else if(turn_type == Operation::TURN_RIGHT135 || turn_type == Operation::TURN_LEFT135) extra_offset = 24.55;
     len_counter = 0;
     while(len_counter < len_measure(extra_offset)){
       float wall_value = 0.0f;
@@ -858,7 +859,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       
       if(reverse_flag == true){
         if(reverseOP == Operation::TURN_RIGHT45 || reverseOP == Operation::TURN_LEFT45) extra_offset = 77.27922074784167;
-        else if(reverseOP == Operation::TURN_RIGHT135 || reverseOP == Operation::TURN_LEFT135) extra_offset = 4.55;//4.55
+        else if(reverseOP == Operation::TURN_RIGHT135 || reverseOP == Operation::TURN_LEFT135) extra_offset = 24.55;//4.55
         len_counter = 0;
         while(len_counter < len_measure(extra_offset)){
           if(ENCODER_start == ON){
@@ -872,7 +873,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       ////////////////////
       if(latestOP == Operation::RIGHT_V90 || latestOP == Operation::LEFT_V90){
         len_counter = 0;
-        while(len_counter < len_measure(20.0)){
+        while(len_counter < len_measure(30.0)){
           float wall_value = 0.0f;
           if(timer_clock == ON){
             timer_clock = OFF;
@@ -990,7 +991,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       //////////////
       if(latestOP == Operation::RIGHT_V90 || latestOP == Operation::LEFT_V90){
         len_counter = 0;
-        while(len_counter < len_measure(20.0)){
+        while(len_counter < len_measure(30.0)){
           float wall_value = 0.0f;
           if(timer_clock == ON){
             timer_clock = OFF;
@@ -1147,7 +1148,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     float latest_target_x = x(), latest_target_y = y();
     float w_r;
     float dst_len;
-    float extra_offset = 30.0;
+    float extra_offset = 50.0;
     Traject traject = trajectList.getTraject(turn_type, firstDir);
     bool initial_flag = false;
     while(initial_flag == false){
@@ -1261,8 +1262,10 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       }
     }
     GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_RESET);
+  */
   }
   else if((root[*i].op == Operation::TURN_RIGHT90S) || (root[*i].op  == Operation::TURN_LEFT90S)){
+    setRobotVecFromRun(root[*i].op,root[*i].n);
     len_counter = 0;
     sensor_works();
     setWallStatus();
@@ -1356,7 +1359,6 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       if(runStatus == 3)break;
     }
     GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_RESET);
-    */
   }
   stop_buzzer();
 }
@@ -1456,6 +1458,7 @@ OperationList rebuildOperation(OperationList list,bool diagFlag){
         if(nextOP.op == Operation::STOP)	newOPlist.push_back({Operation::FORWARD,1});
       }
     }
+    newOPlist = rebuildOperation(newOPlist, true);
   }
   else{
     for(size_t i = 0;i < list.size();i++){
@@ -1640,7 +1643,7 @@ void Robot::fixCoordinate(Matrix2i runVec, float wall_left, float wall_right){
   const float rightA = -6.0;
   float A, sub;
   const float b = 7.5714;
-  if(wall_left > led_1_threshold && wall_right > led_2_threshold && fabs(wall_left - wall_right) < 550){
+  if(wall_left > led_1_threshold && wall_right > led_2_threshold && fabs(wall_left - wall_right) < 150){
     A = -11.232;
     sub = wall_left - wall_right;
   }
