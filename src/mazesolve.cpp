@@ -57,6 +57,8 @@ void Robot::add_coordinate(float degree, float slip_rad){
   add_y(curent_speed * cos(latest_rad));
   add_vr_x(curent_speed * -sin(real_rad));
   add_vr_y(curent_speed * cos(real_rad));
+  set_x(getPosition().vr_x);
+  set_y(getPosition().vr_y);
 }
 float Robot::centerDistance(){
   float distance = 0.0f;
@@ -397,7 +399,7 @@ void Robot::robotMove(Direction Nextdir, bool goal_flag = false){
 }
 float target_degree = 0.0f;
 int16_t now_speed = 0;
-float slip_k = 4.1e-5;
+float slip_k = 2.9e-5;//4.1e-5
 //float slip_k = 0.00009;
 void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   if(*i == 0){
@@ -448,13 +450,11 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   //float diagKx = 0.0003;//151520
   //float diagKy = 4.00;
   //float diagKtheta = 0.0015;
-  float diagKx = 0.0002;//151520
+  float diagKx = 0.0003;//151520
   float diagStraightKx = 0.00005;//151520
   float diagKy = 2.50;
-  float diagKtheta = 0.0025;
+  float diagKtheta = 0.004;
   float slip_rad = 0.0;
-
-
   //setRobotVecFromRun(root[*i].op,root[*i].n);
   Direction latestDirection = directionFromRunVec(RobotRunVec);
   if(root[*i].op == Operation::FORWARD){
@@ -467,6 +467,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     float target_theta_sum = 0;
 
     stop_buzzer();
+    led_fullon();
     float left_value, right_value;
     float last_left_value, last_right_value;
     float last_len = 0;
@@ -548,9 +549,9 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         float theta_input = -(degree_d * target_theta_diff + degree_i * target_theta_sum + degree_p * target_theta_now);
         //value = - (degree_d * target_theta_diff + degree_i * target_theta_sum + degree_p * target_theta_now - sensor_p * wall_value)/*+ (-target_theta_now + target_theta_last) * degree_d) + e_now * x_p + e_sum * x_i*/;
         value = theta_input + (sensor_p * wall_value);
-        speed_controller(now_speed, value);
+        //speed_controller(now_speed, value);
         //speed_controller(now_speed * cos(target_theta_now) /*+ diagKy * e_y*/,);
-        //speed_controller(now_speed* cos(-target_theta_now) + diagKy * e_y, now_speed * (-diagStraightKx * e_x + diagKtheta * sin(-target_theta_now)));
+        speed_controller(now_speed* cos(-target_theta_now) + diagKy * e_y, now_speed * (-diagKx * e_x + diagKtheta * sin(-target_theta_now)));
         ENCODER_start = OFF;
       }
       if(timer_clock == ON){
@@ -588,6 +589,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
     }
   }
   else if(root[*i].op == Operation::STOP){
+    led_fulloff();
     set_speed(0,0);
   }
   else if(judge_diag_turn(root[*i].op)){
@@ -651,6 +653,8 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         read_encoder();
         //slip_rad = ((slip_rad / 0.001) + GYRO_rad) / ((1 / 0.001) + (1 / (slip_k * (left_speed + right_speed) / 2.0 / MmConvWheel)));
         slip_rad = 0.001 * (GYRO_rad - slip_rad * (1.0 / (slip_k * (left_speed + right_speed) / 2.0 / MmConvWheel) - 1.0 / 0.001));
+        if(slip_rad > SLIP_MAX) slip_rad = SLIP_MAX;
+        else if(slip_rad < -SLIP_MAX) slip_rad = -SLIP_MAX;
         add_coordinate(degree, slip_rad);
         now_speed = now_speed <= reference_speed ? now_speed + accel : reference_speed;
         theta_e_diff = theta_e - last_theta_e;
@@ -787,30 +791,36 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       second_flag = false;
       Operation::OperationType reverseOP;
       Position startPosition = getPositionFromVec(getRobotVec(), directionFromRunVec(RobotRunVec));
+      IndexVec offsetIndex;
       float rad_offset = 0;
       float reverse_offset = 0.0;
       bool reverse_flag = false;
       diag_length = 0;
       Operation::OperationType latestOP = root[*i].op;
+      Matrix2i forOffsetRunVec;
       if(latestOP == Operation::TURN_RIGHT45 || latestOP == Operation::TURN_LEFT45){
         reverse_flag = true;
         firstRunVec = RobotRunVec;
+        forOffsetRunVec = RobotRunVec;
         reverseOP = (latestOP == Operation::TURN_RIGHT45) ? Operation::TURN_LEFT45 : Operation::TURN_RIGHT45;
+        offsetIndex = RobotVec;
         setRobotVecFromRun((latestOP == Operation::TURN_RIGHT45) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
         nextRunVec = RobotRunVec;
       }
       else if(latestOP == Operation::TURN_RIGHT135 || latestOP == Operation::TURN_LEFT135){
         reverse_flag = true;
+        forOffsetRunVec = RobotRunVec;
         reverseOP = (latestOP == Operation::TURN_RIGHT135) ? Operation::TURN_LEFT135 : Operation::TURN_RIGHT135;
         setRobotVecFromRun((latestOP == Operation::TURN_RIGHT135) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
         firstRunVec = RobotRunVec;
+        offsetIndex = RobotVec;
         setRobotVecFromRun((latestOP == Operation::TURN_RIGHT135) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
         nextRunVec = RobotRunVec;
       }
       else if (latestOP == Operation::LEFT_V90 || latestOP == Operation::Operation::RIGHT_V90){
         rad_offset = (latestOP == Operation::RIGHT_V90) ? -PI / 4.f : PI / 4.f;
         reverseOP = (latestOP == Operation::LEFT_V90) ? Operation::LEFT_V90 : Operation::RIGHT_V90;
-        //firstRunVec = RobotRunVec;
+        forOffsetRunVec = RobotRunVec;
         setRobotVecFromRun((latestOP == Operation::RIGHT_V90) ? Operation::TURN_RIGHT90 : Operation::TURN_LEFT90,root[*i].n);
         firstRunVec = RobotRunVec;
         nextRunVec = RobotRunVec; // fix this at last time
@@ -850,7 +860,7 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
           if(timer_clock == ON){
             timer_clock = OFF;
             Position tmp = getPosition();
-            plot.push_back(tmp.x, tmp.y, 0,0, tmp.vr_x, tmp.vr_y);
+            plot.push_back(tmp.x, tmp.y, latest_target_x, latest_target_y, tmp.vr_x, tmp.vr_y);
           }
           if(SENSOR_reset == ON){
             if(led_3 >= led_3_threshold || led_4 >= led_4_threshold ){
@@ -879,22 +889,20 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
             float target_theta_now = (degree - target_degree) / 180.0 * PI;
             update_length += (left_speed + right_speed) / 2 / MmConvWheel / 1000.0;
             value = - (degree_p * target_theta_now - sensor_p * wall_value);
-            //speed_controller(now_speed, -degree_p * target_theta_now);
-            //speed_controller(reference_speed, value);
-            float e_x = startPosition.x + (update_length + offset) * targetPos.x - x();
-            float e_y = startPosition.y + (update_length + offset) * targetPos.y - y();
+            latest_target_x = startPosition.x + (update_length + offset) * targetPos.x;
+            latest_target_y = startPosition.y + (update_length + offset) * targetPos.y;
+            float e_x = latest_target_x - x();
+            float e_y = latest_target_y - y();
             float tmp = e_x;
             e_x = tmp * cos(degree / 180.0 * PI) + e_y * sin(degree / 180.0 * PI);
             e_y = -tmp * sin(degree / 180.0 * PI) + e_y * cos(degree / 180.0 * PI);
-            speed_controller(reference_speed * cos(-target_theta_now) + diagKy * e_y, reference_speed * (-diagStraightKx * e_x + diagKtheta * sin(-target_theta_now)));
-            //speed_controller(reference_speed * cos(-target_theta_now) + diagKy * e_y,  reference_speed * (-diagStraightKx * e_x));
+            speed_controller(reference_speed * cos(-target_theta_now) + diagKy * e_y, reference_speed * (-diagKx * e_x + diagKtheta * sin(-target_theta_now)));
             ENCODER_start = OFF;
           }
         }
         if(root[*i].n % 2 == 1) RobotRunVec = firstRunVec;
       }
-      if(reverse_flag == true) startPosition = getPositionFromVec(getRobotVec());
-      //This causes bug?????????????????????
+
       Direction secondDir = directionFromRunVec(nextRunVec);
       Traject secondTraject = trajectList.getTraject(reverseOP, secondDir);
       target_index = target_offset;
@@ -915,11 +923,50 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         if(reverseOP == Operation::TURN_RIGHT45 || reverseOP == Operation::TURN_LEFT45) extra_offset = 77.27922074784167;
         else if(reverseOP == Operation::TURN_RIGHT135 || reverseOP == Operation::TURN_LEFT135) extra_offset = 24.55;//4.55
         len_counter = 0;
+        firstDir = directionFromRunVec(forOffsetRunVec);
+        nextDir = directionFromRunVec(nextRunVec);
+        Position targetPos;
+        float offset = 5.0;
+        float update_length = 0.0;
+        if((firstDir == NORTH && nextDir == WEST) || (firstDir == WEST && nextDir == NORTH)){
+          targetPos.x = -1 / sqrt(2.0);
+          targetPos.y =  1 / sqrt(2.0);
+        }
+        else if((firstDir == WEST && nextDir == SOUTH) || (firstDir == SOUTH && nextDir == WEST)){
+          targetPos.x = -1 / sqrt(2.0);
+          targetPos.y = -1 / sqrt(2.0);
+        }
+        else if((firstDir == SOUTH && nextDir == EAST) || (firstDir == EAST && nextDir == SOUTH)){
+          targetPos.x =  1 / sqrt(2.0);
+          targetPos.y = -1 / sqrt(2.0);
+        }
+        else if((firstDir == EAST && nextDir == NORTH) || (firstDir == NORTH && nextDir == EAST)){
+          targetPos.x = 1 / sqrt(2.0);
+          targetPos.y = 1 / sqrt(2.0);
+        }
         while(len_counter < len_measure(extra_offset)){
+          if(timer_clock == ON){
+            timer_clock = OFF;
+            Position tmp = getPosition();
+            plot.push_back(tmp.x, tmp.y, latest_target_x, latest_target_y, tmp.vr_x, tmp.vr_y);
+          }
           if(ENCODER_start == ON){
+            if(len_counter >= len_measure(diag_length - 1.5 * ((int32_t)now_speed * (int32_t)now_speed - (int32_t)reference_speed * (int32_t)reference_speed) / 2.0 / (accel * 1000))) //conv to mm
+              now_speed = reference_speed >= now_speed ? reference_speed : now_speed - accel;
+            else
+              now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
             read_encoder();
             add_coordinate(degree);
-            speed_controller(now_speed, 0);
+            float target_theta_now = (degree - target_degree) / 180.0 * PI;
+            update_length += (left_speed + right_speed) / 2 / MmConvWheel / 1000.0;
+            latest_target_x = startPosition.x + (update_length + offset) * targetPos.x;
+            latest_target_y = startPosition.y + (update_length + offset) * targetPos.y;
+            float e_x = latest_target_x - x();
+            float e_y = latest_target_y - y();
+            float tmp = e_x;
+            e_x = tmp * cos(degree / 180.0 * PI) + e_y * sin(degree / 180.0 * PI);
+            e_y = -tmp * sin(degree / 180.0 * PI) + e_y * cos(degree / 180.0 * PI);
+            speed_controller(reference_speed * cos(-target_theta_now) + diagKy * e_y, reference_speed * (-diagKx * e_x + diagKtheta * sin(-target_theta_now)));
             ENCODER_start = OFF;
           }
         }
@@ -943,7 +990,6 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
               else if(led_4 >= led_4_threshold)
                 wall_value = (led_4 - led_4_threshold) / 4.0;
               led_fullon();
-              //if(led_1 >= led_1_threshold && led_2 >= led_2_threshold && abs(led_1 - led_2) < 150)  fixCoordinate(RobotRunVec, led_1, led_2);
             }
             else led_fulloff();
             reset_led();
@@ -958,6 +1004,8 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
               now_speed = last_speed <= now_speed ? last_speed : now_speed + accel;
             read_encoder();
             slip_rad = 0.001 * (GYRO_rad - slip_rad * (1.0 / (slip_k * (left_speed + right_speed) / 2.0 / MmConvWheel) - 1.0 / 0.001));
+            if(slip_rad > SLIP_MAX) slip_rad = SLIP_MAX;
+            else if(slip_rad < -SLIP_MAX) slip_rad = -SLIP_MAX;
             add_coordinate(degree, slip_rad);
             float target_theta_now = (degree - target_degree) / 180.0 * PI;
             value = - (degree_p * target_theta_now - sensor_p * wall_value);
@@ -968,6 +1016,11 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         }
       }
       ////////////////////
+      if(reverse_flag == true) startPosition = getPositionFromVec(getRobotVec());
+      e_x = 0.0f;
+      e_y = 0.0f;
+      theta_e = 0.0f, theta_e_sum = 0.0, last_theta_e = 0.0, theta_e_diff = 0.0, theta_e_diff = 0.0;
+      w_r = 0;
       while(second_flag == false && latestOP != Operation::FORWARD_DIAG){
         float wall_value = 0.0f;
         if(SENSOR_reset == ON){
@@ -994,6 +1047,8 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
         if(ENCODER_start == ON){
           read_encoder();
           slip_rad = 0.001 * (GYRO_rad - slip_rad * (1.0 / (slip_k * (left_speed + right_speed) / 2.0 / MmConvWheel) - 1.0 / 0.001));
+          if(slip_rad > SLIP_MAX) slip_rad = SLIP_MAX;
+          else if(slip_rad < -SLIP_MAX) slip_rad = -SLIP_MAX;
           add_coordinate(degree, slip_rad);
           now_speed = now_speed <= reference_speed ? now_speed + accel : reference_speed;
           value = sensor_p * wall_value;
@@ -1215,6 +1270,8 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
       if(ENCODER_start == ON){
         read_encoder();
         slip_rad = 0.001 * (GYRO_rad - slip_rad * (1.0 / (slip_k * (left_speed + right_speed) / 2.0 / MmConvWheel) - 1.0 / 0.001));
+        if(slip_rad > SLIP_MAX) slip_rad = SLIP_MAX;
+        else if(slip_rad < -SLIP_MAX) slip_rad = -SLIP_MAX;
         add_coordinate(degree, slip_rad);
         now_speed = now_speed <= reference_speed ? now_speed + accel : reference_speed;
         theta_e_diff = theta_e - last_theta_e;
