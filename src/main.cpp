@@ -670,16 +670,7 @@ while(1){
     pipi(3);
     Delay_ms(300);
     OperationList runSequence; 
-    runSequence.push_back({Operation::FORWARD,3});
-    runSequence.push_back({Operation::TURN_RIGHT180,1});
-    runSequence.push_back({Operation::FORWARD,1});
-    runSequence.push_back({Operation::TURN_LEFT135,1});
-    runSequence.push_back({Operation::TURN_RIGHT45,1});
-    runSequence.push_back({Operation::FORWARD,3});
-    runSequence.push_back({Operation::TURN_RIGHT135,1});
-    runSequence.push_back({Operation::FORWARD_DIAG,1});
-    runSequence.push_back({Operation::TURN_RIGHT45,1});
-    runSequence.push_back({Operation::FORWARD,3});
+    runSequence.push_back({Operation::FORWARD,8});
     /*
     runSequence.push_back({Operation::FORWARD,1});
     runSequence.push_back({Operation::TURN_RIGHT45,1});
