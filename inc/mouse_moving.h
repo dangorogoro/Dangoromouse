@@ -3,6 +3,7 @@
 #define ONE_BLOCK 180
 #define WheelDistance 70.0 //69
 #define WheelFromWall 40
+#define SLIP_MAX (20.0 / 180.0 * PI)
 extern volatile uint8_t ENCODER_start;
 extern float GYRO_rad;
 extern int16_t search_velocity;
