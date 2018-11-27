@@ -5,7 +5,7 @@ float GYRO_rad = 0;
 volatile uint8_t ENCODER_start = 0;
 int16_t search_velocity = 600;
 int16_t last_left_input = 0, last_right_input = 0;
-float MmConvWheel = (4096.0 * 40.0 / 13.0 / 1000.0 / 78.0);  //79.0
+float MmConvWheel = (4096.0 * 40.0 / 13.0 / 1000.0 / 76.0);  //79.0
 
 //1.896 16.1089 0.010979
 //1.7752 15.23 0.010
