@@ -4,6 +4,7 @@
 #define WheelDistance 70.0 //69
 #define WheelFromWall 40
 extern volatile uint8_t ENCODER_start;
+extern float GYRO_rad;
 extern int16_t search_velocity;
 extern float target_velocity;
 extern float left_e_sum,right_e_sum;

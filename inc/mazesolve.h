@@ -7,8 +7,9 @@ extern Maze maze,maze_backup;
 struct Position{
   float x;
   float y;
+  float vr_x;
+  float vr_y;
 };
-
 class Robot{
   private:
     int16_t LeftEncoder,RightEncoder;
@@ -16,6 +17,7 @@ class Robot{
     Direction RobotDir;
     int8_t RobotDegreeDir;
     struct Position position;
+    struct Position virtual_position;
     bool leftWall;
     bool rightWall;
     bool sideWall;
@@ -28,7 +30,7 @@ class Robot{
     //Direction RobotRunVec = NORTH;
     Matrix2i RobotRunVec;
     Matrix2i setRunVec(){Matrix2i po; po << 0, 1 ,0 ,0; return po;}
-    Robot() : RobotDir{NORTH}, RobotDegreeDir{0}, position{0,0},zStatus{false}, RobotRunVec{setRunVec()}{}
+    Robot() : RobotDir{NORTH}, RobotDegreeDir{0}, position{0,0,0,0}, zStatus{false}, RobotRunVec{setRunVec()}{}
     inline void saveMazeStart(){flag.setSaveMaze(true);}
     inline bool getSaveMazeFlag(){return (flag.getSaveMaze());}
     inline bool getSearchingSaveFlag(){return (flag.getSearchingSave());}
@@ -55,6 +57,10 @@ class Robot{
     inline void set_y(float coordinate){ position.y = coordinate;}
     inline void add_x(float coordinate){ position.x += coordinate;}
     inline void add_y(float coordinate){ position.y += coordinate;}
+    inline void set_vr_x(float coordinate){ position.vr_x = coordinate;}
+    inline void set_vr_y(float coordinate){ position.vr_y = coordinate;}
+    inline void add_vr_x(float coordinate){ position.vr_x += coordinate;}
+    inline void add_vr_y(float coordinate){ position.vr_y += coordinate;}
     inline Position getPosition(){return position;}
     void fixCoordinate();
     void fixCoordinate(Matrix2i runVec, float offset);
@@ -65,6 +71,7 @@ class Robot{
     inline uint16_t get_right_sensor(){ return right_sensor;}
     void set_coordinate(float coordinate_x, float coordinate_y);
     void add_coordinate(float degre);
+    void add_coordinate(float degree, float slip_rad);
     void addRobotDegreeDir(int8_t dir){RobotDegreeDir += dir;}
     void setRobotDegreeDir(int8_t dir){RobotDegreeDir	 = dir;}
     int8_t getRobotDegreeDir()const{return RobotDegreeDir;}

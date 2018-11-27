@@ -1,6 +1,7 @@
 #include "mine.h"
 int16_t left_speed = 0,right_speed = 0;
 int16_t last_left_speed = 0,last_right_speed = 0;
+float GYRO_rad = 0;
 volatile uint8_t ENCODER_start = 0;
 int16_t search_velocity = 600;
 int16_t last_left_input = 0, last_right_input = 0;
@@ -159,8 +160,6 @@ float rad_e_sum = 0.f;
 float rad_e_old = 0.f;
 uint16_t left_speed_counter = 0, right_speed_counter = 0;
 void speed_controller(int16_t target_speed,float target_rad){
-
-  float GYRO_rad = 0;
   if(GYRO_start == ON){
     GYRO_rad = (float)(ReadGYRO()-GYRO_offset_data)/16.4/180.0*3.14;
     degree += GYRO_rad*180.0/3.14/1000.0;
@@ -198,7 +197,7 @@ void speed_controller(int16_t target_speed,float target_rad){
   */
   if(left_input >= TIM3_Period){
     left_speed_counter++;
-    if(left_speed_counter >= 100){
+    if(left_speed_counter >= 500){
       left_input = 0;
       suction_stop();
     }
@@ -207,7 +206,7 @@ void speed_controller(int16_t target_speed,float target_rad){
   else  left_speed_counter = 0;
   if(right_input >= TIM3_Period){
     right_speed_counter++;
-    if(right_speed_counter >= 100){
+    if(right_speed_counter >= 500){
       right_input = 0;
       suction_stop();
     }
