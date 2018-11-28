@@ -450,10 +450,10 @@ void Robot::robotShortMove(OperationList root,Param param,size_t *i){
   //float diagKx = 0.0003;//151520
   //float diagKy = 4.00;
   //float diagKtheta = 0.0015;
-  float diagKx = 0.0003;//151520
-  float diagStraightKx = 0.00005;//151520
+  float diagKx = 0.00055;//151520
+  //float diagStraightKx = 0.00005;//151520
   float diagKy = 2.50;
-  float diagKtheta = 0.004;
+  float diagKtheta = 0.008;
   float slip_rad = 0.0;
   //setRobotVecFromRun(root[*i].op,root[*i].n);
   Direction latestDirection = directionFromRunVec(RobotRunVec);
