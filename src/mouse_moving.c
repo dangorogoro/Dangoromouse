@@ -15,8 +15,8 @@ float MmConvWheel = (4096.0 * 40.0 / 13.0 / 1000.0 / 76.0);  //79.0
 float left_Kp = 4.896, right_Kp = 4.896;
 float left_Ki = 16.1, right_Ki = 16.1; //8.0 8.0
 float left_Kd = 0.01, right_Kd = 0.01; //8.0 8.0
-float rotate_Kp = 190.8919; //94
-float rotate_Ki = 801.72;
+float rotate_Kp = 260.8919; //94
+float rotate_Ki = 951.72;
 float rotate_Kd = 4.11;
 
 //float left_Kp = 5.17, right_Kp = 5.17; // 4.0 4.0
@@ -203,7 +203,16 @@ void speed_controller(int16_t target_speed,float target_rad){
     }
     else  left_input = TIM3_Period - 2;
   }
+  else if(left_input < -TIM3_Period){
+    left_speed_counter++;
+    if(left_speed_counter >= 500){
+      left_input = 0;
+      suction_stop();
+    }
+    else  left_input = -TIM3_Period + 2;
+  }
   else  left_speed_counter = 0;
+
   if(right_input >= TIM3_Period){
     right_speed_counter++;
     if(right_speed_counter >= 500){
@@ -211,6 +220,14 @@ void speed_controller(int16_t target_speed,float target_rad){
       suction_stop();
     }
     else  right_input = TIM3_Period - 2;
+  }
+  else if(right_input < -TIM3_Period){
+    right_speed_counter++;
+    if(right_speed_counter >= 500){
+      right_input = 0;
+      suction_stop();
+    }
+    else  right_input = -TIM3_Period + 2;
   }
   else right_speed_counter = 0;
 
@@ -260,9 +277,9 @@ void turn_back(int16_t target_direction){
   set_speed(0,0);
   Delay_ms(100);
   reset_e();
-  float last_rad = 2.0f * PI;
+  float last_rad = 1.5f * PI;
   float target_rad = 0.0;
-  float rad_diff = 0.15f * PI;
+  float rad_diff = 0.1f * PI;
   bool first_flag = false;
   bool second_flag = false;
   while(degree >= turn_direction * 90){
@@ -294,9 +311,9 @@ void turn_side(int16_t target_direction,int8_t wall_dir){
   set_speed(0,0);
   Delay_ms(100);
   reset_e();
-  float last_rad = 2.0f * PI;
+  float last_rad = 1.5f * PI;
   float target_rad = 0.0;
-  float rad_diff = 0.15f * PI;
+  float rad_diff = 0.1f * PI;
   bool first_flag = false;
   bool second_flag = false;
   if(wall_dir == 1){
