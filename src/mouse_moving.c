@@ -19,6 +19,7 @@ float rotate_Kp = 260.8919; //94
 float rotate_Ki = 951.72;
 float rotate_Kd = 4.11;
 
+bool left_stop = false, right_stop = false;
 //float left_Kp = 5.17, right_Kp = 5.17; // 4.0 4.0
 //float left_Ki = 12.1, right_Ki = 12.1; //8.0 8.0
 //float left_Kd = 0.54, right_Kd = 0.54; //8.0 8.0
@@ -198,6 +199,7 @@ void speed_controller(int16_t target_speed,float target_rad){
   if(left_input >= TIM3_Period){
     left_speed_counter++;
     if(left_speed_counter >= 200){
+      left_stop = true;
       left_input = 0;
       suction_stop();
     }
@@ -206,6 +208,7 @@ void speed_controller(int16_t target_speed,float target_rad){
   else if(left_input < -TIM3_Period){
     left_speed_counter++;
     if(left_speed_counter >= 200){
+      left_stop = true;
       left_input = 0;
       suction_stop();
     }
@@ -216,6 +219,7 @@ void speed_controller(int16_t target_speed,float target_rad){
   if(right_input >= TIM3_Period){
     right_speed_counter++;
     if(right_speed_counter >= 200){
+      right_stop = true;
       right_input = 0;
       suction_stop();
     }
@@ -224,6 +228,7 @@ void speed_controller(int16_t target_speed,float target_rad){
   else if(right_input < -TIM3_Period){
     right_speed_counter++;
     if(right_speed_counter >= 200){
+      right_stop = true;
       right_input = 0;
       suction_stop();
     }
@@ -231,6 +236,10 @@ void speed_controller(int16_t target_speed,float target_rad){
   }
   else right_speed_counter = 0;
 
+
+  if(right_stop == true || left_stop == true){
+    set_speed(0,0);
+  }
 
   set_speed(left_input,right_input);
   left_e_old  = left_e;
