@@ -197,7 +197,7 @@ void speed_controller(int16_t target_speed,float target_rad){
   */
   if(left_input >= TIM3_Period){
     left_speed_counter++;
-    if(left_speed_counter >= 500){
+    if(left_speed_counter >= 200){
       left_input = 0;
       suction_stop();
     }
@@ -205,7 +205,7 @@ void speed_controller(int16_t target_speed,float target_rad){
   }
   else if(left_input < -TIM3_Period){
     left_speed_counter++;
-    if(left_speed_counter >= 500){
+    if(left_speed_counter >= 200){
       left_input = 0;
       suction_stop();
     }
@@ -215,7 +215,7 @@ void speed_controller(int16_t target_speed,float target_rad){
 
   if(right_input >= TIM3_Period){
     right_speed_counter++;
-    if(right_speed_counter >= 500){
+    if(right_speed_counter >= 200){
       right_input = 0;
       suction_stop();
     }
@@ -223,7 +223,7 @@ void speed_controller(int16_t target_speed,float target_rad){
   }
   else if(right_input < -TIM3_Period){
     right_speed_counter++;
-    if(right_speed_counter >= 500){
+    if(right_speed_counter >= 200){
       right_input = 0;
       suction_stop();
     }
