@@ -14,6 +14,7 @@ extern float MmConvWheel;
 extern int16_t left_speed,right_speed;
 extern int16_t last_left_speed,last_right_speed;
 extern float left_input, right_input;
+extern bool left_stop, right_stop;
 
 
 void suction_motor_setting();
